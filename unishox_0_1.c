@@ -31,7 +31,7 @@
 #include <ctype.h>
 #include <stdint.h>
 
-#include "unishox++_0_1.h"
+#include "unishox_0_1.h"
 
 typedef unsigned char byte;
 
@@ -112,7 +112,7 @@ int encodeCount(char *out, int ol, int count) {
 //const byte uni_bit_len[4]   = {6, 12, 15, 23};
 //const int32_t uni_adder[4] = {0, 64, 4160, 36928};
 const byte uni_bit_len[4]   = {6, 12, 14, 17};
-const int32_t uni_adder[4] = {0, 64, 4160, 12362};
+const int32_t uni_adder[4] = {0, 64, 4160, 20544};
 
 int encodeUnicode(char *out, int ol, int32_t code) {
   // First five bits are code and Last three bits of codes represent length
@@ -126,7 +126,7 @@ int encodeUnicode(char *out, int ol, int32_t code) {
         int32_t val = code - uni_adder[i];
         int excess_bits = uni_bit_len[i] - 16;
         ol = append_bits(out, ol, val >> excess_bits, 16, 1);
-        ol = append_bits(out, ol, (val & ((1 << excess_bits) - 1)) << (16 - excess_bits), uni_bit_len[i] - 16, 1);
+        ol = append_bits(out, ol, (val & ((1 << excess_bits) - 1)) << (16 - excess_bits), excess_bits, 1);
       } else
         ol = append_bits(out, ol, (code - uni_adder[i]) << (16 - uni_bit_len[i]), uni_bit_len[i], 1);
       return ol;
@@ -144,6 +144,7 @@ int matchOccurance(const char *in, int len, int l, char *out, int *ol) {
     }
     if ((k - j) > (NICE_LEN_FOR_PRIOR - 1)) {
       *ol = append_bits(out, *ol, 14144, 10, 1);
+      printf("Len:%d / Dist:%d\n", k - j - NICE_LEN_FOR_PRIOR, l - j - NICE_LEN_FOR_PRIOR + 1);
       *ol = encodeCount(out, *ol, k - j - NICE_LEN_FOR_PRIOR); // len
       *ol = encodeCount(out, *ol, l - j - NICE_LEN_FOR_PRIOR + 1); // dist
       l += (k - j);
@@ -426,7 +427,8 @@ int getCodeIdx(char *code_type, const char *in, int len, int *bit_no_p) {
 int32_t getNumFromBits(const char *in, int bit_no, int count) {
    int32_t ret = 0;
    while (count--) {
-     ret += getBitVal(in, bit_no++, count);
+     ret += getBitVal(in, bit_no, count);
+     bit_no++;
    }
    return ret;
 }
@@ -443,14 +445,16 @@ int readCount(const char *in, int *bit_no_p, int len) {
 }
 
 int32_t readUnicode(const char *in, int *bit_no_p, int len) {
-  const byte codes[4]   = {0, 1, 3, 7};
   int code = 0;
-  for (int i = 0; i < 4; i++) {
+  for (int i = 0; i < 3; i++) {
     code += getBitVal(in, *bit_no_p, i);
     (*bit_no_p)++;
-    if (code == codes[i]) {
-      int32_t count = getNumFromBits(in, *bit_no_p, uni_bit_len[i]) + uni_adder[i];
-      (*bit_no_p) += uni_bit_len[i];
+    int idx = (code == 0 && i == 0 ? 0 : (code == 1 && i == 1 ? 1 : 
+                  (code == 3 && i == 2 ? 2 : (code == 7 && i == 2 ? 3 : -1))));
+    if (idx >= 0) {
+      int32_t count = getNumFromBits(in, *bit_no_p, uni_bit_len[idx]);
+      count += uni_adder[idx];
+      (*bit_no_p) += uni_bit_len[idx];
       return count;
     }
   }
@@ -669,8 +673,8 @@ double timedifference(uint32_t t0, uint32_t t1) {
 
 int main(int argv, char *args[]) {
 
-char cbuf[65536];
-char dbuf[65536];
+char cbuf[1024];
+char dbuf[1024];
 long len, tot_len, clen, ctot, dlen, l;
 float perc;
 FILE *fp, *wfp;
@@ -860,7 +864,7 @@ if (argv == 2) {
    printf("\nBytes (Compressed/Original=Savings%%): %ld/%ld=", ctot, len);
    printf("%.2f%%\n", perc);
 } else {
-   printf("UniShox++ (byte format version: %s)\n", UNISHOX_VERSION);
+   printf("Unishox (byte format version: %s)\n", UNISHOX_VERSION);
    printf("---------------------------------\n");
    printf("Usage: unishox++ \"string\" or unishox++ [action] [in_file] [out_file] [encoding]\n");
    printf("\n");
