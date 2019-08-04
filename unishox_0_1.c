@@ -35,8 +35,19 @@
 
 typedef unsigned char byte;
 
-unsigned int  c_95[95] = {16384, 16256, 15744, 16192, 15328, 15344, 15360, 16064, 15264, 15296, 15712, 15200, 14976, 15040, 14848, 15104, 14528, 14592, 14656, 14688, 14720, 14752, 14784, 14816, 14832, 14464, 15552, 15488, 15616, 15168, 15680, 16000, 15872, 10752,  8576,  8192,  8320,  9728,  8672,  8608,  8384, 11264,  9024,  8992, 12160,  8544, 11520, 11008,  8512,  9008, 12032, 11776, 10240,  8448,  8960,  8640,  9040,  8688,  9048, 15840, 16288, 15856, 16128, 16224, 16368, 40960,  6144,     0,  2048, 24576,  7680,  6656,  3072, 49152, 13312, 12800, 63488,  5632, 53248, 45056,  5120, 13056, 61440, 57344, 32768,  4096, 12288,  7168, 13568,  7936, 13696, 15776, 16320, 15808, 16352};
-unsigned char l_95[95] = {    3,    11,    11,    11,    12,    12,     9,    10,    11,    11,    11,    11,    10,    10,     9,    10,    10,    10,    11,    11,    11,    11,    11,    12,    12,    10,    10,    10,    10,    11,    11,    10,     9,     8,    11,     9,    10,     7,    12,    11,    10,     8,    12,    12,     9,    11,     8,     8,    11,    12,     9,     8,     7,    10,    11,    11,    13,    12,    13,    12,    11,    12,    10,    11,    12,     4,     7,     5,     6,     3,     8,     7,     6,     4,     8,     8,     5,     7,     4,     4,     7,     8,     5,     4,     3,     6,     7,     7,     9,     8,     9,    11,    11,    11,    12};
+enum {SHX_SET1 = 0, SHX_SET1A, SHX_SET1B, SHX_SET2, SHX_SET3, SHX_SET4, SHX_SET4A};
+char vcodes[] =     {0, 2, 3, 4, 10, 11, 12, 13, 14, 30, 31};
+char vcode_lens[] = {2, 3, 3, 3,  4,  4,  4,  4,  4,  5,  5};
+char sets[][11] = {{  0, ' ', 'e', 't', 'a', 'o', 'i', 'n', 's', 'r', 'l'},
+                   {'c', 'd', 'h', 'u', 'p', 'm', 'b', 'g', 'w', 'f', 'y'},
+                   {'v', 'k', 'q', 'j', 'x', 'z',   0,   0,   0,   0,   0},
+                   {  0, '9', '0', '1', '2', '3', '4', '5', '6', '7', '8'},
+                   {'.', ',', '-', '/', '=', '+', ' ', '(', ')', '$', '%'},
+                   {'&', ';', ':', '<', '>', '*', '"', '{', '}', '[', ']'},
+                   {'@', '?', '\'', '^', '#', '_', '!', '\\', '|', '~', '`'}};
+
+unsigned int  c_95[95]; // = {16384, 16256, 15744, 16192, 15328, 15344, 15360, 16064, 15264, 15296, 15712, 15200, 14976, 15040, 14848, 15104, 14528, 14592, 14656, 14688, 14720, 14752, 14784, 14816, 14832, 14464, 15552, 15488, 15616, 15168, 15680, 16000, 15872, 10752,  8576,  8192,  8320,  9728,  8672,  8608,  8384, 11264,  9024,  8992, 12160,  8544, 11520, 11008,  8512,  9008, 12032, 11776, 10240,  8448,  8960,  8640,  9040,  8688,  9048, 15840, 16288, 15856, 16128, 16224, 16368, 40960,  6144,     0,  2048, 24576,  7680,  6656,  3072, 49152, 13312, 12800, 63488,  5632, 53248, 45056,  5120, 13056, 61440, 57344, 32768,  4096, 12288,  7168, 13568,  7936, 13696, 15776, 16320, 15808, 16352};
+unsigned char l_95[95]; // = {    3,    11,    11,    11,    12,    12,     9,    10,    11,    11,    11,    11,    10,    10,     9,    10,    10,    10,    11,    11,    11,    11,    11,    12,    12,    10,    10,    10,    10,    11,    11,    10,     9,     8,    11,     9,    10,     7,    12,    11,    10,     8,    12,    12,     9,    11,     8,     8,    11,    12,     9,     8,     7,    10,    11,    11,    13,    12,    13,    12,    11,    12,    10,    11,    12,     4,     7,     5,     6,     3,     8,     7,     6,     4,     8,     8,     5,     7,     4,     4,     7,     8,     5,     4,     3,     6,     7,     7,     9,     8,     9,    11,    11,    11,    12};
 //unsigned char c[]    = {  ' ',   '!',   '"',   '#',   '$',   '%',   '&',  '\'',   '(',   ')',   '*',   '+',   ',',   '-',   '.',   '/',   '0',   '1',   '2',   '3',   '4',   '5',   '6',   '7',   '8',   '9',   ':',   ';',   '<',   '=',   '>',   '?',   '@',   'A',   'B',   'C',   'D',   'E',   'F',   'G',   'H',   'I',   'J',   'K',   'L',   'M',   'N',   'O',   'P',   'Q',   'R',   'S',   'T',   'U',   'V',   'W',   'X',   'Y',   'Z',   '[',  '\\',   ']',   '^',   '_',   '`',   'a',   'b',   'c',   'd',   'e',   'f',   'g',   'h',   'i',   'j',   'k',   'l',   'm',   'n',   'o',   'p',   'q',   'r',   's',   't',   'u',   'v',   'w',   'x',   'y',   'z',   '{',   '|',   '}',   '~'};
 char SET2_STR[] = {'9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '.', ',', '-', '/', '=', '+', ' ', '(', ')', '$', '%', '&', ';', ':', '<', '>', '*', '"', '{', '}', '[', ']', '@', '?', '\'', '^', '#', '_', '!', '\\', '|', '~', '`', '\0'};
 
@@ -53,6 +64,62 @@ byte lookup[65536];
 #endif
 #define NICE_LEN_FOR_PRIOR 7
 #define NICE_LEN_FOR_OTHER 12
+
+byte is_inited = 0;
+void init_coder() {
+  if (is_inited)
+    return;
+  for (int i = 0; i < 7; i++) {
+    for (int j = 0; j < 11; j++) {
+      char c = sets[i][j];
+      if (c != 0) {
+        int ascii = c - 32;
+        switch (i) {
+          case SHX_SET1: // just vcode
+            c_95[ascii] = (vcodes[j] << (16 - vcode_lens[j]));
+            l_95[ascii] = vcode_lens[j];
+            if (c >= 'a' && c <= 'z') {
+              c_95[ascii] = (2 << 12) + (vcodes[j] << (12 - vcode_lens[j]));
+              l_95[ascii] = 4 + vcode_lens[j];
+            }
+            break;
+          case SHX_SET1A: // 000 + vcode
+            c_95[ascii] = 0 + (vcodes[j] << (13 - vcode_lens[j]));
+            l_95[ascii] = 3 + vcode_lens[j];
+            if (c >= 'a' && c <= 'z') {
+              c_95[ascii] = (2 << 12) + 0 + (vcodes[j] << (9 - vcode_lens[j]));
+              l_95[ascii] = 4 + 3 + vcode_lens[j];
+            }
+            break;
+          case SHX_SET1B: // 00110 + vcode
+            c_95[ascii] = (6 << 11) + (vcodes[j] << (11 - vcode_lens[j]));
+            l_95[ascii] = 5 + vcode_lens[j];
+            if (c >= 'a' && c <= 'z') {
+              c_95[ascii] = (2 << 12) + (6 << 7) + (vcodes[j] << (7 - vcode_lens[j]));
+              l_95[ascii] = 4 + 5 + vcode_lens[j];
+            }
+            break;
+          case SHX_SET2: // 0011100 + vcode
+            c_95[ascii] = (28 << 9) + (vcodes[j] << (9 - vcode_lens[j]));
+            l_95[ascii] = 7 + vcode_lens[j];
+            break;
+          case SHX_SET3: // 0011101 + vcode
+            c_95[ascii] = (29 << 9) + (vcodes[j] << (9 - vcode_lens[j]));
+            l_95[ascii] = 7 + vcode_lens[j];
+            break;
+          case SHX_SET4: // 0011110 + vcode
+            c_95[ascii] = (30 << 9) + (vcodes[j] << (9 - vcode_lens[j]));
+            l_95[ascii] = 7 + vcode_lens[j];
+            break;
+          case SHX_SET4A: // 0011111 + vcode
+            c_95[ascii] = (31 << 9) + (vcodes[j] << (9 - vcode_lens[j]));
+            l_95[ascii] = 7 + vcode_lens[j];
+        }
+      }
+    }
+  }
+  is_inited = 1;
+}
 
 unsigned int mask[] = {0x8000, 0xC000, 0xE000, 0xF000, 0xF800, 0xFC00, 0xFE00, 0xFF00};
 int append_bits(char *out, int ol, unsigned int code, int clen, byte state) {
@@ -111,7 +178,7 @@ int encodeCount(char *out, int ol, int count) {
 //const int32_t uni_adder[4] = {0, 32, 4128, 36896};
 //const byte uni_bit_len[4]   = {6, 12, 15, 23};
 //const int32_t uni_adder[4] = {0, 64, 4160, 36928};
-const byte uni_bit_len[4]   = {6, 12, 14, 17};
+const byte uni_bit_len[4]   = {6, 12, 14, 21};
 const int32_t uni_adder[4] = {0, 64, 4160, 20544};
 
 int encodeUnicode(char *out, int ol, int32_t code) {
@@ -217,6 +284,7 @@ int unishox_0_1_compress(const char *in, int len, char *out, struct lnk_lst *pre
   int prev_uni;
   byte is_upper, is_all_upper;
 
+  init_coder();
   ol = 0;
   c_prev = 0;
   prev_uni = 0;
@@ -394,15 +462,6 @@ char hcode[32] = {1 + (1 << 3), 2 + (0 << 3), 0, 3 + (2 << 3), 0, 0, 0, 5 + (3 <
 //                24, 25, 26, 27, 28, 29, 30, 31
                    0, 0,  0,  0,  0,  0,  0,  5 + (6 << 3)};
 
-enum {SHX_SET1 = 0, SHX_SET1A, SHX_SET1B, SHX_SET2, SHX_SET3, SHX_SET4, SHX_SET4A};
-char sets[][11] = {{' ', ' ', 'e', 't', 'a', 'o', 'i', 'n', 's', 'r', 'l'},
-                   {'c', 'd', 'h', 'u', 'p', 'm', 'b', 'g', 'w', 'f', 'y'},
-                   {'v', 'k', 'q', 'j', 'x', 'z', ' ', ' ', ' ', ' ', ' '},
-                   {' ', '9', '0', '1', '2', '3', '4', '5', '6', '7', '8'},
-                   {'.', ',', '-', '/', '=', '+', ' ', '(', ')', '$', '%'},
-                   {'&', ';', ':', '<', '>', '*', '"', '{', '}', '[', ']'},
-                   {'@', '?', '\'', '^', '#', '_', '!', '\\', '|', '~', '`'}};
-
 int getBitVal(const char *in, int bit_no, int count) {
    return (in[bit_no >> 3] & (0x80 >> (bit_no % 8)) ? 1 << count : 0);
 }
@@ -466,6 +525,8 @@ int unishox_0_1_decompress(const char *in, int len, char *out, struct lnk_lst *p
   int dstate;
   int bit_no;
   byte is_all_upper;
+
+  init_coder();
   int ol = 0;
   bit_no = 0;
   dstate = SHX_SET1;
@@ -580,7 +641,7 @@ int unishox_0_1_decompress(const char *in, int len, char *out, struct lnk_lst *p
          }
       }
     }
-    if (c == 't') {
+    /*if (c == 't') {
       int sign = getBitVal(in, bit_no, 1);
       bit_no++;
       int delta = readUnicode(in, &bit_no, len);
@@ -592,7 +653,7 @@ int unishox_0_1_decompress(const char *in, int len, char *out, struct lnk_lst *p
       //printf("Sign: %d, bitno: %d\n", sign, bit_no);
       //printf("Code: %d\n", delta);
       //printf("BitNo: %d\n", bit_no);
-    }
+    }*/
     out[ol++] = c;
   }
 
