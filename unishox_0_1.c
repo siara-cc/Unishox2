@@ -40,7 +40,7 @@ char vcodes[] =     {0, 2, 3, 4, 10, 11, 12, 13, 14, 30, 31};
 char vcode_lens[] = {2, 3, 3, 3,  4,  4,  4,  4,  4,  5,  5};
 char sets[][11] = {{  0, ' ', 'e', 't', 'a', 'o', 'i', 'n', 's', 'r', 'l'},
                    {'c', 'd', 'h', 'u', 'p', 'm', 'b', 'g', 'w', 'f', 'y'},
-                   {'v', 'k', 'q', 'j', 'x', 'z',   0,   0,   0,   0,   0},
+                   {'v', 'k', 'q', 'j', 'x', 'z',   0,   0,   0, 0, 0},
                    {  0, '9', '0', '1', '2', '3', '4', '5', '6', '7', '8'},
                    {'.', ',', '-', '/', '=', '+', ' ', '(', ')', '$', '%'},
                    {'&', ';', ':', '<', '>', '*', '"', '{', '}', '[', ']'},
@@ -83,12 +83,22 @@ byte lookup[65536];
 #define ONLY_CR_CODE_LEN 13
 #define TAB_CODE 9216
 #define TAB_CODE_LEN 7
+#define UNI_CODE 0x8000
+#define UNI_CODE_LEN 3
+#define CONT_UNI_CODE 0x2800
+#define CONT_UNI_CODE_LEN 7
+#define ALL_UPPER_CODE 8704
+#define ALL_UPPER_CODE_LEN 8
+#define SW2_STATE2_CODE 14336
+#define SW2_STATE2_CODE_LEN 7
+#define ST2_SPC_CODE 15232
+#define ST2_SPC_CODE_LEN 11
 
-void checkPrevCodes(char c, int prev_code, char prev_code_len, int c_95, char l_95) {
-   if (prev_code != c_95 || prev_code_len != l_95) {
-     printf("Code mismatch: %d: %d!=%d, %d!=%d\n", c, prev_code, c_95, prev_code_len, l_95);
-   }
-}
+//void checkPrevCodes(char c, int prev_code, char prev_code_len, int c_95, char l_95) {
+//   if (prev_code != c_95 || prev_code_len != l_95) {
+//     printf("Code mismatch: %d: %d!=%d, %d!=%d\n", c, prev_code, c_95, prev_code_len, l_95);
+//   }
+//}
 
 byte is_inited = 0;
 void init_coder() {
@@ -398,7 +408,7 @@ int unishox_0_1_compress(const char *in, int len, char *out, struct lnk_lst *pre
           uni <<= 6;
           uni += (in[l + j + 1] & 0x3F);
         } while (j++ < bc);
-        ol = append_bits(out, ol, 0x8000, 3, 1);
+        ol = append_bits(out, ol, UNI_CODE, UNI_CODE_LEN, 1);
         ol = append_bits(out, ol, uni > prev_uni ? 0x8000 : 0, 1, 1);
         ol = encodeUnicode(out, ol, abs(uni - prev_uni));
         printf("%d:%d,", bc, uni);
@@ -436,12 +446,12 @@ int unishox_0_1_compress(const char *in, int len, char *out, struct lnk_lst *pre
           break;
       }
       if (ll == l-1) {
-        ol = append_bits(out, ol, 8704, 8, state);
+        ol = append_bits(out, ol, ALL_UPPER_CODE, ALL_UPPER_CODE_LEN, state);
         is_all_upper = 1;
       }
     }
     if (state == SHX_STATE_1 && c_in >= '0' && c_in <= '9') {
-      ol = append_bits(out, ol, 14336, 7, state);
+      ol = append_bits(out, ol, SW2_STATE2_CODE, SW2_STATE2_CODE_LEN, state);
       state = SHX_STATE_2;
     }
     c_next = 0;
@@ -454,7 +464,7 @@ int unishox_0_1_compress(const char *in, int len, char *out, struct lnk_lst *pre
       if (is_all_upper && is_upper)
         c_in += 32;
       if (c_in == 0 && state == SHX_STATE_2)
-        ol = append_bits(out, ol, 15232, 11, state);
+        ol = append_bits(out, ol, ST2_SPC_CODE, ST2_SPC_CODE_LEN, state);
       else
         ol = append_bits(out, ol, c_95[c_in], l_95[c_in], state);
     } else
