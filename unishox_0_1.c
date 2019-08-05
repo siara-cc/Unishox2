@@ -38,9 +38,9 @@ typedef unsigned char byte;
 enum {SHX_SET1 = 0, SHX_SET1A, SHX_SET1B, SHX_SET2, SHX_SET3, SHX_SET4, SHX_SET4A};
 char vcodes[] =     {0, 2, 3, 4, 10, 11, 12, 13, 14, 30, 31};
 char vcode_lens[] = {2, 3, 3, 3,  4,  4,  4,  4,  4,  5,  5};
-char sets[][11] = {{  0, ' ', 'e', 't', 'a', 'o', 'i', 'n', 's', 'r', 'l'},
-                   {'c', 'd', 'h', 'u', 'p', 'm', 'b', 'g', 'w', 'f', 'y'},
-                   {'v', 'k', 'q', 'j', 'x', 'z',   0,   0,   0, 0, 0},
+char sets[][11] = {{  0, ' ', 'e',   0, 't', 'a', 'o', 'i',   0, 'n', 's'},
+                   {'r', 'l', 'c', 'd', 'h', 'u', 'p', 'm', 'b', 'g', 'w'},
+                   {'f', 'y', 'v', 'k', 'q', 'j', 'x', 'z',   0,   0,   0},
                    {  0, '9', '0', '1', '2', '3', '4', '5', '6', '7', '8'},
                    {'.', ',', '-', '/', '=', '+', ' ', '(', ')', '$', '%'},
                    {'&', ';', ':', '<', '>', '*', '"', '{', '}', '[', ']'},
@@ -65,34 +65,36 @@ byte lookup[65536];
 #define NICE_LEN_FOR_PRIOR 7
 #define NICE_LEN_FOR_OTHER 12
 
-#define TERM_CODE 14272
+#define TERM_CODE 0x37C0
 #define TERM_CODE_LEN 10
-#define DICT_PRIOR_CODE 14144
-#define DICT_PRIOR_CODE_LEN 10
-#define DICT_OTHER_CODE 14080
-#define DICT_OTHER_CODE_LEN 10
-#define RPT_CODE 14208
-#define RPT_CODE_LEN 10
+#define DICT_PRIOR_CODE 0xE800
+#define DICT_PRIOR_CODE_LEN 5
+#define DICT_OTHER_CODE 0xE000
+#define DICT_OTHER_CODE_LEN 5
+#define RPT_CODE 0x2378
+#define RPT_CODE_LEN 14
 #define BACK2_STATE1_CODE 8192
 #define BACK2_STATE1_CODE_LEN 4
-#define CRLF_CODE 13824
+#define CRLF_CODE 0x3700
 #define CRLF_CODE_LEN 9
-#define LF_CODE 13952
-#define LF_CODE_LEN 9
+#define LF_CODE 0x3780
+#define LF_CODE_LEN 10
 #define ONLY_CR_CODE 9064
 #define ONLY_CR_CODE_LEN 13
-#define TAB_CODE 9216
+#define TAB_CODE 0x2400
 #define TAB_CODE_LEN 7
 #define UNI_CODE 0x8000
 #define UNI_CODE_LEN 3
 #define CONT_UNI_CODE 0x2800
 #define CONT_UNI_CODE_LEN 7
-#define ALL_UPPER_CODE 8704
+#define ALL_UPPER_CODE 0x2200
 #define ALL_UPPER_CODE_LEN 8
-#define SW2_STATE2_CODE 14336
+#define SW2_STATE2_CODE 0x3800
 #define SW2_STATE2_CODE_LEN 7
-#define ST2_SPC_CODE 15232
+#define ST2_SPC_CODE 0x3B80
 #define ST2_SPC_CODE_LEN 11
+#define BIN_CODE 0x237C
+#define BIN_CODE_LEN 14
 
 //void checkPrevCodes(char c, int prev_code, char prev_code_len, int c_95, char l_95) {
 //   if (prev_code != c_95 || prev_code_len != l_95) {
@@ -647,6 +649,24 @@ int unishox_0_1_decompress(const char *in, int len, char *out, struct lnk_lst *p
         }
       }
     }
+    if (v == 8 && h == SHX_SET1) {
+      if (getBitVal(in, bit_no++, 0)) {
+        int dict_len = readCount(in, &bit_no, len) + NICE_LEN_FOR_PRIOR;
+        int dist = readCount(in, &bit_no, len) + NICE_LEN_FOR_PRIOR - 1;
+        memcpy(out + ol, out + ol - dist, dict_len);
+        ol += dict_len;
+      } else {
+        int dict_len = readCount(in, &bit_no, len) + NICE_LEN_FOR_OTHER;
+        int dist = readCount(in, &bit_no, len);
+        int ctx = readCount(in, &bit_no, len);
+        struct lnk_lst *cur_line = prev_lines;
+        while (ctx--)
+          cur_line = cur_line->previous;
+        memmove(out + ol, cur_line->data + dist, dict_len);
+        ol += dict_len;
+      }
+      continue;
+    }
     if (h < 64 && v < 32)
       c = sets[h][v];
     if (c >= 'a' && c <= 'z') {
@@ -657,41 +677,25 @@ int unishox_0_1_decompress(const char *in, int len, char *out, struct lnk_lst *p
         c = '\t';
       if (h == SHX_SET1B) {
          switch (v) {
-           case 6:
-             out[ol++] = '\r';
-             c = '\n';
-             break;
-           case 7:
-             c = is_upper ? '\r' : '\n';
-             break;
-           case 8:
-             if (getBitVal(in, bit_no++, 0)) {
-               int dict_len = readCount(in, &bit_no, len) + NICE_LEN_FOR_PRIOR;
-               int dist = readCount(in, &bit_no, len) + NICE_LEN_FOR_PRIOR - 1;
-               memcpy(out + ol, out + ol - dist, dict_len);
-               ol += dict_len;
+           case 9:
+             if (is_upper) { // rpt
+              int count = readCount(in, &bit_no, len);
+              count += 4;
+              char rpt_c = out[ol - 1];
+              while (count--)
+                out[ol++] = rpt_c;
              } else {
-               int dict_len = readCount(in, &bit_no, len) + NICE_LEN_FOR_OTHER;
-               int dist = readCount(in, &bit_no, len);
-               int ctx = readCount(in, &bit_no, len);
-               struct lnk_lst *cur_line = prev_lines;
-               while (ctx--)
-                 cur_line = cur_line->previous;
-               memmove(out + ol, cur_line->data + dist, dict_len);
-               ol += dict_len;
+               out[ol++] = '\r';
+               c = '\n';
              }
              continue;
-           case 9: {
-             int count = readCount(in, &bit_no, len);
-             count += 4;
-             char rpt_c = out[ol - 1];
-             while (count--)
-               out[ol++] = rpt_c;
-             continue;
-           }
+           case 8:
+             c = is_upper ? '\r' : '\n';
+             break;
            case 10:
              continue;
          }
+         continue;
       }
     }
     /*if (c == 't') {
@@ -707,7 +711,7 @@ int unishox_0_1_decompress(const char *in, int len, char *out, struct lnk_lst *p
       //printf("Code: %d\n", delta);
       //printf("BitNo: %d\n", bit_no);
     }*/
-    out[ol++] = c;
+      out[ol++] = c;
   }
 
   return ol;
