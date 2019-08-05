@@ -4,27 +4,27 @@
 \pagestyle{fancy}
 \fancyhead{}
 \fancyfoot{}
-\fancyhead[C]{Data Compression techniques $\bullet$ Information Theory $\bullet$ Shox++ - Guaranteed Compression of Short Strings}
+\fancyhead[C]{Data Compression techniques $\bullet$ Information Theory $\bullet$ Unishox - Guaranteed Compression of Short Unicode Strings}
 \fancyfoot[L]{ Licensed under CC 4.0 Int'l Attribution License \copyright  2019 Siara Logics (cc)}
 \fancyfoot[R]{\thepage}
 
 %opening
-\title{Shox++ - Guaranteed Compression of Short Strings}
-\author{Arundale R}
+\title{Unishox - Guaranteed Compression of Short Unicode Strings}
+\author{Arundale Ramanathan}
 
 \begin{document}
 
 \maketitle
 
 \begin{abstract}
-We formulate a hybrid encoding method with which short strings could be compressed using context aware pre-mapped codes resulting in surprisingly good ratios.
+A new hybrid encoding method is proposed, with which short unicode strings could be compressed using context aware pre-mapped codes and delta coding resulting in surprisingly good ratios.
 
-We also go on to prove that this technique can guarantee compression for any English language sentence of minimum 3 words.
+It is also proved how this technique can guarantee compression for any language sentence of minimum 3 words.
 \end{abstract}
 
 \section{Summary}
 
-Compression of Short Strings of arbitrary lengths have not been addressed sufficiently by lossless entropy encoding methods so far.  Although it appears inconsequential, space occupied by such strings become significant in memory constrained environments such as Arduino Uno and when attempting storage of such independent strings in a database. While block compression is available for databases, retrieval efficiency could be improved if the strings are individually compressed.
+Compression of Short Unicode Strings of arbitrary lengths have not been addressed sufficiently by lossless entropy encoding methods so far.  Although it appears inconsequential, space occupied by such strings become significant in memory constrained environments such as Arduino Uno and when attempting storage of such independent strings in a database. While block compression is available for databases, retrieval efficiency could be improved if the strings are individually compressed.
 
 \section{Basic Definitions}
 
