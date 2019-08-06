@@ -1,0 +1,52 @@
+shox256
+
+7 bit code (0010100) for continuous delta coding
+- 0 - followed by 00 for Space, 01 for full stop, 10 for comma, 11 for switch back
+- 10 - followed by sign bit and 5 bit code for difference (total 8 bits) (-ve zero is Para)
+- 110 - followed by sign bit and 12 bit code for difference (total 16 bits)
+- 1110 - followed by sign bit and 15 bit code for difference (total 19 bits)
+- 1111 - followed by sign bit and 23 bit code for difference (total 28 bits)
+
+-  5,  2 - 00
+-  9,  6 - 01 + sign + 3
+- 13, 10 - 100 + sign + 6
+- 19, 16 - 101 + sign + 12
+- 21, 18 - 110 + sign + 14
+- 24, 21 - 1110 + sign + 16
+- 30, 27 - 11110 + sign + 21
+- 10,  7 - 11111 + 2 bits
+
+After Terminator 0 or 1. 0 - length of remaining 8-bit chars, 1 - no length
+
+2:Arabic:    69/104=33.65%:  ديسيبل محملة. انقر مرتين على رأس أو صفحات لإظهار التفاصيل
+3:Bengali:   92/205=55.12%:  ডিবি লোড করা আছে । বিস্তারিত প্রদর্শন করতে হেডার বা পেজগুলিতে ডাবল ক্লিক করুন
+2:German:    51/78=34.62%:   DB geladen. Doppelklicken Sie auf Kopfzeile oder Seit dnuus o| anzuzeigen
+2:Spanish:   50/79=36.71%:   DB cargado. Haga doble clic en Encabezado o Páginas para mostrar los detalles.
+2:Persian:   81/113=28.32%:  DB بارگذاری شد بر روی Header یا Pages کلیک کنید تا جزئیات را نشان دهید
+2:French:    59/101=41.58%:  La base de données a été chargée. Cliquez sur l'en-tête ou les pages pour afficher les détails.
+3:Hindi:     81/173=53.18%:  डीबी लोड किया गया था। विवरण दिखाने के लिए हैडर या पेज पर क्लिक करें
+2:Italian:   46/77=40.26%:   DB è stato caricato. Clicca su Intestazione o Pagine per mostrare i dettagli
+3:Japanese:  79/128=38.28%:  DBがロードされました。詳細を表示するには、ヘッダーまたはページをクリックしてください。
+1:Javanese:  39/60=35.00%:   DB diisi. Klik ing Header utawa Kaca kanggo nuduhake rincian
+3:Korean:    93/107=13.08%:  DB가로드되었습니다. 세부 정보를 표시하려면 헤더 또는 페이지를 클릭하십시오.
+1:Malay:     49/75=34.67%:   DB telah dimuatkan. Klik pada Header atau Halaman untuk menunjukkan butiran
+3:Myanmar:   125/300=58.33%: DB တင်ခဲ့သည်ခဲ့သည်။ အသေးစိတ်အချက်အလက်များကိုပြသနိုင်ဖို့ Header ကိုသို့မဟုတ်စာမျက်နှာများပေါ်တွင်ကလစ်နှိပ်ပါ
+3:Punjabi:   85/170=50.00%:  ਡੀ.ਬੀ. ਲੋਡ ਕੀਤਾ ਗਿਆ ਸੀ. ਵੇਰਵੇ ਦਿਖਾਉਣ ਲਈ ਸਿਰਲੇਖ ਜਾਂ ਪੰਨੇ 'ਤੇ ਕਲਿਕ ਕਰੋ
+2:Polish:    59/83=28.92%:   DB został załadowany. Kliknij nagłówek lub strony, aby wyświetlić szczegóły
+2:Portugese: 48/79=39.24%:   DB foi carregado. Clique no cabeçalho ou nas páginas para mostrar os detalhes
+2:Russian:   84/138=39.13%:  БД была загружена. Нажмите на заголовок или страницы, чтобы показать детали
+3:Tamil:     96/221=56.56%:  DB ஏற்றப்பட்டது. விவரங்களைக் காட்டுவதற்கு தலைப்பு அல்லது பக்கங்களில் கிளிக் செய்க
+1:Filipino:  49/75=34.67%:   Naka-load ang DB. Mag-click sa Header o Pages upang ipakit ang mga detlye
+2:Turkish:   55/84=34.52%:   Db yüklü. Ayrıntıları görüntülemek için Üstbilgi veya Sayfalara tıklayın
+2:Urdu:      91/119=23.53%:  ڈی بی لوڈ ہو گیا. تفصیلات ظاہر کرنے کیلئے ہیڈر یا صفحات پر کلک کریں
+2:Vietnam:   56/81=30.86%:   Đã tải DB. Nhấp vào Tiêu đề hoặc Trang để hiển thị chi tiết
+3:Chinese:   57/56=-1.79%:   DB已加载。单击标题或页面以显示详细信息
+
+3:Chinese:   57/56=-1.79%:   DB已加载。单击标题或页面以显示详细信息
+2:Spanish:   50/79=36.71%:   DB cargado. Haga doble clic en Encabezado o Páginas para mostrar los detalles.
+2:Arabic:    69/104=33.65%:  ديسيبل محملة. انقر مرتين على رأس أو صفحات لإظهار التفاصيل
+3:Hindi:     81/173=53.18%:  डीबी लोड किया गया था। विवरण दिखाने के लिए हैडर या पेज पर क्लिक करें
+3:Bengali:   92/205=55.12%:  ডিবি লোড করা আছে । বিস্তারিত প্রদর্শন করতে হেডার বা পেজগুলিতে ডাবল ক্লিক করুন
+2:Portugese: 48/79=39.24%:   DB foi carregado. Clique no cabeçalho ou nas páginas para mostrar os detalhes
+2:Russian:   84/138=39.13%:  БД была загружена. Нажмите на заголовок или страницы, чтобы показать детали
+3:Japanese:  79/128=38.28%:  DBがロードされました。詳細を表示するには、ヘッダーまたはページをクリックしてください。

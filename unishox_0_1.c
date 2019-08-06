@@ -38,8 +38,8 @@ typedef unsigned char byte;
 enum {SHX_SET1 = 0, SHX_SET1A, SHX_SET1B, SHX_SET2, SHX_SET3, SHX_SET4, SHX_SET4A};
 char vcodes[] =     {0, 2, 3, 4, 10, 11, 12, 13, 14, 30, 31};
 char vcode_lens[] = {2, 3, 3, 3,  4,  4,  4,  4,  4,  5,  5};
-char sets[][11] = {{  0, ' ', 'e',   0, 't', 'a', 'o', 'i',   0, 'n', 's'},
-                   {'r', 'l', 'c', 'd', 'h', 'u', 'p', 'm', 'b', 'g', 'w'},
+char sets[][11] = {{  0, ' ', 'e',   0, 't', 'a', 'o', 'i', 'n', 's', 'r'},
+                   {  0, 'l', 'c', 'd', 'h', 'u', 'p', 'm', 'b', 'g', 'w'},
                    {'f', 'y', 'v', 'k', 'q', 'j', 'x', 'z',   0,   0,   0},
                    {  0, '9', '0', '1', '2', '3', '4', '5', '6', '7', '8'},
                    {'.', ',', '-', '/', '=', '+', ' ', '(', ')', '$', '%'},
@@ -67,18 +67,18 @@ byte lookup[65536];
 
 #define TERM_CODE 0x37C0
 #define TERM_CODE_LEN 10
-#define DICT_PRIOR_CODE 0xE800
-#define DICT_PRIOR_CODE_LEN 5
-#define DICT_OTHER_CODE 0xE000
-#define DICT_OTHER_CODE_LEN 5
+#define DICT_PRIOR_CODE 0x0400
+#define DICT_PRIOR_CODE_LEN 6
+#define DICT_OTHER_CODE 0x0000
+#define DICT_OTHER_CODE_LEN 6
 #define RPT_CODE 0x2378
 #define RPT_CODE_LEN 14
 #define BACK2_STATE1_CODE 8192
 #define BACK2_STATE1_CODE_LEN 4
-#define CRLF_CODE 0x3700
-#define CRLF_CODE_LEN 9
-#define LF_CODE 0x3780
-#define LF_CODE_LEN 10
+#define CRLF_CODE 0x3780
+#define CRLF_CODE_LEN 10
+#define LF_CODE 0x3700
+#define LF_CODE_LEN 9
 #define ONLY_CR_CODE 9064
 #define ONLY_CR_CODE_LEN 13
 #define TAB_CODE 0x2400
@@ -649,7 +649,7 @@ int unishox_0_1_decompress(const char *in, int len, char *out, struct lnk_lst *p
         }
       }
     }
-    if (v == 8 && h == SHX_SET1) {
+    if (v == 0 && h == SHX_SET1A) {
       if (getBitVal(in, bit_no++, 0)) {
         int dict_len = readCount(in, &bit_no, len) + NICE_LEN_FOR_PRIOR;
         int dist = readCount(in, &bit_no, len) + NICE_LEN_FOR_PRIOR - 1;
@@ -686,11 +686,11 @@ int unishox_0_1_decompress(const char *in, int len, char *out, struct lnk_lst *p
                 out[ol++] = rpt_c;
              } else {
                out[ol++] = '\r';
-               c = '\n';
+               out[ol++] = '\n';
              }
              continue;
            case 8:
-             c = is_upper ? '\r' : '\n';
+             out[ol++] = is_upper ? '\r' : '\n';
              break;
            case 10:
              continue;
