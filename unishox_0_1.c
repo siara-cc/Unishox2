@@ -254,7 +254,7 @@ int encodeUnicode(char *out, int ol, int32_t code) {
   return ol;
 }
 
-int matchOccurance(const char *in, int len, int l, char *out, int *ol, byte *state) {
+int matchOccurance(const char *in, int len, int l, char *out, int *ol, byte *state, byte *is_all_upper) {
   int j, k;
   for (j = 0; j < l; j++) {
     for (k = j; k < l && (l + k - j) < len; k++) {
@@ -262,7 +262,8 @@ int matchOccurance(const char *in, int len, int l, char *out, int *ol, byte *sta
         break;
     }
     if ((k - j) > (NICE_LEN - 1)) {
-      if (*state == SHX_STATE_2) {
+      if (*state == SHX_STATE_2 || *is_all_upper) {
+        *is_all_upper = 0;
         *state = SHX_STATE_1;
         *ol = append_bits(out, *ol, BACK2_STATE1_CODE, BACK2_STATE1_CODE_LEN, *state);
       }
@@ -278,7 +279,7 @@ int matchOccurance(const char *in, int len, int l, char *out, int *ol, byte *sta
   return -l;
 }
 
-int matchLine(const char *in, int len, int l, char *out, int *ol, struct lnk_lst *prev_lines, byte *state) {
+int matchLine(const char *in, int len, int l, char *out, int *ol, struct lnk_lst *prev_lines, byte *state, byte *is_all_upper) {
   int last_ol = *ol;
   int last_len = 0;
   int last_dist = 0;
@@ -306,7 +307,8 @@ int matchLine(const char *in, int len, int l, char *out, int *ol, struct lnk_lst
         last_len = (k - j);
         last_dist = j;
         last_ctx = line_ctr;
-        if (*state == SHX_STATE_2) {
+        if (*state == SHX_STATE_2 || *is_all_upper) {
+          *is_all_upper = 0;
           *state = SHX_STATE_1;
           *ol = append_bits(out, *ol, BACK2_STATE1_CODE, BACK2_STATE1_CODE_LEN, *state);
         }
@@ -362,7 +364,8 @@ int unishox_0_1_compress(const char *in, int len, char *out, struct lnk_lst *pre
         while (rpt_count < len && in[rpt_count] == c_in)
           rpt_count++;
         rpt_count -= l;
-        if (state == SHX_STATE_2) {
+        if (state == SHX_STATE_2 || is_all_upper) {
+          is_all_upper = 0;
           state = SHX_STATE_1;
           ol = append_bits(out, ol, BACK2_STATE1_CODE, BACK2_STATE1_CODE_LEN, state);
         }
@@ -376,7 +379,7 @@ int unishox_0_1_compress(const char *in, int len, char *out, struct lnk_lst *pre
 
     if (to_match_repeats && l < (len - NICE_LEN + 1)) {
       if (prev_lines) {
-        l = matchLine(in, len, l, out, &ol, prev_lines, &state);
+        l = matchLine(in, len, l, out, &ol, prev_lines, &state, &is_all_upper);
         if (l > 0) {
           continue;
         }
@@ -386,7 +389,7 @@ int unishox_0_1_compress(const char *in, int len, char *out, struct lnk_lst *pre
         uint16_t to_lookup = c_in ^ in[l + 1] + ((in[l + 2] ^ in[l + 3]) << 8);
         if (lookup[to_lookup]) {
     #endif
-          l = matchOccurance(in, len, l, out, &ol, &state);
+          l = matchOccurance(in, len, l, out, &ol, &state, &is_all_upper);
           if (l > 0) {
             continue;
           }
