@@ -5,6 +5,7 @@ unishox
 unishox++_0_1_0
 unishox_0_1_0
 .DS_Store
+*.txt
 *.aux
 *.log
 *.out
@@ -20,6 +21,7 @@ errno.h
 Html.h
 *.gz
 *.zip
+*.shx
 *.shox
 *.bz2
 utf8samples/*.gz

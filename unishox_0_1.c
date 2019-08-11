@@ -49,21 +49,18 @@ char sets[][11] = {{  0, ' ', 'e',   0, 't', 'a', 'o', 'i', 'n', 's', 'r'},
 unsigned int  c_95[95]; // = {16384, 16256, 15744, 16192, 15328, 15344, 15360, 16064, 15264, 15296, 15712, 15200, 14976, 15040, 14848, 15104, 14528, 14592, 14656, 14688, 14720, 14752, 14784, 14816, 14832, 14464, 15552, 15488, 15616, 15168, 15680, 16000, 15872, 10752,  8576,  8192,  8320,  9728,  8672,  8608,  8384, 11264,  9024,  8992, 12160,  8544, 11520, 11008,  8512,  9008, 12032, 11776, 10240,  8448,  8960,  8640,  9040,  8688,  9048, 15840, 16288, 15856, 16128, 16224, 16368, 40960,  6144,     0,  2048, 24576,  7680,  6656,  3072, 49152, 13312, 12800, 63488,  5632, 53248, 45056,  5120, 13056, 61440, 57344, 32768,  4096, 12288,  7168, 13568,  7936, 13696, 15776, 16320, 15808, 16352};
 unsigned char l_95[95]; // = {    3,    11,    11,    11,    12,    12,     9,    10,    11,    11,    11,    11,    10,    10,     9,    10,    10,    10,    11,    11,    11,    11,    11,    12,    12,    10,    10,    10,    10,    11,    11,    10,     9,     8,    11,     9,    10,     7,    12,    11,    10,     8,    12,    12,     9,    11,     8,     8,    11,    12,     9,     8,     7,    10,    11,    11,    13,    12,    13,    12,    11,    12,    10,    11,    12,     4,     7,     5,     6,     3,     8,     7,     6,     4,     8,     8,     5,     7,     4,     4,     7,     8,     5,     4,     3,     6,     7,     7,     9,     8,     9,    11,    11,    11,    12};
 //unsigned char c[]    = {  ' ',   '!',   '"',   '#',   '$',   '%',   '&',  '\'',   '(',   ')',   '*',   '+',   ',',   '-',   '.',   '/',   '0',   '1',   '2',   '3',   '4',   '5',   '6',   '7',   '8',   '9',   ':',   ';',   '<',   '=',   '>',   '?',   '@',   'A',   'B',   'C',   'D',   'E',   'F',   'G',   'H',   'I',   'J',   'K',   'L',   'M',   'N',   'O',   'P',   'Q',   'R',   'S',   'T',   'U',   'V',   'W',   'X',   'Y',   'Z',   '[',  '\\',   ']',   '^',   '_',   '`',   'a',   'b',   'c',   'd',   'e',   'f',   'g',   'h',   'i',   'j',   'k',   'l',   'm',   'n',   'o',   'p',   'q',   'r',   's',   't',   'u',   'v',   'w',   'x',   'y',   'z',   '{',   '|',   '}',   '~'};
-char SET2_STR[] = {'9', '0', '1', '2', '3', '4', '5', '6', '7', '8', '.', ',', '-', '/', '=', '+', ' ', '(', ')', '$', '%', '&', ';', ':', '<', '>', '*', '"', '{', '}', '[', ']', '@', '?', '\'', '^', '#', '_', '!', '\\', '|', '~', '`', '\0'};
 
 const int UTF8_MASK[] = {0xE0, 0xF0, 0xF8};
 const int UTF8_PREFIX[] = {0xC0, 0xE0, 0xF0};
 
 enum {SHX_STATE_1 = 1, SHX_STATE_2};
 
-byte to_match_repeats_earlier = 1;
-byte to_match_repeats_within = 1;
+byte to_match_repeats = 1;
 #define USE_64K_LOOKUP 1
 #if USE_64K_LOOKUP == 1
 byte lookup[65536];
 #endif
-#define NICE_LEN_FOR_PRIOR 7
-#define NICE_LEN_FOR_OTHER 12
+#define NICE_LEN 5
 
 #define TERM_CODE 0x37C0
 #define TERM_CODE_LEN 10
@@ -75,12 +72,10 @@ byte lookup[65536];
 #define RPT_CODE_LEN 14
 #define BACK2_STATE1_CODE 8192
 #define BACK2_STATE1_CODE_LEN 4
-#define CRLF_CODE 0x3780
-#define CRLF_CODE_LEN 10
+#define CRLF_CODE 0x2370
+#define CRLF_CODE_LEN 13
 #define LF_CODE 0x3700
 #define LF_CODE_LEN 9
-#define ONLY_CR_CODE 9064
-#define ONLY_CR_CODE_LEN 13
 #define TAB_CODE 0x2400
 #define TAB_CODE_LEN 7
 #define UNI_CODE 0x8000
@@ -93,8 +88,8 @@ byte lookup[65536];
 #define SW2_STATE2_CODE_LEN 7
 #define ST2_SPC_CODE 0x3B80
 #define ST2_SPC_CODE_LEN 11
-#define BIN_CODE 0x237C
-#define BIN_CODE_LEN 14
+#define BIN_CODE 0x3780
+#define BIN_CODE_LEN 10
 
 //void checkPrevCodes(char c, int prev_code, char prev_code_len, int c_95, char l_95) {
 //   if (prev_code != c_95 || prev_code_len != l_95) {
@@ -183,6 +178,8 @@ int append_bits(char *out, int ol, unsigned int code, int clen, byte state) {
    byte blen;
    unsigned char a_byte;
 
+   //printf("%d,%x,%d,%d\n", ol, code, clen, state);
+
    if (state == SHX_STATE_2) {
       // remove change state prefix
       if ((code >> 9) == 0x1C) {
@@ -257,18 +254,22 @@ int encodeUnicode(char *out, int ol, int32_t code) {
   return ol;
 }
 
-int matchOccurance(const char *in, int len, int l, char *out, int *ol) {
+int matchOccurance(const char *in, int len, int l, char *out, int *ol, byte *state) {
   int j, k;
   for (j = 0; j < l; j++) {
     for (k = j; k < l && (l + k - j) < len; k++) {
       if (in[k] != in[l + k - j])
         break;
     }
-    if ((k - j) > (NICE_LEN_FOR_PRIOR - 1)) {
+    if ((k - j) > (NICE_LEN - 1)) {
+      if (*state == SHX_STATE_2) {
+        *state = SHX_STATE_1;
+        *ol = append_bits(out, *ol, BACK2_STATE1_CODE, BACK2_STATE1_CODE_LEN, *state);
+      }
       *ol = append_bits(out, *ol, DICT_PRIOR_CODE, DICT_PRIOR_CODE_LEN, 1);
-      //printf("Len:%d / Dist:%d\n", k - j - NICE_LEN_FOR_PRIOR, l - j - NICE_LEN_FOR_PRIOR + 1);
-      *ol = encodeCount(out, *ol, k - j - NICE_LEN_FOR_PRIOR); // len
-      *ol = encodeCount(out, *ol, l - j - NICE_LEN_FOR_PRIOR + 1); // dist
+      //printf("Len:%d / Dist:%d\n", k - j - NICE_LEN, l - j - NICE_LEN_FOR_PRIOR + 1);
+      *ol = encodeCount(out, *ol, k - j - NICE_LEN); // len
+      *ol = encodeCount(out, *ol, l - j - NICE_LEN + 1); // dist
       l += (k - j);
       l--;
       return l;
@@ -277,7 +278,7 @@ int matchOccurance(const char *in, int len, int l, char *out, int *ol) {
   return -l;
 }
 
-int matchLine(const char *in, int len, int l, char *out, int *ol, struct lnk_lst *prev_lines) {
+int matchLine(const char *in, int len, int l, char *out, int *ol, struct lnk_lst *prev_lines, byte *state) {
   int last_ol = *ol;
   int last_len = 0;
   int last_dist = 0;
@@ -291,7 +292,7 @@ int matchLine(const char *in, int len, int l, char *out, int *ol, struct lnk_lst
         if (prev_lines->data[k] != in[i])
           break;
       }
-      if ((k - j) >= NICE_LEN_FOR_OTHER) {
+      if ((k - j) >= NICE_LEN) {
         if (last_len) {
           if (j > last_dist)
             continue;
@@ -305,8 +306,12 @@ int matchLine(const char *in, int len, int l, char *out, int *ol, struct lnk_lst
         last_len = (k - j);
         last_dist = j;
         last_ctx = line_ctr;
+        if (*state == SHX_STATE_2) {
+          *state = SHX_STATE_1;
+          *ol = append_bits(out, *ol, BACK2_STATE1_CODE, BACK2_STATE1_CODE_LEN, *state);
+        }
         *ol = append_bits(out, *ol, DICT_OTHER_CODE, DICT_OTHER_CODE_LEN, 1);
-        *ol = encodeCount(out, *ol, last_len - NICE_LEN_FOR_OTHER);
+        *ol = encodeCount(out, *ol, last_len - NICE_LEN);
         *ol = encodeCount(out, *ol, last_dist);
         *ol = encodeCount(out, *ol, last_ctx);
         /*
@@ -335,13 +340,12 @@ int unishox_0_1_compress(const char *in, int len, char *out, struct lnk_lst *pre
   byte state;
 
   int l, ll, ol;
-  char c_in, c_next, c_prev;
+  char c_in, c_next;
   int prev_uni;
   byte is_upper, is_all_upper;
 
   init_coder();
   ol = 0;
-  c_prev = 0;
   prev_uni = 0;
 #if USE_64K_LOOKUP == 1
   memset(lookup, 0, sizeof(lookup));
@@ -352,12 +356,16 @@ int unishox_0_1_compress(const char *in, int len, char *out, struct lnk_lst *pre
 
     c_in = in[l];
 
-    if (l < len - 4) {
-      if (c_in == c_prev && c_in == in[l + 1] && c_in == in[l + 2] && c_in == in[l + 3]) {
+    if (l && l < len - 4) {
+      if (c_in == in[l - 1] && c_in == in[l + 1] && c_in == in[l + 2] && c_in == in[l + 3]) {
         int rpt_count = l + 4;
         while (rpt_count < len && in[rpt_count] == c_in)
           rpt_count++;
         rpt_count -= l;
+        if (state == SHX_STATE_2) {
+          state = SHX_STATE_1;
+          ol = append_bits(out, ol, BACK2_STATE1_CODE, BACK2_STATE1_CODE_LEN, state);
+        }
         ol = append_bits(out, ol, RPT_CODE, RPT_CODE_LEN, 1);
         ol = encodeCount(out, ol, rpt_count - 4);
         l += rpt_count;
@@ -366,71 +374,37 @@ int unishox_0_1_compress(const char *in, int len, char *out, struct lnk_lst *pre
       }
     }
 
-    if (l < (len - NICE_LEN_FOR_PRIOR + 1) && to_match_repeats_within) {
-#if USE_64K_LOOKUP == 1
+    if (to_match_repeats && l < (len - NICE_LEN + 1)) {
+      if (prev_lines) {
+        l = matchLine(in, len, l, out, &ol, prev_lines, &state);
+        if (l > 0) {
+          continue;
+        }
+        l = -l;
+      } else {
+    #if USE_64K_LOOKUP == 1
         uint16_t to_lookup = c_in ^ in[l + 1] + ((in[l + 2] ^ in[l + 3]) << 8);
         if (lookup[to_lookup]) {
-#endif
-          l = matchOccurance(in, len, l, out, &ol);
+    #endif
+          l = matchOccurance(in, len, l, out, &ol, &state);
           if (l > 0) {
-            c_prev = in[l - 1];
             continue;
           }
           l = -l;
-#if USE_64K_LOOKUP == 1
+    #if USE_64K_LOOKUP == 1
         } else
           lookup[to_lookup] = 1;
-#endif
-    }
-    if (l < (len - NICE_LEN_FOR_OTHER + 1) && to_match_repeats_earlier) {
-        if (prev_lines != NULL) {
-          l = matchLine(in, len, l, out, &ol, prev_lines);
-          if (l > 0) {
-            c_prev = in[l - 1];
-            continue;
-          }
-          l = -l;
-        }
-    }
-
-    int bc = 0;
-    for (; bc < 3; bc++) {
-      if (UTF8_PREFIX[bc] == (c_in & UTF8_MASK[bc]) && len - (bc + 1) > l) {
-        if (is_all_upper) {
-          is_all_upper = 0;
-          ol = append_bits(out, ol, BACK2_STATE1_CODE, BACK2_STATE1_CODE_LEN, state);
-        }
-        if (state == SHX_STATE_2) {
-          state = SHX_STATE_1;
-          ol = append_bits(out, ol, BACK2_STATE1_CODE, BACK2_STATE1_CODE_LEN, 1);
-        }
-        int j = 0;
-        int uni = c_in & ~UTF8_MASK[bc] & 0xFF;
-        do {
-          uni <<= 6;
-          uni += (in[l + j + 1] & 0x3F);
-        } while (j++ < bc);
-        ol = append_bits(out, ol, UNI_CODE, UNI_CODE_LEN, 1);
-        ol = append_bits(out, ol, uni > prev_uni ? 0x8000 : 0, 1, 1);
-        ol = encodeUnicode(out, ol, abs(uni - prev_uni));
-        printf("%d:%d,", bc, uni);
-        prev_uni = uni;
-        l += (bc + 1);
-        c_prev = 0; // ?
-        break;
+    #endif
       }
     }
-    if (bc < 3)
-      continue;
 
     if (state == SHX_STATE_2) {
-      if (c_in == ' ' && len - 1 > l)
-        ptr = (char *) memchr(SET2_STR, in[l+1], 42);
-      else
-        ptr = (char *) memchr(SET2_STR, c_in, 42);
-      if (ptr == NULL) {
+      if ((c_in >= ' ' && c_in <= '@') ||
+          (c_in >= '[' && c_in <= '`') ||
+          (c_in >= '{' && c_in <= '~')) {
+      } else {
         state = SHX_STATE_1;
-        ol = append_bits(out, ol, BACK2_STATE1_CODE, BACK2_STATE1_CODE_LEN, 1);
+        ol = append_bits(out, ol, BACK2_STATE1_CODE, BACK2_STATE1_CODE_LEN, state);
       }
     }
     is_upper = 0;
@@ -442,26 +416,25 @@ int unishox_0_1_compress(const char *in, int len, char *out, struct lnk_lst *pre
         ol = append_bits(out, ol, BACK2_STATE1_CODE, BACK2_STATE1_CODE_LEN, state);
       }
     }
-    if (is_upper && !is_all_upper) {
-      for (ll=l+5; ll>=l && ll<len; ll--) {
-        if (in[ll] >= 'a' && in[ll] <= 'z')
-          break;
-      }
-      if (ll == l-1) {
-        ol = append_bits(out, ol, ALL_UPPER_CODE, ALL_UPPER_CODE_LEN, state);
-        is_all_upper = 1;
-      }
-    }
-    if (state == SHX_STATE_1 && c_in >= '0' && c_in <= '9') {
-      ol = append_bits(out, ol, SW2_STATE2_CODE, SW2_STATE2_CODE_LEN, state);
-      state = SHX_STATE_2;
-    }
     c_next = 0;
     if (l+1 < len)
       c_next = in[l+1];
 
-    c_prev = c_in;
     if (c_in >= 32 && c_in <= 126) {
+      if (is_upper && !is_all_upper) {
+        for (ll=l+5; ll>=l && ll<len; ll--) {
+          if (in[ll] < 'A' || in[ll] > 'Z')
+            break;
+        }
+        if (ll == l-1) {
+          ol = append_bits(out, ol, ALL_UPPER_CODE, ALL_UPPER_CODE_LEN, state);
+          is_all_upper = 1;
+        }
+      }
+      if (state == SHX_STATE_1 && c_in >= '0' && c_in <= '9') {
+        ol = append_bits(out, ol, SW2_STATE2_CODE, SW2_STATE2_CODE_LEN, state);
+        state = SHX_STATE_2;
+      }
       c_in -= 32;
       if (is_all_upper && is_upper)
         c_in += 32;
@@ -473,16 +446,37 @@ int unishox_0_1_compress(const char *in, int len, char *out, struct lnk_lst *pre
     if (c_in == 13 && c_next == 10) {
       ol = append_bits(out, ol, CRLF_CODE, CRLF_CODE_LEN, state);
       l++;
-      c_prev = 10;
     } else
     if (c_in == 10) {
       ol = append_bits(out, ol, LF_CODE, LF_CODE_LEN, state);
     } else
-    if (c_in == 13) {
-      ol = append_bits(out, ol, ONLY_CR_CODE, ONLY_CR_CODE_LEN, state);
-    } else
     if (c_in == '\t') {
       ol = append_bits(out, ol, TAB_CODE, TAB_CODE_LEN, state);
+    } else {
+      ol = append_bits(out, ol, BIN_CODE, BIN_CODE_LEN, state);
+      ol = encodeCount(out, ol, (unsigned char) c_in);
+      /*
+      int bc = 0;
+      for (; bc < 3; bc++) {
+        if (UTF8_PREFIX[bc] == (c_in & UTF8_MASK[bc]) && len - (bc + 1) > l) {
+          int j = 0;
+          int uni = c_in & ~UTF8_MASK[bc] & 0xFF;
+          do {
+            uni <<= 6;
+            uni += (in[l + j + 1] & 0x3F);
+          } while (j++ < bc);
+          ol = append_bits(out, ol, UNI_CODE, UNI_CODE_LEN, 1);
+          ol = append_bits(out, ol, uni > prev_uni ? 0x8000 : 0, 1, 1);
+          ol = encodeUnicode(out, ol, abs(uni - prev_uni));
+          printf("%d:%d,", bc, uni);
+          prev_uni = uni;
+          l += (bc + 1);
+          break;
+        }
+      }
+      if (bc < 3)
+        continue;
+        */
     }
   }
   bits = ol % 8;
@@ -593,7 +587,7 @@ int unishox_0_1_decompress(const char *in, int len, char *out, struct lnk_lst *p
   out[ol] = 0;
   while (bit_no < len) {
     int h, v;
-    char c;
+    char c = 0;
     byte is_upper = is_all_upper;
     int orig_bit_no = bit_no;
     v = getCodeIdx(vcode, in, len, &bit_no);
@@ -651,12 +645,12 @@ int unishox_0_1_decompress(const char *in, int len, char *out, struct lnk_lst *p
     }
     if (v == 0 && h == SHX_SET1A) {
       if (getBitVal(in, bit_no++, 0)) {
-        int dict_len = readCount(in, &bit_no, len) + NICE_LEN_FOR_PRIOR;
-        int dist = readCount(in, &bit_no, len) + NICE_LEN_FOR_PRIOR - 1;
+        int dict_len = readCount(in, &bit_no, len) + NICE_LEN;
+        int dist = readCount(in, &bit_no, len) + NICE_LEN - 1;
         memcpy(out + ol, out + ol - dist, dict_len);
         ol += dict_len;
       } else {
-        int dict_len = readCount(in, &bit_no, len) + NICE_LEN_FOR_OTHER;
+        int dict_len = readCount(in, &bit_no, len) + NICE_LEN;
         int dist = readCount(in, &bit_no, len);
         int ctx = readCount(in, &bit_no, len);
         struct lnk_lst *cur_line = prev_lines;
@@ -685,17 +679,19 @@ int unishox_0_1_decompress(const char *in, int len, char *out, struct lnk_lst *p
               while (count--)
                 out[ol++] = rpt_c;
              } else {
-               out[ol++] = '\r';
-               out[ol++] = '\n';
+                out[ol++] = readCount(in, &bit_no, len);
+                if (ol != 1024)
+                  printf("count:%d:%d\n", ol, out[ol-1]);
              }
              continue;
            case 8:
-             out[ol++] = is_upper ? '\r' : '\n';
-             break;
+             if (is_upper)
+               out[ol++] = '\r';
+             out[ol++] = '\n';
+             continue;
            case 10:
              continue;
          }
-         continue;
       }
     }
     /*if (c == 't') {
@@ -867,7 +863,7 @@ if (argv == 4 && strcmp(args[1], "-d") == 0) {
 if (argv == 4 && (strcmp(args[1], "-g") == 0 || 
       strcmp(args[1], "-G") == 0)) {
    if (strcmp(args[1], "-g") == 0)
-     to_match_repeats_earlier = 0;
+     to_match_repeats = 0;
    fp = fopen(args[2], "r");
    if (fp == NULL) {
       perror(args[2]);
