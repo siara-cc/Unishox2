@@ -53,14 +53,14 @@ unsigned char l_95[95]; // = {    3,    11,    11,    11,    12,    12,     9,  
 const int UTF8_MASK[] = {0xE0, 0xF0, 0xF8};
 const int UTF8_PREFIX[] = {0xC0, 0xE0, 0xF0};
 
-enum {SHX_STATE_1 = 1, SHX_STATE_2};
+enum {SHX_STATE_1 = 1, SHX_STATE_2, SHX_STATE_UNI};
 
 byte to_match_repeats = 1;
 #define USE_64K_LOOKUP 1
 #if USE_64K_LOOKUP == 1
 byte lookup[65536];
 #endif
-#define NICE_LEN 5
+#define NICE_LEN 7
 
 #define TERM_CODE 0x37C0
 #define TERM_CODE_LEN 10
@@ -72,6 +72,8 @@ byte lookup[65536];
 #define RPT_CODE_LEN 14
 #define BACK2_STATE1_CODE 8192
 #define BACK2_STATE1_CODE_LEN 4
+#define BACK_FROM_UNI_CODE 8192
+#define BACK_FROM_UNI_CODE_LEN 6
 #define CRLF_CODE 0x2370
 #define CRLF_CODE_LEN 13
 #define LF_CODE 0x3700
@@ -230,19 +232,29 @@ int encodeCount(char *out, int ol, int count) {
 //const int32_t uni_adder[4] = {0, 32, 4128, 36896};
 //const byte uni_bit_len[4]   = {6, 12, 15, 23};
 //const int32_t uni_adder[4] = {0, 64, 4160, 36928};
-const byte uni_bit_len[4]   = {6, 12, 14, 21};
-const int32_t uni_adder[4] = {0, 64, 4160, 20544};
+//const byte uni_bit_len[4]   = {6, 12, 14, 21};
+//const int32_t uni_adder[4] = {0, 64, 4160, 20544};
+const byte uni_bit_len[7]   = {0, 3, 6, 12, 14, 16, 21};
+const int32_t uni_adder[7] = {0, 1, 9, 73, 4169, 20553, 86089};
 
-int encodeUnicode(char *out, int ol, int32_t code) {
+int encodeUnicode(char *out, int ol, int32_t code, int32_t prev_code) {
+  switch (code) {
+    case '.':
+    case ',':
+    case 13:
+    case 10:
+    case ' ':
+  }
   // First five bits are code and Last three bits of codes represent length
-  const byte codes[4] = {0x01, 0x82, 0xC3, 0xE3};
+  const byte codes[4] = {0x01, 0x82, 0xC3, 0xE3}; // to change
   int32_t till = 0;
   for (int i = 0; i < 4; i++) {
     till += (1 << uni_bit_len[i]);
     if (code < till) {
       ol = append_bits(out, ol, (codes[i] & 0xF8) << 8, codes[i] & 0x07, 1);
+      ol = append_bits(out, ol, code > prev_code ? 0x8000 : 0, 1, 1);
       if (uni_bit_len[i] > 16) {
-        int32_t val = code - uni_adder[i];
+        int32_t val = code - prev_code - uni_adder[i];
         int excess_bits = uni_bit_len[i] - 16;
         ol = append_bits(out, ol, val >> excess_bits, 16, 1);
         ol = append_bits(out, ol, (val & ((1 << excess_bits) - 1)) << (16 - excess_bits), excess_bits, 1);
@@ -252,6 +264,28 @@ int encodeUnicode(char *out, int ol, int32_t code) {
     }
   }
   return ol;
+}
+
+int readUTF8(const char *in, int len, int l, int *utf8len) {
+  int bc = 0;
+  int uni = 0;
+  byte c_in = in[l];
+  for (; bc < 3; bc++) {
+    if (UTF8_PREFIX[bc] == (c_in & UTF8_MASK[bc]) && len - (bc + 1) > l) {
+      int j = 0;
+      uni = c_in & ~UTF8_MASK[bc] & 0xFF;
+      do {
+        uni <<= 6;
+        uni += (in[l + j + 1] & 0x3F);
+      } while (j++ < bc);
+      break;
+    }
+  }
+  if (bc < 3) {
+    *utf8len = bc + 1;
+    return uni;
+  }
+  return 0;
 }
 
 int matchOccurance(const char *in, int len, int l, char *out, int *ol, byte *state, byte *is_all_upper) {
@@ -410,6 +444,10 @@ int unishox_0_1_compress(const char *in, int len, char *out, struct lnk_lst *pre
         ol = append_bits(out, ol, BACK2_STATE1_CODE, BACK2_STATE1_CODE_LEN, state);
       }
     }
+    if (state == SHX_STATE_UNI && c_in >= 0 && c_in <= 127) {
+      state = SHX_STATE_1;
+      ol = append_bits(out, ol, BACK_FROM_UNI_CODE, BACK_FROM_UNI_CODE_LEN, state);
+    }
     is_upper = 0;
     if (c_in >= 'A' && c_in <= 'Z')
       is_upper = 1;
@@ -456,30 +494,26 @@ int unishox_0_1_compress(const char *in, int len, char *out, struct lnk_lst *pre
     if (c_in == '\t') {
       ol = append_bits(out, ol, TAB_CODE, TAB_CODE_LEN, state);
     } else {
-      ol = append_bits(out, ol, BIN_CODE, BIN_CODE_LEN, state);
-      ol = encodeCount(out, ol, (unsigned char) c_in);
-      /*
-      int bc = 0;
-      for (; bc < 3; bc++) {
-        if (UTF8_PREFIX[bc] == (c_in & UTF8_MASK[bc]) && len - (bc + 1) > l) {
-          int j = 0;
-          int uni = c_in & ~UTF8_MASK[bc] & 0xFF;
-          do {
-            uni <<= 6;
-            uni += (in[l + j + 1] & 0x3F);
-          } while (j++ < bc);
-          ol = append_bits(out, ol, UNI_CODE, UNI_CODE_LEN, 1);
-          ol = append_bits(out, ol, uni > prev_uni ? 0x8000 : 0, 1, 1);
-          ol = encodeUnicode(out, ol, abs(uni - prev_uni));
-          printf("%d:%d,", bc, uni);
-          prev_uni = uni;
-          l += (bc + 1);
-          break;
+      int utf8len;
+      int uni = readUTF8(in, len, l, &utf8len);
+      if (uni) {
+        l += utf8len;
+        if (state != SHX_STATE_UNI) {
+          int uni2 = readUTF8(in, len, l, &utf8len);
+          if (uni2) {
+            state = SHX_STATE_UNI;
+            ol = append_bits(out, ol, CONT_UNI_CODE, CONT_UNI_CODE_LEN, 1);
+          } else {
+            ol = append_bits(out, ol, UNI_CODE, UNI_CODE_LEN, 1);
+          }
         }
+        ol = encodeUnicode(out, ol, uni, prev_uni);
+        printf("%d:%d,", utf8len, uni);
+        prev_uni = uni;
+      } else {
+        ol = append_bits(out, ol, BIN_CODE, BIN_CODE_LEN, state);
+        ol = encodeCount(out, ol, (unsigned char) c_in);
       }
-      if (bc < 3)
-        continue;
-        */
     }
   }
   bits = ol % 8;
@@ -563,10 +597,12 @@ int32_t readUnicode(const char *in, int *bit_no_p, int len) {
     int idx = (code == 0 && i == 0 ? 0 : (code == 1 && i == 1 ? 1 : 
                   (code == 3 && i == 2 ? 2 : (code == 7 && i == 2 ? 3 : -1))));
     if (idx >= 0) {
+      int sign = getBitVal(in, *bit_no_p, 1);
+      (*bit_no_p)++;
       int32_t count = getNumFromBits(in, *bit_no_p, uni_bit_len[idx]);
       count += uni_adder[idx];
       (*bit_no_p) += uni_bit_len[idx];
-      return count;
+      return sign ? -count : count;
     }
   }
   return 0;
@@ -698,8 +734,6 @@ int unishox_0_1_decompress(const char *in, int len, char *out, struct lnk_lst *p
       }
     }
     /*if (c == 't') {
-      int sign = getBitVal(in, bit_no, 1);
-      bit_no++;
       int delta = readUnicode(in, &bit_no, len);
       if (sign)
         prev_uni += delta;
