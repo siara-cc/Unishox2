@@ -234,32 +234,32 @@ int encodeCount(char *out, int ol, int count) {
 //const int32_t uni_adder[4] = {0, 64, 4160, 36928};
 //const byte uni_bit_len[4]   = {6, 12, 14, 21};
 //const int32_t uni_adder[4] = {0, 64, 4160, 20544};
-const byte uni_bit_len[7]   = {0, 3, 6, 12, 14, 16, 21};
-const int32_t uni_adder[7] = {0, 1, 9, 73, 4169, 20553, 86089};
+//const byte uni_bit_len[7]   = {0, 3, 6, 12, 14, 16, 21};
+//const int32_t uni_adder[7] = {0, 1, 9, 73, 4169, 20553, 86089};
+const byte uni_bit_len[5]   = {6, 12, 14, 16, 21};
+const int32_t uni_adder[5] = {0, 64, 4160, 20544, 86080};
 
 int encodeUnicode(char *out, int ol, int32_t code, int32_t prev_code) {
-  switch (code) {
-    case '.':
-    case ',':
-    case 13:
-    case 10:
-    case ' ':
-  }
   // First five bits are code and Last three bits of codes represent length
-  const byte codes[4] = {0x01, 0x82, 0xC3, 0xE3}; // to change
+  const byte codes[6] = {0x01, 0x82, 0xC3, 0xE4, 0xF5, 0xFD};
   int32_t till = 0;
-  for (int i = 0; i < 4; i++) {
+  int orig_ol = ol;
+  for (int i = 0; i < 5; i++) {
     till += (1 << uni_bit_len[i]);
-    if (code < till) {
+    int32_t diff = abs(code - prev_code);
+    if (diff < till) {
       ol = append_bits(out, ol, (codes[i] & 0xF8) << 8, codes[i] & 0x07, 1);
-      ol = append_bits(out, ol, code > prev_code ? 0x8000 : 0, 1, 1);
-      if (uni_bit_len[i] > 16) {
-        int32_t val = code - prev_code - uni_adder[i];
-        int excess_bits = uni_bit_len[i] - 16;
-        ol = append_bits(out, ol, val >> excess_bits, 16, 1);
-        ol = append_bits(out, ol, (val & ((1 << excess_bits) - 1)) << (16 - excess_bits), excess_bits, 1);
-      } else
-        ol = append_bits(out, ol, (code - uni_adder[i]) << (16 - uni_bit_len[i]), uni_bit_len[i], 1);
+      //if (diff) {
+        ol = append_bits(out, ol, prev_code > code ? 0x8000 : 0, 1, 1);
+        if (uni_bit_len[i] > 16) {
+          int32_t val = diff - uni_adder[i];
+          int excess_bits = uni_bit_len[i] - 16;
+          ol = append_bits(out, ol, val >> excess_bits, 16, 1);
+          ol = append_bits(out, ol, (val & ((1 << excess_bits) - 1)) << (16 - excess_bits), excess_bits, 1);
+        } else
+          ol = append_bits(out, ol, (diff - uni_adder[i]) << (16 - uni_bit_len[i]), uni_bit_len[i], 1);
+      //}
+      //printf("bits:%d\n", ol-orig_ol);
       return ol;
     }
   }
@@ -498,6 +498,7 @@ int unishox_0_1_compress(const char *in, int len, char *out, struct lnk_lst *pre
       int uni = readUTF8(in, len, l, &utf8len);
       if (uni) {
         l += utf8len;
+        /*
         if (state != SHX_STATE_UNI) {
           int uni2 = readUTF8(in, len, l, &utf8len);
           if (uni2) {
@@ -506,7 +507,8 @@ int unishox_0_1_compress(const char *in, int len, char *out, struct lnk_lst *pre
           } else {
             ol = append_bits(out, ol, UNI_CODE, UNI_CODE_LEN, 1);
           }
-        }
+        }*/
+        ol = append_bits(out, ol, UNI_CODE, UNI_CODE_LEN, 1);
         ol = encodeUnicode(out, ol, uni, prev_uni);
         printf("%d:%d,", utf8len, uni);
         prev_uni = uni;
@@ -591,11 +593,14 @@ int readCount(const char *in, int *bit_no_p, int len) {
 
 int32_t readUnicode(const char *in, int *bit_no_p, int len) {
   int code = 0;
-  for (int i = 0; i < 3; i++) {
+  for (int i = 0; i < 5; i++) {
     code += getBitVal(in, *bit_no_p, i);
     (*bit_no_p)++;
     int idx = (code == 0 && i == 0 ? 0 : (code == 1 && i == 1 ? 1 : 
-                  (code == 3 && i == 2 ? 2 : (code == 7 && i == 2 ? 3 : -1))));
+                (code == 3 && i == 2 ? 2 : (code == 7 && i == 3 ? 3 :
+                (code == 15 && i == 4 ? 4 : 
+                (code == 31 && i == 4 ? 5 : -1))))));
+    //printf("%d\n", code);
     if (idx >= 0) {
       int sign = getBitVal(in, *bit_no_p, 1);
       (*bit_no_p)++;
@@ -606,6 +611,23 @@ int32_t readUnicode(const char *in, int *bit_no_p, int len) {
     }
   }
   return 0;
+}
+
+void writeUTF8(char *out, int *ol, int uni) {
+  if (uni < (1 << 11)) {
+    out[(*ol)++] = (0xC0 + (uni >> 6));
+    out[(*ol)++] = (0x80 + (uni & 63));
+  } else
+  if (uni < (1 << 16)) {
+    out[(*ol)++] = (0xE0 + (uni >> 12));
+    out[(*ol)++] = (0x80 + ((uni >> 6) & 63));
+    out[(*ol)++] = (0x80 + (uni & 63));
+  } else {
+    out[(*ol)++] = (0xF0 + (uni >> 18));
+    out[(*ol)++] = (0x80 + ((uni >> 12) & 63));
+    out[(*ol)++] = (0x80 + ((uni >> 6) & 63));
+    out[(*ol)++] = (0x80 + (uni & 63));
+  }
 }
 
 int unishox_0_1_decompress(const char *in, int len, char *out, struct lnk_lst *prev_lines) {
@@ -700,6 +722,15 @@ int unishox_0_1_decompress(const char *in, int len, char *out, struct lnk_lst *p
       }
       continue;
     }
+    if (h == SHX_SET1 && v == 3) {
+      int delta = readUnicode(in, &bit_no, len);
+      prev_uni += delta;
+      writeUTF8(out, &ol, prev_uni);
+      //printf("Sign: %d, bitno: %d\n", sign, bit_no);
+      //printf("Code: %d\n", prev_uni);
+      //printf("BitNo: %d\n", bit_no);
+      continue;
+    }
     if (h < 64 && v < 32)
       c = sets[h][v];
     if (c >= 'a' && c <= 'z') {
@@ -712,15 +743,13 @@ int unishox_0_1_decompress(const char *in, int len, char *out, struct lnk_lst *p
          switch (v) {
            case 9:
              if (is_upper) { // rpt
-              int count = readCount(in, &bit_no, len);
-              count += 4;
-              char rpt_c = out[ol - 1];
-              while (count--)
-                out[ol++] = rpt_c;
+               int count = readCount(in, &bit_no, len);
+               count += 4;
+               char rpt_c = out[ol - 1];
+               while (count--)
+                 out[ol++] = rpt_c;
              } else {
                 out[ol++] = readCount(in, &bit_no, len);
-                if (ol != 1024)
-                  printf("count:%d:%d\n", ol, out[ol-1]);
              }
              continue;
            case 8:
@@ -733,18 +762,7 @@ int unishox_0_1_decompress(const char *in, int len, char *out, struct lnk_lst *p
          }
       }
     }
-    /*if (c == 't') {
-      int delta = readUnicode(in, &bit_no, len);
-      if (sign)
-        prev_uni += delta;
-      else
-        prev_uni -= delta;
-      printf("%d,", prev_uni);
-      //printf("Sign: %d, bitno: %d\n", sign, bit_no);
-      //printf("Code: %d\n", delta);
-      //printf("BitNo: %d\n", bit_no);
-    }*/
-      out[ol++] = c;
+    out[ol++] = c;
   }
 
   return ol;
@@ -824,8 +842,8 @@ double timedifference(uint32_t t0, uint32_t t1) {
 
 int main(int argv, char *args[]) {
 
-char cbuf[1024];
-char dbuf[1024];
+char cbuf[4096];
+char dbuf[4096];
 long len, tot_len, clen, ctot, dlen, l;
 float perc;
 FILE *fp, *wfp;
@@ -1009,6 +1027,7 @@ if (argv == 2) {
    dlen = unishox_0_1_decompress(cbuf, ctot, dbuf, NULL);
    dbuf[dlen] = 0;
    printf("\nDecompressed: %s\n", dbuf);
+   //print_compressed(dbuf, dlen);
    perc = (len-ctot);
    perc /= len;
    perc *= 100;

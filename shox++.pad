@@ -16,6 +16,13 @@ shox256
 - 30, 27 - 11110 + sign + 21
 - 10,  7 - 11111 + 2 bits
 
+- 10,  7 - 0 + sign + 5
+- 17, 15 - 10 + sign + 12
+- 21, 18 - 110 + sign + 14
+- 24, 21 - 1110 + sign + 16
+- 30, 27 - 11110 + sign + 21
+- 10,  7 - 11111 + 2 bits
+
 After Terminator 0 or 1. 0 - length of remaining 8-bit chars, 1 - no length
 
 2:Arabic:    69/104=33.65%:  ديسيبل محملة. انقر مرتين على رأس أو صفحات لإظهار التفاصيل
