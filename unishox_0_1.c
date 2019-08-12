@@ -295,6 +295,11 @@ int matchOccurance(const char *in, int len, int l, char *out, int *ol, byte *sta
       if (in[k] != in[l + k - j])
         break;
     }
+    // todo: change logic to exclude ending at partial unicode chars
+    if (((unsigned char)in[k - 2]) == 0xE0)
+      k -= 2;
+    if (((unsigned char)in[k - 1]) == 0xE0)
+      k -= 1;
     if ((k - j) > (NICE_LEN - 1)) {
       if (*state == SHX_STATE_2 || *is_all_upper) {
         *is_all_upper = 0;
@@ -510,9 +515,10 @@ int unishox_0_1_compress(const char *in, int len, char *out, struct lnk_lst *pre
         }*/
         ol = append_bits(out, ol, UNI_CODE, UNI_CODE_LEN, 1);
         ol = encodeUnicode(out, ol, uni, prev_uni);
-        printf("%d:%d,", utf8len, uni);
+        printf("%d:%d:%d,", l, utf8len, uni);
         prev_uni = uni;
       } else {
+        printf("Bin:%d:%x\n", (unsigned char) c_in, (unsigned char) c_in);
         ol = append_bits(out, ol, BIN_CODE, BIN_CODE_LEN, state);
         ol = encodeCount(out, ol, (unsigned char) c_in);
       }
@@ -805,6 +811,18 @@ uint64_t decode_unsigned_varint(const uint8_t *data, int *decoded_bytes) {
   return decoded_value;
 }
 
+void print_string_as_hex(char *in, int len) {
+
+  int l;
+  byte bit;
+  printf("String in hex:\n");
+  for (l=0; l<len; l++) {
+    printf("%x, ", (unsigned char) in[l]);
+  }
+  printf("\n");
+
+}
+
 void print_compressed(char *in, int len) {
 
   int l;
@@ -1020,6 +1038,8 @@ if (argv == 4 && (strcmp(args[1], "-g") == 0 ||
 } else
 if (argv == 2) {
    len = strlen(args[1]);
+   //printf("Len:%ld\n", len);
+   //print_string_as_hex(args[1], len);
    memset(cbuf, 0, sizeof(cbuf));
    ctot = unishox_0_1_compress(args[1], len, cbuf, NULL);
    print_compressed(cbuf, ctot);
