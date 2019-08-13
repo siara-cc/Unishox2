@@ -241,6 +241,7 @@ const int32_t uni_adder[5] = {0, 64, 4160, 20544, 86080};
 
 int encodeUnicode(char *out, int ol, int32_t code, int32_t prev_code) {
   // First five bits are code and Last three bits of codes represent length
+  //const byte codes[8] = {0x00, 0x42, 0x83, 0xA3, 0xC3, 0xE4, 0xF5, 0xFD};
   const byte codes[6] = {0x01, 0x82, 0xC3, 0xE4, 0xF5, 0xFD};
   int32_t till = 0;
   int orig_ol = ol;
@@ -290,31 +291,39 @@ int readUTF8(const char *in, int len, int l, int *utf8len) {
 
 int matchOccurance(const char *in, int len, int l, char *out, int *ol, byte *state, byte *is_all_upper) {
   int j, k;
-
+  int longest_dist = 0;
+  int longest_len = 0;
   for (j = l - NICE_LEN; j >= 0; j--) {
     for (k = l; k < len && j + k - l < l; k++) {
       if (in[k] != in[j + k - l])
         break;
     }
-    // todo: change logic to exclude ending at partial unicode chars
-    if (((unsigned char)in[k - 1]) == 0xE0)
-      k -= 1;
-    if (((unsigned char)in[k - 2]) == 0xE0)
-      k -= 2;
+    while ((((unsigned char) in[k]) >> 6) == 2)
+      k--; // Skip partial UTF-8 matches
+    //if ((in[k - 1] >> 3) == 0x1E || (in[k - 1] >> 4) == 0x0E || (in[k - 1] >> 5) == 0x06)
+    //  k--;
     if (k - l > NICE_LEN - 1) {
-      if (*state == SHX_STATE_2 || *is_all_upper) {
-        *is_all_upper = 0;
-        *state = SHX_STATE_1;
-        *ol = append_bits(out, *ol, BACK2_STATE1_CODE, BACK2_STATE1_CODE_LEN, *state);
+      int match_len = k - l - NICE_LEN;
+      int match_dist = l - j - NICE_LEN + 1;
+      if (match_len > longest_len) {
+        longest_len = match_len;
+        longest_dist = match_dist;
       }
-      *ol = append_bits(out, *ol, DICT_PRIOR_CODE, DICT_PRIOR_CODE_LEN, 1);
-      //printf("Len:%d / Dist:%d\n", k - l, l - j);
-      *ol = encodeCount(out, *ol, k - l - NICE_LEN); // len
-      *ol = encodeCount(out, *ol, l - j - NICE_LEN + 1); // dist
-      l = k;
-      l--;
-      return l;
     }
+  }
+  if (longest_len) {
+    if (*state == SHX_STATE_2 || *is_all_upper) {
+      *is_all_upper = 0;
+      *state = SHX_STATE_1;
+      *ol = append_bits(out, *ol, BACK2_STATE1_CODE, BACK2_STATE1_CODE_LEN, *state);
+    }
+    *ol = append_bits(out, *ol, DICT_PRIOR_CODE, DICT_PRIOR_CODE_LEN, 1);
+    //printf("Len:%d / Dist:%d\n", longest_len, longest_dist);
+    *ol = encodeCount(out, *ol, longest_len);
+    *ol = encodeCount(out, *ol, longest_dist);
+    l += (longest_len + NICE_LEN);
+    l--;
+    return l;
   }
   return -l;
 }
@@ -603,11 +612,18 @@ int32_t readUnicode(const char *in, int *bit_no_p, int len) {
   for (int i = 0; i < 5; i++) {
     code += getBitVal(in, *bit_no_p, i);
     (*bit_no_p)++;
+    //int idx = (code == 0 && i == 1 ? 0 : (code == 2 && i == 1 ? 1 : 
+    //            (code == 1 && i == 2 ? 2 : (code == 5 && i == 2 ? 3 :
+    //            (code == 3 && i == 2 ? 4 : (code == 7 && i == 3 ? 5 :
+    //            (code == 15 && i == 4 ? 6 : 
+    //            (code == 31 && i == 4 ? 7 : -1))))))));
     int idx = (code == 0 && i == 0 ? 0 : (code == 1 && i == 1 ? 1 : 
                 (code == 3 && i == 2 ? 2 : (code == 7 && i == 3 ? 3 :
                 (code == 15 && i == 4 ? 4 : 
                 (code == 31 && i == 4 ? 5 : -1))))));
     //printf("%d\n", code);
+    //if (idx == 0)
+    //  return 0;
     if (idx >= 0) {
       int sign = getBitVal(in, *bit_no_p, 1);
       (*bit_no_p)++;
@@ -861,8 +877,8 @@ double timedifference(uint32_t t0, uint32_t t1) {
 
 int main(int argv, char *args[]) {
 
-char cbuf[4096];
-char dbuf[4096];
+char cbuf[1024];
+char dbuf[1024];
 long len, tot_len, clen, ctot, dlen, l;
 float perc;
 FILE *fp, *wfp;
