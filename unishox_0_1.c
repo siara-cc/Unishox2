@@ -60,7 +60,7 @@ byte to_match_repeats = 1;
 #if USE_64K_LOOKUP == 1
 byte lookup[65536];
 #endif
-#define NICE_LEN 7
+#define NICE_LEN 5
 
 #define TERM_CODE 0x37C0
 #define TERM_CODE_LEN 10
@@ -290,27 +290,28 @@ int readUTF8(const char *in, int len, int l, int *utf8len) {
 
 int matchOccurance(const char *in, int len, int l, char *out, int *ol, byte *state, byte *is_all_upper) {
   int j, k;
-  for (j = 0; j < l; j++) {
-    for (k = j; k < l && (l + k - j) < len; k++) {
-      if (in[k] != in[l + k - j])
+
+  for (j = l - NICE_LEN; j >= 0; j--) {
+    for (k = l; k < len && j + k - l < l; k++) {
+      if (in[k] != in[j + k - l])
         break;
     }
     // todo: change logic to exclude ending at partial unicode chars
-    if (((unsigned char)in[k - 2]) == 0xE0)
-      k -= 2;
     if (((unsigned char)in[k - 1]) == 0xE0)
       k -= 1;
-    if ((k - j) > (NICE_LEN - 1)) {
+    if (((unsigned char)in[k - 2]) == 0xE0)
+      k -= 2;
+    if (k - l > NICE_LEN - 1) {
       if (*state == SHX_STATE_2 || *is_all_upper) {
         *is_all_upper = 0;
         *state = SHX_STATE_1;
         *ol = append_bits(out, *ol, BACK2_STATE1_CODE, BACK2_STATE1_CODE_LEN, *state);
       }
       *ol = append_bits(out, *ol, DICT_PRIOR_CODE, DICT_PRIOR_CODE_LEN, 1);
-      //printf("Len:%d / Dist:%d\n", k - j - NICE_LEN, l - j - NICE_LEN_FOR_PRIOR + 1);
-      *ol = encodeCount(out, *ol, k - j - NICE_LEN); // len
+      //printf("Len:%d / Dist:%d\n", k - l, l - j);
+      *ol = encodeCount(out, *ol, k - l - NICE_LEN); // len
       *ol = encodeCount(out, *ol, l - j - NICE_LEN + 1); // dist
-      l += (k - j);
+      l = k;
       l--;
       return l;
     }
