@@ -70,10 +70,10 @@ byte lookup[65536];
 #define DICT_OTHER_CODE_LEN 6
 #define RPT_CODE 0x2378
 #define RPT_CODE_LEN 14
-#define BACK2_STATE1_CODE 8192
+#define BACK2_STATE1_CODE 0x2000
 #define BACK2_STATE1_CODE_LEN 4
-#define BACK_FROM_UNI_CODE 8192
-#define BACK_FROM_UNI_CODE_LEN 6
+#define BACK_FROM_UNI_CODE 0xFE00
+#define BACK_FROM_UNI_CODE_LEN 7
 #define CRLF_CODE 0x2370
 #define CRLF_CODE_LEN 13
 #define LF_CODE 0x3700
@@ -82,6 +82,8 @@ byte lookup[65536];
 #define TAB_CODE_LEN 7
 #define UNI_CODE 0x8000
 #define UNI_CODE_LEN 3
+#define UNI_STATE_SPL_CODE 0xF800
+#define UNI_STATE_SPL_CODE_LEN 7
 #define CONT_UNI_CODE 0x2800
 #define CONT_UNI_CODE_LEN 7
 #define ALL_UPPER_CODE 0x2200
@@ -240,6 +242,21 @@ const byte uni_bit_len[5]   = {6, 12, 14, 16, 21};
 const int32_t uni_adder[5] = {0, 64, 4160, 20544, 86080};
 
 int encodeUnicode(char *out, int ol, int32_t code, int32_t prev_code) {
+  switch (code) {
+    //case 13:
+    //case 10:
+    case ' ':
+      ol = append_bits(out, ol, UNI_STATE_SPL_CODE, UNI_STATE_SPL_CODE_LEN, SHX_STATE_UNI);
+      ol = append_bits(out, ol, 0x4000, 2, 1);
+      return ol;
+    case '.':
+    case 0x3002: // .
+      ol = append_bits(out, ol, UNI_STATE_SPL_CODE, UNI_STATE_SPL_CODE_LEN, SHX_STATE_UNI);
+      ol = append_bits(out, ol, 0x8000, 2, 1);
+      return ol;
+    //case ',':
+    //case 0xFF0C: // ,
+  }
   // First five bits are code and Last three bits of codes represent length
   //const byte codes[8] = {0x00, 0x42, 0x83, 0xA3, 0xC3, 0xE4, 0xF5, 0xFD};
   const byte codes[6] = {0x01, 0x82, 0xC3, 0xE4, 0xF5, 0xFD};
@@ -317,7 +334,10 @@ int matchOccurance(const char *in, int len, int l, char *out, int *ol, byte *sta
       *state = SHX_STATE_1;
       *ol = append_bits(out, *ol, BACK2_STATE1_CODE, BACK2_STATE1_CODE_LEN, *state);
     }
-    *ol = append_bits(out, *ol, DICT_PRIOR_CODE, DICT_PRIOR_CODE_LEN, 1);
+    if (*state == SHX_STATE_UNI)
+      *ol = append_bits(out, *ol, UNI_STATE_SPL_CODE, UNI_STATE_SPL_CODE_LEN, SHX_STATE_UNI);
+    else
+      *ol = append_bits(out, *ol, DICT_PRIOR_CODE, DICT_PRIOR_CODE_LEN, 1);
     //printf("Len:%d / Dist:%d\n", longest_len, longest_dist);
     *ol = encodeCount(out, *ol, longest_len);
     *ol = encodeCount(out, *ol, longest_dist);
@@ -407,7 +427,7 @@ int unishox_0_1_compress(const char *in, int len, char *out, struct lnk_lst *pre
 
     c_in = in[l];
 
-    if (l && l < len - 4) {
+    if (state != SHX_STATE_UNI && l && l < len - 4) {
       if (c_in == in[l - 1] && c_in == in[l + 1] && c_in == in[l + 2] && c_in == in[l + 3]) {
         int rpt_count = l + 4;
         while (rpt_count < len && in[rpt_count] == c_in)
@@ -450,6 +470,11 @@ int unishox_0_1_compress(const char *in, int len, char *out, struct lnk_lst *pre
       }
     }
 
+    if (state == SHX_STATE_UNI && (c_in == '.' || c_in == ' ')) {
+      ol = encodeUnicode(out, ol, c_in, prev_uni);
+      continue;
+    }
+
     if (state == SHX_STATE_2) {
       if ((c_in >= ' ' && c_in <= '@') ||
           (c_in >= '[' && c_in <= '`') ||
@@ -460,8 +485,8 @@ int unishox_0_1_compress(const char *in, int len, char *out, struct lnk_lst *pre
       }
     }
     if (state == SHX_STATE_UNI && c_in >= 0 && c_in <= 127) {
-      state = SHX_STATE_1;
       ol = append_bits(out, ol, BACK_FROM_UNI_CODE, BACK_FROM_UNI_CODE_LEN, state);
+      state = SHX_STATE_1;
     }
     is_upper = 0;
     if (c_in >= 'A' && c_in <= 'Z')
@@ -513,26 +538,31 @@ int unishox_0_1_compress(const char *in, int len, char *out, struct lnk_lst *pre
       int uni = readUTF8(in, len, l, &utf8len);
       if (uni) {
         l += utf8len;
-        /*
         if (state != SHX_STATE_UNI) {
-          int uni2 = readUTF8(in, len, l, &utf8len);
+          int uni2 = readUTF8(in, len, l + 1, &utf8len);
           if (uni2) {
             state = SHX_STATE_UNI;
             ol = append_bits(out, ol, CONT_UNI_CODE, CONT_UNI_CODE_LEN, 1);
           } else {
             ol = append_bits(out, ol, UNI_CODE, UNI_CODE_LEN, 1);
           }
-        }*/
-        ol = append_bits(out, ol, UNI_CODE, UNI_CODE_LEN, 1);
+        }
         ol = encodeUnicode(out, ol, uni, prev_uni);
         printf("%d:%d:%d,", l, utf8len, uni);
         prev_uni = uni;
       } else {
+        if (state == SHX_STATE_UNI) {
+          state = SHX_STATE_1;
+          ol = append_bits(out, ol, BACK_FROM_UNI_CODE, BACK_FROM_UNI_CODE_LEN, state);
+        }
         printf("Bin:%d:%x\n", (unsigned char) c_in, (unsigned char) c_in);
         ol = append_bits(out, ol, BIN_CODE, BIN_CODE_LEN, state);
         ol = encodeCount(out, ol, (unsigned char) c_in);
       }
     }
+  }
+  if (state == SHX_STATE_UNI) {
+    ol = append_bits(out, ol, BACK_FROM_UNI_CODE, BACK_FROM_UNI_CODE_LEN, state);
   }
   bits = ol % 8;
   if (bits) {
@@ -624,6 +654,11 @@ int32_t readUnicode(const char *in, int *bit_no_p, int len) {
     //printf("%d\n", code);
     //if (idx == 0)
     //  return 0;
+    if (idx == 5) {
+      int count = getNumFromBits(in, *bit_no_p, 2);
+      (*bit_no_p) += 2;
+      return 0x7FFFFFF0 + count;
+    }
     if (idx >= 0) {
       int sign = getBitVal(in, *bit_no_p, 1);
       (*bit_no_p)++;
@@ -746,9 +781,34 @@ int unishox_0_1_decompress(const char *in, int len, char *out, struct lnk_lst *p
       continue;
     }
     if (h == SHX_SET1 && v == 3) {
-      int delta = readUnicode(in, &bit_no, len);
-      prev_uni += delta;
-      writeUTF8(out, &ol, prev_uni);
+      do {
+        int32_t delta = readUnicode(in, &bit_no, len);
+        if ((delta >> 4) == 0x7FFFFFF) {
+          int count = delta & 0x0000000F;
+          if (count == 3)
+            break;
+          switch (count) {
+            case 0: {
+              int dict_len = readCount(in, &bit_no, len) + NICE_LEN;
+              int dist = readCount(in, &bit_no, len) + NICE_LEN - 1;
+              memcpy(out + ol, out + ol - dist, dict_len);
+              ol += dict_len;
+              }
+              break;
+            case 1:
+              out[ol++] = ' ';
+              break;
+            case 2:
+              if (prev_uni > 0x3000)
+                writeUTF8(out, &ol, 0x3002);
+              else
+                out[ol++] = '.';
+          }
+        } else {
+          prev_uni += delta;
+          writeUTF8(out, &ol, prev_uni);
+        }
+      } while (is_upper);
       //printf("Sign: %d, bitno: %d\n", sign, bit_no);
       //printf("Code: %d\n", prev_uni);
       //printf("BitNo: %d\n", bit_no);

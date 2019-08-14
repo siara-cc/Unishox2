@@ -24,6 +24,7 @@ Html.h
 *.shx
 *.shox
 *.bz2
+*.lzma
 utf8samples/*.gz
 utf8samples/*.zip
 utf8samples/*.shox
