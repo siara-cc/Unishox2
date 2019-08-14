@@ -25,27 +25,27 @@ shox256
 
 After Terminator 0 or 1. 0 - length of remaining 8-bit chars, 1 - no length
 
-en:English   30/58=48.28%    Beauty is not in the face. Beauty is a light in the heart.
-ar:Arabic:   الجمال ليس في الوجه. الجمال هو النور الذي في القلب.
-3:Bengali:   সৌন্দর্য মুখে নেই। সৌন্দর্য হৃদয় একটি আলো।
-2:German:    Schönheit ist nicht im Gesicht. Schönheit ist ein Licht im Herzen.
-2:Spanish:   La belleza no está en la cara. La belleza es una luz en el corazón.
-2:Persian:   زیبایی در چهره نیست. زیبایی نور در قلب است.
-2:French:    La beauté est pas dans le visage. La beauté est la lumière dans le coeur.
-3:Hindi:     सुंदरता चेहरे में नहीं है। सौंदर्य हृदय में प्रकाश है।
-2:Italian:   La bellezza non è in faccia. La bellezza è la luce nel cuore.
-3:Japanese:  美は顔にありません。 美は心の中の光です。
-1:Javanese:  Beauty ora ing pasuryan. Kaendahan iku cahya ing sajroning ati.
-3:Korean:    아름다움은 얼굴에 없습니다。아름다움은 마음의 빛입니다。
-1:Malay:     Kecantikan bukan di muka. Kecantikan adalah cahaya di dalam hati.
-3:Myanmar:   အလှအပမျက်နှာပေါ်မှာမဟုတ်ပါဘူး။ အလှအပစိတ်နှလုံးထဲမှာအလင်းကိုဖြစ်ပါတယ်။
-3:Punjabi:   ਸੁੰਦਰਤਾ ਚਿਹਰੇ ਵਿੱਚ ਨਹੀਂ ਹੈ. ਸੁੰਦਰਤਾ ਦੇ ਦਿਲ ਵਿਚ ਚਾਨਣ ਹੈ.
-2:Polish:    Piękno nie jest w twarz. Piękno jest światłem w sercu.
-2:Portugese: A beleza não está na cara. A beleza é a luz no coração.
-2:Russian:   Красота не в лицо. Красота - это свет в сердце.
-3:Tamil:     அழகு முகத்தில் இல்லை. அழகு என்பது இதயத்தின் ஒளி.
-1:Filipino:  Ang kagandahan ay wala sa mukha. Ang kagandahan ay ang ilaw sa puso.
-2:Turkish:   Güzellik karşısında değildir. Güzellik, kalbin içindeki ışıktır.
-2:Urdu:      خوبصورتی چہرے میں نہیں ہے۔ خوبصورتی دل میں روشنی ہے۔
-2:Vietnam:   Vẻ đẹp không nằm trong khuôn mặt. Vẻ đẹp là ánh sáng trong tim.
-3:Chinese:   美是不是在脸上。 美是心中的亮光。
+en:English    29/58=50.00%    Beauty is not in the face. Beauty is a light in the heart.
+ar:Arabic:    46/91=49.45%    الجمال ليس في الوجه. الجمال هو النور الذي في القلب.
+bn:Bengali:   42/117=64.10%   সৌন্দর্য মুখে নেই। সৌন্দর্য হৃদয় একটি আলো।
+de:German:    35/68=48.53%    Schönheit ist nicht im Gesicht. Schönheit ist ein Licht im Herzen.
+es:Spanish:   38/69=44.93%    La belleza no está en la cara. La belleza es una luz en el corazón.
+fa:Persian:   46/76=39.47%    زیبایی در چهره نیست. زیبایی نور در قلب است.
+fr:French:    39/76=48.68%    La beauté est pas dans le visage. La beauté est la lumière dans le coeur.
+hi:Hindi:     54/144=62.50%   सुंदरता चेहरे में नहीं है। सौंदर्य हृदय में प्रकाश है।
+it:Italian:   35/63=44.44%    La bellezza non è in faccia. La bellezza è la luce nel cuore.
+ja:Japanese:  37/60=38.33%    美は顔にありません。美は心の中の光です。
+jv:Javanese:  40/63=36.51%    Beauty ora ing pasuryan. Kaendahan iku cahya ing sajroning ati.
+ko:Korean:    43/82=47.56%    아름다움은 얼굴에 없습니다。아름다움은 마음의 빛입니다。
+ms:Malay:     38/65=41.54%    Kecantikan bukan di muka. Kecantikan adalah cahaya di dalam hati.
+my:Myanmar:   72/205=64.88%   အလှအပမျက်နှာပေါ်မှာမဟုတ်ပါဘူး။ အလှအပစိတ်နှလုံးထဲမှာအလင်းကိုဖြစ်ပါတယ်။
+pa:Punjabi:   51/141=63.83%   ਸੁੰਦਰਤਾ ਚਿਹਰੇ ਵਿੱਚ ਨਹੀਂ ਹੈ. ਸੁੰਦਰਤਾ ਦੇ ਦਿਲ ਵਿਚ ਚਾਨਣ ਹੈ.
+pl:Polish:    37/58=36.21%    Piękno nie jest w twarz. Piękno jest światłem w sercu.
+pt:Portugese: 36/60=40.00%    A beleza não está na cara. A beleza é a luz no coração.
+ru:Russian:   45/82=45.12%    Красота не в лицо. Красота - это свет в сердце.
+ta:Tamil:     49/128=61.72%   அழகு முகத்தில் இல்லை. அழகு என்பது இதயத்தின் ஒளி.
+tl:Filipino:  36/68=47.06%    Ang kagandahan ay wala sa mukha. Ang kagandahan ay ang ilaw sa puso.
+tr:Turkish:   52/75=30.67%    Güzellik karşısında değildir. Güzellik, kalbin içindeki ışıktır.
+ur:Urdu:      53/95=44.21%    خوبصورتی چہرے میں نہیں ہے۔ خوبصورتی دل میں روشنی ہے۔
+vi:Vietnam:   57/82=30.49%    Vẻ đẹp không nằm trong khuôn mặt. Vẻ đẹp là ánh sáng trong tim.
+zh:Chinese:   34/49=30.61%    美是不是在脸上。 美是心中的亮光。

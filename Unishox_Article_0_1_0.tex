@@ -80,7 +80,7 @@ With these two sets of codes, we form several sets of letters as shown in the ta
 	\begin{tabular}{ | l | l | l | l | l | l | l | l | } \hline
 		\textbf{hcode $\rightarrow$} & \textbf{10} & \textbf{0} & \textbf{110} & \textbf{11100} & \textbf{11101} & \textbf{11110} & \textbf{11111} \\ \hline
 		\textbf{$\downarrow$ vcode} & \textbf{Set 1} & \textbf{Set 1a} & \textbf{Set 1b} & \textbf{Set 2} & \textbf{Set 3} & \textbf{Set 4} & \textbf{Set 4a} \\ \hline
-		\textbf{00} & switch & dist / stop & f / F & switch & . & \& & @ \\ \hline
+		\textbf{00} & switch & dist / bin & f / F & switch & . & \& & @ \\ \hline
 		\textbf{010} & sp / tb & l / L & y / Y & 9 & , & ; & ? \\ \hline
 		\textbf{011} & e / E & c / C & v / V & 0 & - & : & ' \\ \hline
 		\textbf{100} & Uni / Cont. & d / D & k / K & 1 & / & $\textless$ & \^{} \\ \hline
@@ -88,24 +88,11 @@ With these two sets of codes, we form several sets of letters as shown in the ta
 		\textbf{1011} & a / A & u / U & j / J & 3 & + & * & \_ \\ \hline
 		\textbf{1100} & o / O & p / P & x / X & 4 & sp & \textquotedblleft & ! \\ \hline
 		\textbf{1101} & i / I & m / M & z / Z & 5 & ( & \{ & \textbackslash \\ \hline
-		\textbf{1110} & n / N & b / B & lf / cr+lf & 6 & ) & \} & $|$ \\ \hline
-		\textbf{11110} & s / S & g / G & bin / rpt & 7 & \$ & [ & \~{} \\ \hline
-		\textbf{11111} & r / R & w / W & term / para & 8 & \% & ] & ` \\ \hline
+		\textbf{1110} & n / N & b / B & lf / rpt & 6 & ) & \} & $|$ \\ \hline
+		\textbf{11110} & s / S & g / G & cr+lf & 7 & \$ & [ & \~{} \\ \hline
+		\textbf{11111} & r / R & w / W & term & 8 & \% & ] & ` \\ \hline
 	\end{tabular}
 \end{center}
-
--  5,  2 - 00
--  9,  6 - 01 + sign + 3
-- 13, 10 - 100 + sign + 6
-- 19, 16 - 101 + sign + 12
-- 21, 18 - 110 + sign + 14
-- 24, 21 - 1110 + sign + 16
-- 30, 27 - 11110 + sign + 21
-- 10,  7 - 11111 + 2 bits
-
-- neg 0 on 01 - space
-- neg 0 on 100 - para
-- for 11111 - 00 - return, 01 - stop, 10 - comma, 11 - dict
 
 \section{Rules}
 

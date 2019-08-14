@@ -64,18 +64,18 @@ byte lookup[65536];
 
 #define TERM_CODE 0x37C0
 #define TERM_CODE_LEN 10
-#define DICT_PRIOR_CODE 0x0400
-#define DICT_PRIOR_CODE_LEN 6
-#define DICT_OTHER_CODE 0x0000
+#define DICT_PRIOR_CODE 0x0000
+#define DICT_PRIOR_CODE_LEN 5
+#define DICT_OTHER_CODE 0x0000 // not used
 #define DICT_OTHER_CODE_LEN 6
-#define RPT_CODE 0x2378
-#define RPT_CODE_LEN 14
+#define RPT_CODE 0x2370
+#define RPT_CODE_LEN 13
 #define BACK2_STATE1_CODE 0x2000
 #define BACK2_STATE1_CODE_LEN 4
 #define BACK_FROM_UNI_CODE 0xFE00
-#define BACK_FROM_UNI_CODE_LEN 7
-#define CRLF_CODE 0x2370
-#define CRLF_CODE_LEN 13
+#define BACK_FROM_UNI_CODE_LEN 8
+#define CRLF_CODE 0x3780
+#define CRLF_CODE_LEN 10
 #define LF_CODE 0x3700
 #define LF_CODE_LEN 9
 #define TAB_CODE 0x2400
@@ -83,7 +83,9 @@ byte lookup[65536];
 #define UNI_CODE 0x8000
 #define UNI_CODE_LEN 3
 #define UNI_STATE_SPL_CODE 0xF800
-#define UNI_STATE_SPL_CODE_LEN 7
+#define UNI_STATE_SPL_CODE_LEN 5
+#define UNI_STATE_DICT_CODE 0xFC00
+#define UNI_STATE_DICT_CODE_LEN 7
 #define CONT_UNI_CODE 0x2800
 #define CONT_UNI_CODE_LEN 7
 #define ALL_UPPER_CODE 0x2200
@@ -92,8 +94,8 @@ byte lookup[65536];
 #define SW2_STATE2_CODE_LEN 7
 #define ST2_SPC_CODE 0x3B80
 #define ST2_SPC_CODE_LEN 11
-#define BIN_CODE 0x3780
-#define BIN_CODE_LEN 10
+#define BIN_CODE 0x2000
+#define BIN_CODE_LEN 9
 
 //void checkPrevCodes(char c, int prev_code, char prev_code_len, int c_95, char l_95) {
 //   if (prev_code != c_95 || prev_code_len != l_95) {
@@ -242,20 +244,16 @@ const byte uni_bit_len[5]   = {6, 12, 14, 16, 21};
 const int32_t uni_adder[5] = {0, 64, 4160, 20544, 86080};
 
 int encodeUnicode(char *out, int ol, int32_t code, int32_t prev_code) {
-  switch (code) {
-    //case 13:
-    //case 10:
-    case ' ':
-      ol = append_bits(out, ol, UNI_STATE_SPL_CODE, UNI_STATE_SPL_CODE_LEN, SHX_STATE_UNI);
-      ol = append_bits(out, ol, 0x4000, 2, 1);
-      return ol;
-    case '.':
-    case 0x3002: // .
-      ol = append_bits(out, ol, UNI_STATE_SPL_CODE, UNI_STATE_SPL_CODE_LEN, SHX_STATE_UNI);
-      ol = append_bits(out, ol, 0x8000, 2, 1);
-      return ol;
-    //case ',':
-    //case 0xFF0C: // ,
+  uint16_t spl_code = (code == ',' ? 0xE000 : 
+    ((code == '.' || code == 0x3002) ? 0xE800 : (code == ' ' ? 0 :
+    (code == 13 ? 0xF000 : (code == 10 ? 0xF800 : 0xFFFF)))));
+  if (spl_code != 0xFFFF) {
+    uint16_t spl_code_len = (code == ',' ? 5 : 
+      ((code == '.' || code == 0x3002) ? 5 : (code == ' ' ? 1 :
+      (code == 13 ? 5 : (code == 10 ? 5 : 0xFFFF)))));
+    ol = append_bits(out, ol, UNI_STATE_SPL_CODE, UNI_STATE_SPL_CODE_LEN, SHX_STATE_UNI);
+    ol = append_bits(out, ol, spl_code, spl_code_len, 1);
+    return ol;
   }
   // First five bits are code and Last three bits of codes represent length
   //const byte codes[8] = {0x00, 0x42, 0x83, 0xA3, 0xC3, 0xE4, 0xF5, 0xFD};
@@ -335,7 +333,7 @@ int matchOccurance(const char *in, int len, int l, char *out, int *ol, byte *sta
       *ol = append_bits(out, *ol, BACK2_STATE1_CODE, BACK2_STATE1_CODE_LEN, *state);
     }
     if (*state == SHX_STATE_UNI)
-      *ol = append_bits(out, *ol, UNI_STATE_SPL_CODE, UNI_STATE_SPL_CODE_LEN, SHX_STATE_UNI);
+      *ol = append_bits(out, *ol, UNI_STATE_DICT_CODE, UNI_STATE_DICT_CODE_LEN, SHX_STATE_UNI);
     else
       *ol = append_bits(out, *ol, DICT_PRIOR_CODE, DICT_PRIOR_CODE_LEN, 1);
     //printf("Len:%d / Dist:%d\n", longest_len, longest_dist);
@@ -470,7 +468,8 @@ int unishox_0_1_compress(const char *in, int len, char *out, struct lnk_lst *pre
       }
     }
 
-    if (state == SHX_STATE_UNI && (c_in == '.' || c_in == ' ')) {
+    if (state == SHX_STATE_UNI && (c_in == '.' || c_in == ' ' 
+                 || c_in == ',' || c_in == 13 || c_in == 10)) {
       ol = encodeUnicode(out, ol, c_in, prev_uni);
       continue;
     }
@@ -548,8 +547,9 @@ int unishox_0_1_compress(const char *in, int len, char *out, struct lnk_lst *pre
           }
         }
         ol = encodeUnicode(out, ol, uni, prev_uni);
-        printf("%d:%d:%d,", l, utf8len, uni);
-        prev_uni = uni;
+        //printf("%d:%d:%d,", l, utf8len, uni);
+        if (uni != 0x3002)
+          prev_uni = uni;
       } else {
         if (state == SHX_STATE_UNI) {
           state = SHX_STATE_1;
@@ -655,9 +655,8 @@ int32_t readUnicode(const char *in, int *bit_no_p, int len) {
     //if (idx == 0)
     //  return 0;
     if (idx == 5) {
-      int count = getNumFromBits(in, *bit_no_p, 2);
-      (*bit_no_p) += 2;
-      return 0x7FFFFFF0 + count;
+      int idx = getCodeIdx(hcode, in, len, bit_no_p);
+      return 0x7FFFFF00 + idx;
     }
     if (idx >= 0) {
       int sign = getBitVal(in, *bit_no_p, 1);
@@ -763,46 +762,59 @@ int unishox_0_1_decompress(const char *in, int len, char *out, struct lnk_lst *p
       }
     }
     if (v == 0 && h == SHX_SET1A) {
-      if (getBitVal(in, bit_no++, 0)) {
-        int dict_len = readCount(in, &bit_no, len) + NICE_LEN;
-        int dist = readCount(in, &bit_no, len) + NICE_LEN - 1;
-        memcpy(out + ol, out + ol - dist, dict_len);
-        ol += dict_len;
+      if (is_upper) {
+        out[ol++] = readCount(in, &bit_no, len);
       } else {
-        int dict_len = readCount(in, &bit_no, len) + NICE_LEN;
-        int dist = readCount(in, &bit_no, len);
-        int ctx = readCount(in, &bit_no, len);
-        struct lnk_lst *cur_line = prev_lines;
-        while (ctx--)
-          cur_line = cur_line->previous;
-        memmove(out + ol, cur_line->data + dist, dict_len);
-        ol += dict_len;
+        //if (getBitVal(in, bit_no++, 0)) {
+          int dict_len = readCount(in, &bit_no, len) + NICE_LEN;
+          int dist = readCount(in, &bit_no, len) + NICE_LEN - 1;
+          memcpy(out + ol, out + ol - dist, dict_len);
+          ol += dict_len;
+        //} else {
+        //  int dict_len = readCount(in, &bit_no, len) + NICE_LEN;
+        //  int dist = readCount(in, &bit_no, len);
+        //  int ctx = readCount(in, &bit_no, len);
+        //  struct lnk_lst *cur_line = prev_lines;
+        //  while (ctx--)
+        //    cur_line = cur_line->previous;
+        //  memmove(out + ol, cur_line->data + dist, dict_len);
+        //  ol += dict_len;
+        //}
       }
       continue;
     }
     if (h == SHX_SET1 && v == 3) {
       do {
         int32_t delta = readUnicode(in, &bit_no, len);
-        if ((delta >> 4) == 0x7FFFFFF) {
-          int count = delta & 0x0000000F;
-          if (count == 3)
+        if ((delta >> 8) == 0x7FFFFF) {
+          int spl_code_idx = delta & 0x000000FF;
+          if (spl_code_idx == 2)
             break;
-          switch (count) {
-            case 0: {
-              int dict_len = readCount(in, &bit_no, len) + NICE_LEN;
-              int dist = readCount(in, &bit_no, len) + NICE_LEN - 1;
-              memcpy(out + ol, out + ol - dist, dict_len);
-              ol += dict_len;
-              }
-              break;
+          switch (spl_code_idx) {
             case 1:
               out[ol++] = ' ';
               break;
-            case 2:
+            case 0: {
+                int dict_len = readCount(in, &bit_no, len) + NICE_LEN;
+                int dist = readCount(in, &bit_no, len) + NICE_LEN - 1;
+                memcpy(out + ol, out + ol - dist, dict_len);
+                ol += dict_len;
+              }
+              break;
+            case 3:
+              out[ol++] = ',';
+              break;
+            case 4:
               if (prev_uni > 0x3000)
                 writeUTF8(out, &ol, 0x3002);
               else
                 out[ol++] = '.';
+              break;
+            case 5:
+              out[ol++] = 13;
+              break;
+            case 6:
+              out[ol++] = 10;
           }
         } else {
           prev_uni += delta;
@@ -825,6 +837,10 @@ int unishox_0_1_decompress(const char *in, int len, char *out, struct lnk_lst *p
       if (h == SHX_SET1B) {
          switch (v) {
            case 9:
+             out[ol++] = '\r';
+             out[ol++] = '\n';
+             continue;
+           case 8:
              if (is_upper) { // rpt
                int count = readCount(in, &bit_no, len);
                count += 4;
@@ -832,13 +848,8 @@ int unishox_0_1_decompress(const char *in, int len, char *out, struct lnk_lst *p
                while (count--)
                  out[ol++] = rpt_c;
              } else {
-                out[ol++] = readCount(in, &bit_no, len);
+               out[ol++] = '\n';
              }
-             continue;
-           case 8:
-             if (is_upper)
-               out[ol++] = '\r';
-             out[ol++] = '\n';
              continue;
            case 10:
              continue;
