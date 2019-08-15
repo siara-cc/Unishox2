@@ -31,7 +31,7 @@
 #include <ctype.h>
 #include <stdint.h>
 
-#include "unishox_0_1.h"
+#include "unishox1.h"
 
 typedef unsigned char byte;
 

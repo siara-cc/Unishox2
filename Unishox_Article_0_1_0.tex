@@ -9,7 +9,7 @@
 \fancyfoot[R]{\thepage}
 
 %opening
-\title{Unishox - Guaranteed Compression of Short Unicode Strings}
+\title{Unishox - Guaranteed Compression of Short Unicode Strings using Entropy, Dictionary and Delta encoding techniques}
 \author{Arundale Ramanathan}
 
 \begin{document}
@@ -19,24 +19,30 @@
 \begin{abstract}
 A new hybrid encoding method is proposed, with which short unicode strings could be compressed using context aware pre-mapped codes and delta coding resulting in surprisingly good ratios.
 
-It is also proved how this technique can guarantee compression for any language sentence of minimum 3 words.
+Also shown is how this technique can guarantee compression for any language sentence of minimum 3 words.
 \end{abstract}
 
 \section{Summary}
 
-Compression of Short Unicode Strings of arbitrary lengths have not been addressed sufficiently by lossless entropy encoding methods so far.  Although it appears inconsequential, space occupied by such strings become significant in memory constrained environments such as Arduino Uno and when attempting storage of such independent strings in a database. While block compression is available for databases, retrieval efficiency could be improved if the strings are individually compressed.
+\char"00E7 Compression of Short Unicode Strings of arbitrary lengths have not been addressed sufficiently by lossless entropy encoding methods so far.  Although it appears inconsequential, space occupied by such strings become significant in memory constrained environments such as Arduino Uno and when attempting storage of such independent strings in a database. While block compression is available for databases, retrieval efficiency could be improved if the strings are individually compressed.
 
 \section{Basic Definitions}
 
 In information theory, \emph{entropy encoding} is a lossless data compression scheme that is independent of the specific characteristics of the medium \cite{1}.
 
-One of the main types of entropy coding creates and assigns a unique prefix-free code to each unique symbol that occurs in the input. These entropy encoders then compress data by replacing each fixed-length input symbol with the corresponding variable-length prefix-free output codeword.
+One of the main types of entropy coding is about creating and assigning a unique \emph{prefix-free code} to each unique symbol that occurs in the input. These entropy encoders then compress data by replacing each fixed-length input symbol with the corresponding variable-length prefix-free output code word.
 
 According to Shannon's source coding theorem, the optimal code length for a symbol is $-log_bP$, where b is the number of symbols used to make output codes and P is the probability of the input symbol \cite{2}. Therefore, the most common symbols use the shortest codes.
 
 The most popular and most used method (even today) for forming optimal prefix-free discrete codes is Huffman coding \cite{3}.
 
-In contrast to entropy encoding, there are various other approaches to lossless coding including Lempel-Ziv coding \cite{4} and Burrows-Wheeler coding \cite{5}.
+A \emph{Dictionary coder}, also sometimes known as a substitution coder, is a class of lossless data compression algorithms which operate by searching for matches between the text to be compressed and a set of strings contained in a data structure (called the 'dictionary') maintained by the encoder. When the encoder finds such a match, it substitutes a reference to the string's position in the data structure.
+
+The LZ77 family of encoders use the dictionary encoding technique for compressing data. \cite{4}
+
+\emph{Delta coding} is a technique applied where encoding the difference between the previously encoded symbol or set of symbols is smaller compared to encoding the symbol or the set again.  The duffernce is determined by using the set minus operator or subtraction of values. \cite{5}
+
+In contrast to these encoding methods, there are various other approaches to lossless coding including Run Length Encoding (RLE) and Burrows-Wheeler coding \cite{6}.
 
 \section{Existing techniques - Smaz and shoco}
 
@@ -44,19 +50,19 @@ While technologies such as GZip, Deflate, Zip, LZMA are available for file compr
 
 To our knowledge, only two other competing technologies exist - Smaz and shoco.
 
-Smaz is a simple compression library suitable for compressing very short strings \cite{9}. It was developed by Salvatore Sanfilippo and is released under the BSD license.
+Smaz is a simple compression library suitable for compressing very short strings \cite{10}. It was developed by Salvatore Sanfilippo and is released under the BSD license.
 
-Shoco is a C library to compress short strings \cite{10}. It was developed by Christian Schramm and is released under the MIT license.
+Shoco is a C library to compress short strings \cite{11}. It was developed by Christian Schramm and is released under the MIT license.
 
-While both are lossless encoding methods, Smaz is dictionary based and Shoco classifies as an entropy coder \cite{10}.
+While both are lossless encoding methods, Smaz is dictionary based and Shoco classifies as an entropy coder \cite{11}.
 
-In addition to providing a default frequency table as model, shoco provides an option to re-define the frequency table based on training text \cite{10}.
+In addition to providing a default frequency table as model, shoco provides an option to re-define the frequency table based on training text \cite{11}.
 
 \section{This research}
 
-We propose a hybrid encoding method which mainly relies on entropy encoding method for compression.
+We propose a hybrid encoding method which relies on the three encoding techniques \emph{viz.} Entropy encoding, Dictionary coding and Delta encoding methods for compression.
 
-Unlike shoco, we propose a fixed frequency table generated based on the characterestics of English language letter frequency.  We re-use the research carried out by Oxford University \cite{7} and other sources \cite{6} \cite{8} and come out with a unique method that takes advantage of the conventions of the language.
+Unlike shoco, we propose a fixed frequency table generated based on the characterestics of English language letter frequency.  We re-use the research carried out by Oxford University \cite{7} and other sources \cite{7} \cite{9} and come out with a unique method that takes advantage of the conventions of the language.
 
 We propose a single model that presently is fixed because of the advantages it offers over the training models of shoco.
 
@@ -64,7 +70,9 @@ The disadvantage with the training model, although it may appear to offer more c
 
 We can actually see that this performs better than pre-trained model of shoco (See performance section).
 
-For supporting other languages and types of text, we propose to use different models tailored to each of them, considering the patterns of the specific language.
+For compressing Unicode symbols, we use Delta encoding because usually the difference between subsequent symbols is quite less.
+
+We also use Delta coding for binary symbols (i.e symbols betewen ASCII 0 and 31 ad symbols between ASCII 128 and 255). However not much compression is expected out of this and in many cases, the input size is expanded.
 
 Unlike smaz and shoco, we assume no \emph{a priori} knowledge about the input text.  However we rely on \emph{a posteriori} knowledge about the research carried out on the language and common patterns of sentence formation and come out with pre-assigned codes for each letter.
 
@@ -72,7 +80,7 @@ Unlike smaz and shoco, we assume no \emph{a priori} knowledge about the input te
 
 In the ASCII chart, we have 95 printable letters starting from 32 through 126.  For the purpose of arriving at fixed codes for each of these letters, we use two sets of prefix-free codes.
 
-The first set consists of 11 codes, which are: 00, 010, 011, 100, 1010, 1011, 1100, 1101, 1110, 11110, 11111.  The second set consists of 7 codes, which are 0, 10, 110, 11100, 11101, 11110, 11111.
+The first set consists of 11 codes, which are: 00, 010, 011, 100, 1010, 1011, 1100, 1101, 1110, 11110, 11111.  The second set consists of 7 codes, which are 0, 10, 110, 11100, 11101, 11110, 11111.  Let us call this vcode (vertical code) and hcode (horizontal code) respectively.
 
 With these two sets of codes, we form several sets of letters as shown in the table below and use some rules based on how patterns appear in short strings, to arrive at frequency table.
 
@@ -99,24 +107,24 @@ With these two sets of codes, we form several sets of letters as shown in the ta
 \subsection{Basic rules}
 \begin{itemize}
 	\item[$\bullet$] It can be seen that the more frequent symbols are assigned smaller codes.
-	\item[$\bullet$] Set 1 is always active when beginning compression.  So the letter e has the code 011, t 100 and so on.
-	\item[$\bullet$] If the letter in Set 1a needs to be encoded, the switch code is used followed by 0 to indicate Set 1a.  So the letter c is encoded as 00000, d as 000010 and so on.
-	\item[$\bullet$] Similarly, if the letter in Set 1b needs to be encoded, the switch code is used followed by 110. So k is encoded as 00110010, q as 00110011 and so on. Note that the terminator symbol is encoded as 0011011111.
+	\item[$\bullet$] Set 1 is always active when beginning compression.  So the letter e has the code 011, t 1010 and so on.
+	\item[$\bullet$] If the letter in Set 1a needs to be encoded, the switch code is used followed by 0 to indicate Set 1a.  So the letter c is encoded as 00011, d as 000100 and so on.
+	\item[$\bullet$] Similarly, if the letter in Set 1b needs to be encoded, the switch code is used followed by 110. So k is encoded as 00110100, q as 001101010 and so on. Note that the terminator symbol is encoded as 0011011111.
 \end{itemize}
 
 \subsection{Upper case symbols}
 \begin{itemize}
 	\item[$\bullet$] For encoding uppercase letters in Set 1, the switch symbol is used followed by 10 and the code against the symbol itself.  For example, E is encoded as 0010011.  The same applies to tab character.
-	\item[$\bullet$] For encoding uppercase letters in Set 1a, the switch symbol is used, followed by 10, again switch symbol, followed by 0 and then the corresponding code against the letter.  For instance, the letter P is encoded as 00100001010.
+	\item[$\bullet$] For encoding uppercase letters in Set 1a, the switch symbol is used, followed by 10, again switch symbol, followed by 0 and then the corresponding code against the letter.  For instance, the letter P is encoded as 00100001100.
 	\item[$\bullet$] Similarly, for uppercase letters in Set 1b, the prefix 001000110 is used.  So the symbol X is encoded as 0010001101010.
-	\item[$\bullet$] If uppercase letters appear continuously, then the encoder may decide to switch to upper case using the prefix 00100010.  After that, the same codes for lower case are used to indicate upper case letters until the code sequence 0010 is used again to return to lower case.
+	\item[$\bullet$] If uppercase letters appear continuously, then the encoder may decide to switch to upper case using the prefix 0010 0010.  After that, the same codes for lower case are used to indicate upper case letters until the code sequence 0010 is used again to return to lower case.
 \end{itemize}
 
 \subsection{Numbers and related symbols}
 \begin{itemize}
 	\item[$\bullet$] Symbols in Set 2 are encoded by first switching to the set by using 00 followed by 11100.  So the symbol 9 is encoded as 0011100010.
 	\item[$\bullet$] For Set 2, whenever is switch is made from Set 1, it makes Set 2 active. So subsequent numbers are encoded without the switch symbol, as in 1011 for 3, 1100 for 4 and so on.
-	\item[$\bullet$] To return to Set 1, the prefix 0010 is used.
+	\item[$\bullet$] To return to Set 1, the code 0010 is used.
 	\item[$\bullet$] To encode symbols in Set3, the prefix 00 is used followed by 0 and the corresponding code for the symbol.  For example, + is encoded as 0001011.
 \end{itemize}
 
@@ -136,9 +144,9 @@ With these two sets of codes, we form several sets of letters as shown in the ta
 \subsection{Special symbols}
 \begin{itemize}
 	\item[$\bullet$] term in Set 1b indicates termination of encoding.  This is used if length of the encoded string is not stored.
-	\item[$\bullet$] rpt in Set 1b indicates that the symbol just encoded is to be repeated specified number of times.
-	\item[$\bullet$] dict in Set 1b indicates that the specified offset in file and length is to be copied at the current position. This is dictionary based encoding.
-	\item[$\bullet$] CRLF in Set 1a is encoded using a single code. It will be expanded as two bytes CR LF.  If only LF is used, such as in Unix like systems, a separate code is used in Set 1a.  Also, in the rare case that only CR appears, a longer code is provided in Set1a.
+	\item[$\bullet$] rpt in Set 1b indicates that the symbol last encoded is to be repeated specified number of times.
+	\item[$\bullet$] dict in Set 1a indicates that the specified offset in file and length is to be copied at the current position. This is dictionary based encoding.
+	\item[$\bullet$] CRLF in Set 1b is encoded using a single code. It will be expanded as two bytes CR LF.  If only LF is used, such as in Unix like systems, a separate code is used in Set 1b.  Also, in the rare case that only CR appears, the Bin code is provided in Set1a.
 \end{itemize}
 
 \subsection{Dual access for Set 3}
@@ -156,11 +164,10 @@ With these two sets of codes, we form several sets of letters as shown in the ta
 
 \subsection{Repeating sections}
 \begin{itemize}
-	\item[$\bullet$] If a section repeats, another code of Set1b (dict) is used followed by four fields as described next.
-	\item[$\bullet$] The first field would be 0 or 1. 0 indicates that the distance of the previous section found repeating is to be counted from beginning. 1 indicates that it is to be counted backwards from current position of encoder.
-	\item[$\bullet$] The second field indicates the length of the section that repeats.
+	\item[$\bullet$] If a section repeats, another code of Set1a (dict) is used followed by four fields as described next.
+    \item[$\bullet$] The second field indicates the length of the section that repeats.
 	\item[$\bullet$] The third field indicates the distance of the repeating section.
-	\item[$\bullet$] The fourth field is coded only if the distance starts from the beginning.  It is a number indicating the set that the section belongs to, assuming there are several sets of text are being encoded.  If only one set of text is encoded, the first field is coded as 1 indicating the distance is to be counted from the current position.
+	\item[$\bullet$] The fourth field is coded only if several sets of texts are encoded.  It is a number indicating the set that the section belongs to, assuming there are several sets of text are being encoded.  If only one set of text is encoded, the distance is to be counted from the current position.
 	\item[$\bullet$] The second, third and fourth fields are encoded as explained in the following section "Encoding counts".
 \end{itemize}
 
@@ -173,10 +180,76 @@ With these two sets of codes, we form several sets of letters as shown in the ta
 	\item[$\bullet$] If code is 11100, 9 bits would follow, that is, count is between 164 and 675.
 	\item[$\bullet$] If code is 11101, 12 bits would follow, that is, count is between 676 and 4771.
 	\item[$\bullet$] If code is 11110, 16 bits would follow, that is, count is between 4772 and 70307.
-	\item[$\bullet$] If code is 11111, a varint would follow, which means a VarInt that uses a terminating byte would be used to indicate the count.  The format for this code is kept for future expansion as it is not expected that an implementation of Shox96 would need this.
+	\item[$\bullet$] If code is 11111, a varint would follow, which means a VarInt that uses a terminating byte would be used to indicate the count.  The format for this code is kept for future expansion as it is not expected that an implementation of Unishox would need this.
+	\item[$\bullet$] This is shown in tabular form below
+	\item[] \begin{tabular}{ | l | l | l |} \hline
+	﻿\textbf{Code} & ﻿\textbf{Range} & ﻿\textbf{Number of bits} \\ \hline
+	0 & 0 to 3 & 2 \\ \hline
+	10 & 4 to 35 & 5 \\ \hline
+	110 & 36 to 163 & 7 \\ \hline
+	11100 & 164 to 675 & 9 \\ \hline
+	11101 & 676 to 4771 & 12 \\ \hline
+	11110 & 4772 to 70307 & 16 \\ \hline
+	11111 & Above 70307 & Variable \\ \hline
+\end{tabular}
 \end{itemize}
 
-Based on the above rules the following Frequency table is formed.
+\subsection{Encoding Unicode characters}
+\begin{itemize}
+	\item[$\bullet$] The code 100 is used as prefix to indicate that a Unicode character is being encoded.
+	\item[$\bullet$] First, the unicode number is decoded from the input source depending on how it was encoded, such as UTF-8 or UTF-16 or Wide Character set.
+	\item[$\bullet$] For the first unicode character, the number decoded is re-coded to the output as it is.
+	\item[$\bullet$] For subsequent unicode characters, only the difference between the previous character is re-coded to the output.  Thus, here, delta coding is used.
+	\item[$\bullet$] After the code 100, another set of prefix-free codes are used, according to the following table, depending on the size (in bits) of the difference.
+	\item[] \begin{tabular}{ | l | l | l |} \hline
+	﻿\textbf{Code} & ﻿\textbf{Range} & ﻿\textbf{Number of bits} \\ \hline
+	0 & 0 to 31 & 5 \\ \hline
+	10 & 32 to 4127 & 12 \\ \hline
+	110 & 4128 to 20511 & 14 \\ \hline
+	1110 & 20512 to 86047 & 16 \\ \hline
+	11110 & 86048 to 2183199 & 21 \\ \hline
+	11111 & Special code & - \\ \hline
+    \end{tabular}
+	\item[$\bullet$] The Special code is explained in the next section.
+	\item[$\bullet$] After 100, one of the above codes is used, followed by the sign bit.  The sign bit is a single bit.  1 indicates that the number following is negative and 0 indicates that the number following is positive.
+	\item[$\bullet$] After the sign bit, the unicode value (or difference) is encoded as a number.  The number of bits used depends on its size, as shown in the above table.
+	\item[$\bullet$] After encoding the unicode number, the state returns to Set 1, unless continuous unicode encoding was started.  This is explained in the next section.
+\end{itemize}
+
+\subsection{Encoding continuous Unicode characters}
+\begin{itemize}
+	\item[$\bullet$] Since the prefix 100 may become an overhead when several Unicode are to be encoded, a continuous unicode encoding code is used (0010100).
+	\item[$\bullet$] When 0010100 is used, unicode characters are encoded continously using delta encoding, until a non-unicode character is encountered.  When this happens, state is returned to Set 1 using the Special code 11111 110 in the table shown in previous section is used.
+	\item[$\bullet$] The Special codes are used only when Unicode characters are coded continuously, to indicate special characters and situations occuring in-between. What follows the Special code 11111 is indicated using the table below:
+	\item[] \begin{tabular}{ | l | l |} \hline
+	﻿\textbf{Code} & ﻿\textbf{Character/Situation} \\ \hline
+	0 & Space character \\ \hline
+	10 & Repeating section \\ \hline
+	110 & End continuous unicode encoding \\ \hline
+	11100 & Comma (,) \\ \hline
+	11101 & Full stop (.) \\ \hline
+	11110 & Carriage return (CR) \\ \hline
+	11111 & Line feed (LF) \\ \hline
+    \end{tabular}
+	\item[$\bullet$] It is found that the above characters appear frequently in between continous Unicode characters and so Special codes are needed to avoid switching back and forth from Set1.
+\end{itemize}
+
+\subsection{Encoding punctuations}
+\begin{itemize}
+	\item[$\bullet$] Some languages, such as Japanese and Chinese use their own punctuation characters.  For example full-stop is indicated using U+3002 which is represented visually as a small circle.
+	\item[$\bullet$] So when encountering a Japanese full-stop, the special code for full-stop is used, only in this case, the decoder is expected to decode it as U+3002 instead of '.'.  In general, if the prior unicode character is greater than U+3000, then the special full-stop is decoded.
+	\item[$\bullet$] There are other types of full-stops used in other languages.  For example, Hindi uses a kind of pipe symbol to indicate full-stop.  However, to avoid confusion, this is left to delta coding, since it does not make much difference in compression ratio.
+\end{itemize}
+
+\subsection{Encoding other binary symbols}
+\begin{itemize}
+	\item[$\bullet$]Binary symbols are not expected for encoding text, so it is out of scope of this exercise.
+	\item[$\bullet$] However, for encoding other binary symbols ranging from ASCII 0 to 31 and ASCII 128 to 255, the prefix code 001000000 is used.
+	\item[$\bullet$] It is followed by the ASCII value of the symbol, encoded using the method described in section "Encoding counts" in this document.
+	\item[$\bullet$] This method actually expands the original size and is provided for the rare cases where such binary symbols appear.
+\end{itemize}
+
+Based on the above rules, the following Frequency table is formed.
 
 \section{Frequency table}
 
@@ -222,32 +295,32 @@ Based on the above rules the following Frequency table is formed.
 \begin{center}
 	\begin{tabular}{ | l | l | l | l |} \hline
 		﻿\textbf{ASCII Code} & ﻿\textbf{Letter} & ﻿\textbf{Code} & ﻿\textbf{Length} \\ \hline
-	65 & A & 00101010 & 8 \\ \hline
-	66 & B & 00100001100 & 11 \\ \hline
+	65 & A & 00101011 & 8 \\ \hline
+	66 & B & 00100001110 & 11 \\ \hline
 	67 & C & 001000000 & 9 \\ \hline
-	68 & D & 0010000010 & 10 \\ \hline
+	68 & D & 0010000011 & 10 \\ \hline
 	69 & E & 0010011 & 7 \\ \hline
-	70 & F & 001000011110 & 12 \\ \hline
-	71 & G & 00100001101 & 11 \\ \hline
-	72 & H & 0010000011 & 10 \\ \hline
-	73 & I & 00101100 & 8 \\ \hline
-	74 & J & 001000110100 & 12 \\ \hline
-	75 & K & 001000110010 & 12 \\ \hline
-	76 & L & 001011111 & 9 \\ \hline
-	77 & M & 00100001011 & 11 \\ \hline
-	78 & N & 00101101 & 8 \\ \hline
-	79 & O & 00101011 & 8 \\ \hline
-	80 & P & 00100001010 & 11 \\ \hline
-	81 & Q & 001000110011 & 12 \\ \hline
-	82 & R & 001011110 & 9 \\ \hline
-	83 & S & 00101110 & 8 \\ \hline
-	84 & T & 0010100 & 7 \\ \hline
-	85 & U & 0010000100 & 10 \\ \hline
-	86 & V & 00100011000 & 11 \\ \hline
-	87 & W & 00100001110 & 11 \\ \hline
-	88 & X & 0010001101010 & 13 \\ \hline
-	89 & Y & 001000011111 & 12 \\ \hline
-	90 & Z & 0010001101011 & 13 \\ \hline
+	70 & F & 00100011000 & 11 \\ \hline
+	71 & G & 001000011110 & 12 \\ \hline
+	72 & H & 00100001010 & 12 \\ \hline
+	73 & I & 00101101 & 8 \\ \hline
+	74 & J & 0010001101011 & 13 \\ \hline
+	75 & K & 001000110100 & 12 \\ \hline
+	76 & L & 0010000010 & 10 \\ \hline
+	77 & M & 00100001101 & 11 \\ \hline
+	78 & N & 00101110 & 8 \\ \hline
+	79 & O & 00101100 & 8 \\ \hline
+	80 & P & 00100001100 & 11 \\ \hline
+	81 & Q & 0010001101010 & 13 \\ \hline
+	82 & R & 001011111 & 9 \\ \hline
+	83 & S & 001011110 & 9 \\ \hline
+	84 & T & 00101010 & 8 \\ \hline
+	85 & U & 00100001011 & 11 \\ \hline
+	86 & V & 001000110011 & 12 \\ \hline
+	87 & W & 001000011111 & 12 \\ \hline
+	88 & X & 0010001101100 & 13 \\ \hline
+	89 & Y & 001000110010 & 12 \\ \hline
+	90 & Z & 0010001101101 & 13 \\ \hline
 	91 & [ & 001111011110 & 12 \\ \hline
 	92 & \textbackslash & 00111111101 & 11 \\ \hline
 	93 & ] & 001111011111 & 12 \\ \hline
@@ -260,36 +333,36 @@ Based on the above rules the following Frequency table is formed.
 \begin{center}
 \begin{tabular}{ | l | l | l | l |} \hline
 ﻿\textbf{ASCII Code} & ﻿\textbf{Letter} & ﻿\textbf{Code} & ﻿\textbf{Length} \\ \hline
-	97 & a & 1010 & 4 \\ \hline
-	98 & b & 0001100 & 7 \\ \hline
-	99 & c & 00000 & 5 \\ \hline
-	100 & d & 000010 & 6 \\ \hline
+	97 & a & 1011 & 4 \\ \hline
+	98 & b & 0001110 & 7 \\ \hline
+	99 & c & 000011 & 6 \\ \hline
+	100 & d & 000100 & 6 \\ \hline
 	101 & e & 011 & 3 \\ \hline
-	102 & f & 00011110 & 8 \\ \hline
-	103 & g & 0001101 & 7 \\ \hline
-	104 & h & 000011 & 6 \\ \hline
-	105 & i & 1100 & 4 \\ \hline
-	106 & j & 00110100 & 8 \\ \hline
-	107 & k & 00110010 & 8 \\ \hline
-	108 & l & 11111 & 5 \\ \hline
-	109 & m & 0001011 & 7 \\ \hline
-	110 & n & 1101 & 4 \\ \hline
-	111 & o & 1011 & 4 \\ \hline
-	112 & p & 0001010 & 7 \\ \hline
-	113 & q & 00110011 & 8 \\ \hline
-	114 & r & 11110 & 5 \\ \hline
-	115 & s & 1110 & 4 \\ \hline
-	116 & t & 100 & 3 \\ \hline
-	117 & u & 000100 & 6 \\ \hline
-	118 & v & 0011000 & 7 \\ \hline
-	119 & w & 0001110 & 7 \\ \hline
-	120 & x & 001101010 & 9 \\ \hline
-	121 & y & 00011111 & 8 \\ \hline
-	122 & z & 001101011 & 9 \\ \hline
-	123 & \{ & 00111101101 & 11 \\ \hline
-	124 & | & 00111111110 & 11 \\ \hline
-	125 & \} & 00111101110 & 11 \\ \hline
-	126 & \~{} & 001111111110 & 12 \\ \hline
+	102 & f & 0011000 & 7 \\ \hline
+	103 & g & 00011110 & 8 \\ \hline
+	104 & h & 0001010 & 7 \\ \hline
+	105 & i & 1101 & 4 \\ \hline
+	106 & j & 001101011 & 9 \\ \hline
+	107 & k & 00110100 & 8 \\ \hline
+	108 & l & 000010 & 6 \\ \hline
+	109 & m & 0001101 & 7 \\ \hline
+	110 & n & 1110 & 4 \\ \hline
+	111 & o & 1100 & 4 \\ \hline
+	112 & p & 0001100 & 7 \\ \hline
+	113 & q & 001101010 & 9 \\ \hline
+	114 & r & 11111 & 5 \\ \hline
+	115 & s & 11110 & 5 \\ \hline
+	116 & t & 1010 & 4 \\ \hline
+	117 & u & 0001011 & 7 \\ \hline
+	118 & v & 00110011 & 8 \\ \hline
+	119 & w & 00011111 & 8 \\ \hline
+	120 & x & 001101100 & 9 \\ \hline
+	121 & y & 00110010 & 8 \\ \hline
+	122 & z & 001101101 & 9 \\ \hline
+	123 & \{ & 1101101 & 7 \\ \hline
+	124 & | & 1111110 & 7 \\ \hline
+	125 & \} & 1101110 & 7 \\ \hline
+	126 & \~{} & 11111110 & 8 \\ \hline
 	﻿\end{tabular}
 \end{center}
 
@@ -297,14 +370,14 @@ Even after the freqency table is formed, the original model is still needed for 
 
 \section{Implementation}
 
-According to the above Rules and Frequency table, a reference implementation has been developed and made available at https://github.com/siara-cc/Shox96 as shox96\_0\_2\_0.c.  This is released under Apache License 2.0.
+According to the above Rules and Frequency table, a reference implementation has been developed and made available at https://github.com/siara-cc/Unishox as unishox1.c.  This is released under Apache License 2.0.
 
-Further, Shox96 has been used in several open source projects shown below:
+Further, Unishox has been used in several open source projects shown below:
 
 \begin{itemize}
-	\item[$\bullet$] Shox96 Compression Library for Arduino Progmem - https://github.com/siara-cc/Shox96\_Arduino\_Progmem\_lib
-	\item[$\bullet$] Shox96 Compression Library for Arduino - https://github.com/siara-cc/Shox96\_Arduino\_lib
-	\item[$\bullet$] Sqlite3 User Defined Function as loadable extension - https://github.com/siara-cc/Shox96\_Sqlite\_UDF
+	\item[$\bullet$] Unishox Compression Library for Arduino Progmem - https://github.com/siara-cc/Shox96\_Arduino\_Progmem\_lib
+	\item[$\bullet$] Unishox Compression Library for Arduino - https://github.com/siara-cc/Shox96\_Arduino\_lib
+	\item[$\bullet$] Sqlite3 User Defined Function for Unishox as loadable extension - https://github.com/siara-cc/Unishox\_Sqlite\_UDF
 	\item[$\bullet$] Sqlite3 Library for ESP32 - https://github.com/siara-cc/esp32\_arduino\_sqlite3\_lib
 	\item[$\bullet$] Sqlite3 Library for ESP8266 - https://github.com/siara-cc/esp\_arduino\_sqlite3\_lib
 	\item[$\bullet$] Sqlite3 Library for ESP-IDF - https://github.com/siara-cc/esp32-idf-sqlite3
@@ -362,21 +435,19 @@ So, with a saving of atleast 22 bits, we can say it is more than sufficient to o
 
 This assumption is towards defining a safe limit and since there will be more savings because of the known general frequency of letters, we can safely assume this guarantee.
 
+For Unicode text, the codes in section "Encoding Unicode characters" have been selected in such a way that the prefix-code overhead is offset by delta coding and the fact that UTF-8 encoding has more redundant code overhead.
+
 \section{Conclusion}
 
-As can be seen from the performance numbers, Shox96 performs better than available techniques.  It can also be seen that it performs better for a variety of texts, especially those having a mixture of numbers and special characters.
+As can be seen from the performance numbers, Unishox performs better than available techniques.  It can also be seen that it performs better for a variety of texts, especially those having a mixture of numbers and special characters.
 
 \section{Further work}
 
-We propose to improve Shox96 by including further rules for better compression.  We also propose to develop such models for other languages and types of text such as Programs.
+We propose to improve Unishox by including support for compressing binary symbols.  We also propose to develop such models for other languages and types of text such as Programs.
 
-\section{About the Authors}
+\section{About the Author}
 
-\emph{Arundale R.} has over 20 years of experience working in the IT industry.  He has worked alternatively in large Corporates, MNCs and Startups, including Viewlocity Asia Pacific Pte. Ltd., IBC Systems Pte. Ltd. and Polaris Software Lab Ltd. He has founded Siara Logics (cc) and Siara Logics (in) and publishing his open source work at https://github.com/siara-cc and https://github.com/siara-in. He has a masters degree in Computer Science from Anna University.  He can be reached at arun@siara.cc.
-
-\emph{Charumathi A.} is a budding Electronics and Communications Engineer studying at Jerusalem College of Engineering, Chennai affiliated to Anna University.  She is passionate about building useful technical gadgets, 3d printing, technical research and fashion designing.  She can be reached at cm@cm21.in.
-
-\emph{Harsha N.} is a budding Computer Science Engineer studying at Jerusalem College of Engineering, Chennai affiliated to Anna University.  She is passionate about building software projects in C and Java and technical research.  She can be reached at nnpharsha562@gmail.com.
+\emph{Arundale Ramanathan} has over 20 years of experience working in the IT industry.  He has worked alternatively in large Corporates, MNCs and Startups, including Viewlocity Asia Pacific Pte. Ltd., IBC Systems Pte. Ltd. and Polaris Software Lab Ltd. He has founded Siara Logics (cc) and Siara Logics (in) and publishing his open source work at https://github.com/siara-cc and https://github.com/siara-in. He has a masters degree in Computer Science from Anna University.  He can be reached at arun@siara.cc.
 
 \begin{thebibliography}{1}
 
@@ -388,17 +459,19 @@ We propose to improve Shox96 by including further rules for better compression. 
  
  	\bibitem{4} J. Ziv and A. Lempel. A Universal Algorithm for Data Compression. IEEE Transactions on Information Theory, 23(3):337–343, May 1977.
  
-	\bibitem{5} M. Burrows and D. Wheeler. A Block-Sorting Lossless Data Compression Algorithm. Research Report 124, Digital Equipment Corporation, Palo Alto, CA, USA, May 1994.
+  	\bibitem{5} Wikipedia, {\em Delta Encoding}, https://en.wikipedia.org/wiki/Delta\_encoding, updated July 2019.
+ 
+	\bibitem{6} M. Burrows and D. Wheeler. A Block-Sorting Lossless Data Compression Algorithm. Research Report 124, Digital Equipment Corporation, Palo Alto, CA, USA, May 1994.
 
-	\bibitem{6} {\em "Statistical Distributions of English Text"}. data-compression.com. Archived from the original on 2017-09-18.
+	\bibitem{7} {\em "Statistical Distributions of English Text"}. data-compression.com. Archived from the original on 2017-09-18.
 
- 	\bibitem{7} What is the frequency of the letters of the alphabet in English?, Oxford Dictionary. Oxford University Press. Retrieved 29 December 2012.
+ 	\bibitem{8} What is the frequency of the letters of the alphabet in English?, Oxford Dictionary. Oxford University Press. Retrieved 29 December 2012.
 
-	\bibitem{8} Wikipedia, {\em Letter frequency}, https://en.wikipedia.org/wiki/Letter\_frequency, updated December 2018.
+	\bibitem{9} Wikipedia, {\em Letter frequency}, https://en.wikipedia.org/wiki/Letter\_frequency, updated December 2018.
 
- 	\bibitem{9} Salvatore Sanfilippo, {\em SMAZ - compression for very small strings}, https://github.com/antirez/smaz, February 2012.
+ 	\bibitem{10} Salvatore Sanfilippo, {\em SMAZ - compression for very small strings}, https://github.com/antirez/smaz, February 2012.
 
- 	\bibitem{10} Christian Schramm, {\em shoco: a fast compressor for short strings}, https://github.com/Ed-von-Schleck/shoco, December 2015.
+ 	\bibitem{11} Christian Schramm, {\em shoco: a fast compressor for short strings}, https://github.com/Ed-von-Schleck/shoco, December 2015.
 
 \end{thebibliography}
 
