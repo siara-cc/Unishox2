@@ -17,7 +17,7 @@
  *
  */
 
-#define UNISHOX_VERSION "0.1"
+#define UNISHOX_VERSION "1.0"
 
 #ifdef _MSC_VER
 #include <windows.h>
@@ -402,7 +402,7 @@ int matchLine(const char *in, int len, int l, char *out, int *ol, struct lnk_lst
   return -l;
 }
 
-int unishox_0_1_compress(const char *in, int len, char *out, struct lnk_lst *prev_lines) {
+int unishox1_compress(const char *in, int len, char *out, struct lnk_lst *prev_lines) {
 
   char *ptr;
   byte bits;
@@ -687,7 +687,7 @@ void writeUTF8(char *out, int *ol, int uni) {
   }
 }
 
-int unishox_0_1_decompress(const char *in, int len, char *out, struct lnk_lst *prev_lines) {
+int unishox1_decompress(const char *in, int len, char *out, struct lnk_lst *prev_lines) {
 
   int dstate;
   int bit_no;
@@ -975,7 +975,7 @@ if (argv == 4 && strcmp(args[1], "-c") == 0) {
    do {
      bytes_read = fread(cbuf, 1, sizeof(cbuf), fp);
      if (bytes_read > 0) {
-        clen = unishox_0_1_compress(cbuf, bytes_read, dbuf, NULL);
+        clen = unishox1_compress(cbuf, bytes_read, dbuf, NULL);
         ctot += clen;
         tot_len += bytes_read;
         if (clen > 0) {
@@ -1011,7 +1011,7 @@ if (argv == 4 && strcmp(args[1], "-d") == 0) {
      len_to_read += fgetc(fp);
      bytes_read = fread(dbuf, 1, len_to_read, fp);
      if (bytes_read > 0) {
-        dlen = unishox_0_1_decompress(dbuf, bytes_read, cbuf, NULL);
+        dlen = unishox1_decompress(dbuf, bytes_read, cbuf, NULL);
         if (dlen > 0) {
            if (dlen != fwrite(cbuf, 1, dlen, wfp)) {
               perror("fwrite");
@@ -1041,10 +1041,10 @@ if (argv == 4 && (strcmp(args[1], "-g") == 0 ||
    struct lnk_lst *cur_line = NULL;
    fputs("#ifndef __", wfp);
    fputs(args[3], wfp);
-   fputs("UNISHOX_0_1_COMPRESSED__\n", wfp);
+   fputs("UNISHOX1_COMPRESSED__\n", wfp);
    fputs("#define __", wfp);
    fputs(args[3], wfp);
-   fputs("UNISHOX_0_1_COMPRESSED__\n", wfp);
+   fputs("UNISHOX1_COMPRESSED__\n", wfp);
    int line_ctr = 0;
    int max_len = 0;
    while (fgets(cbuf, sizeof(cbuf), fp) != NULL) {
@@ -1058,7 +1058,7 @@ if (argv == 4 && (strcmp(args[1], "-g") == 0 ||
       if (is_empty(cbuf))
         continue;
       if (len > 0) {
-        clen = unishox_0_1_compress(cbuf, len, dbuf, cur_line);
+        clen = unishox1_compress(cbuf, len, dbuf, cur_line);
         if (clen > 0) {
             perc = (len-clen);
             perc /= len;
@@ -1089,7 +1089,7 @@ if (argv == 4 && (strcmp(args[1], "-g") == 0 ||
         }
         if (len > max_len)
           max_len = len;
-        dlen = unishox_0_1_decompress(dbuf, clen, cbuf, cur_line);
+        dlen = unishox1_decompress(dbuf, clen, cbuf, cur_line);
         cbuf[dlen] = 0;
         printf("\n%s\n", cbuf);
         struct lnk_lst *ll;
@@ -1129,10 +1129,10 @@ if (argv == 2) {
    //printf("Len:%ld\n", len);
    //print_string_as_hex(args[1], len);
    memset(cbuf, 0, sizeof(cbuf));
-   ctot = unishox_0_1_compress(args[1], len, cbuf, NULL);
+   ctot = unishox1_compress(args[1], len, cbuf, NULL);
    print_compressed(cbuf, ctot);
    memset(dbuf, 0, sizeof(dbuf));
-   dlen = unishox_0_1_decompress(cbuf, ctot, dbuf, NULL);
+   dlen = unishox1_decompress(cbuf, ctot, dbuf, NULL);
    dbuf[dlen] = 0;
    printf("\nDecompressed: %s\n", dbuf);
    //print_compressed(dbuf, dlen);
@@ -1144,7 +1144,7 @@ if (argv == 2) {
 } else {
    printf("Unishox (byte format version: %s)\n", UNISHOX_VERSION);
    printf("---------------------------------\n");
-   printf("Usage: unishox++ \"string\" or unishox++ [action] [in_file] [out_file] [encoding]\n");
+   printf("Usage: unishox1 \"string\" or unishox++ [action] [in_file] [out_file] [encoding]\n");
    printf("\n");
    printf("Actions:\n");
    printf("  -c    compress\n");

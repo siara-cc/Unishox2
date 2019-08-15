@@ -1,5 +1,5 @@
-SRCFILE = unishox_0_1.c
-OUTFILE = unishox
+SRCFILE = unishox1.c
+OUTFILE = unishox1
 
 default:
 	gcc -o $(OUTFILE) $(SRCFILE)
