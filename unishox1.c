@@ -64,8 +64,8 @@ byte lookup[65536];
 
 #define TERM_CODE 0x37C0
 #define TERM_CODE_LEN 10
-#define DICT_PRIOR_CODE 0x0000
-#define DICT_PRIOR_CODE_LEN 5
+#define DICT_CODE 0x0000
+#define DICT_CODE_LEN 5
 #define DICT_OTHER_CODE 0x0000 // not used
 #define DICT_OTHER_CODE_LEN 6
 #define RPT_CODE 0x2370
@@ -335,7 +335,7 @@ int matchOccurance(const char *in, int len, int l, char *out, int *ol, byte *sta
     if (*state == SHX_STATE_UNI)
       *ol = append_bits(out, *ol, UNI_STATE_DICT_CODE, UNI_STATE_DICT_CODE_LEN, SHX_STATE_UNI);
     else
-      *ol = append_bits(out, *ol, DICT_PRIOR_CODE, DICT_PRIOR_CODE_LEN, 1);
+      *ol = append_bits(out, *ol, DICT_CODE, DICT_CODE_LEN, 1);
     //printf("Len:%d / Dist:%d\n", longest_len, longest_dist);
     *ol = encodeCount(out, *ol, longest_len);
     *ol = encodeCount(out, *ol, longest_dist);
@@ -352,14 +352,18 @@ int matchLine(const char *in, int len, int l, char *out, int *ol, struct lnk_lst
   int last_dist = 0;
   int last_ctx = 0;
   int line_ctr = 0;
+  int j = 0;
   do {
-    int i, j, k;
+    int i, k;
     int line_len = strlen(prev_lines->data);
-    for (j = 0; j < line_len; j++) {
+    int limit = (line_ctr == 0 ? l : line_len);
+    for (; j < limit; j++) {
       for (i = l, k = j; k < line_len && i < len; k++, i++) {
         if (prev_lines->data[k] != in[i])
           break;
       }
+      while ((((unsigned char) prev_lines->data[k]) >> 6) == 2)
+        k--; // Skip partial UTF-8 matches
       if ((k - j) >= NICE_LEN) {
         if (last_len) {
           if (j > last_dist)
@@ -379,7 +383,10 @@ int matchLine(const char *in, int len, int l, char *out, int *ol, struct lnk_lst
           *state = SHX_STATE_1;
           *ol = append_bits(out, *ol, BACK2_STATE1_CODE, BACK2_STATE1_CODE_LEN, *state);
         }
-        *ol = append_bits(out, *ol, DICT_OTHER_CODE, DICT_OTHER_CODE_LEN, 1);
+        if (*state == SHX_STATE_UNI)
+          *ol = append_bits(out, *ol, UNI_STATE_DICT_CODE, UNI_STATE_DICT_CODE_LEN, SHX_STATE_UNI);
+        else
+          *ol = append_bits(out, *ol, DICT_CODE, DICT_CODE_LEN, 1);
         *ol = encodeCount(out, *ol, last_len - NICE_LEN);
         *ol = encodeCount(out, *ol, last_dist);
         *ol = encodeCount(out, *ol, last_ctx);
@@ -388,7 +395,8 @@ int matchLine(const char *in, int len, int l, char *out, int *ol, struct lnk_lst
           last_len = 0;
           *ol = last_ol;
         }*/
-        //printf("Len: %d, Dist: %d, Line: %d\n", last_len, last_dist, last_ctx);
+        printf("Len: %d, Dist: %d, Line: %d\n", last_len, last_dist, last_ctx);
+        j += last_len;
       }
     }
     line_ctr++;
@@ -687,6 +695,25 @@ void writeUTF8(char *out, int *ol, int uni) {
   }
 }
 
+int decodeRepeat(const char *in, int len, char *out, int ol, int *bit_no, struct lnk_lst *prev_lines) {
+  if (prev_lines) {
+    int dict_len = readCount(in, bit_no, len) + NICE_LEN;
+    int dist = readCount(in, bit_no, len);
+    int ctx = readCount(in, bit_no, len);
+    struct lnk_lst *cur_line = prev_lines;
+    while (ctx--)
+      cur_line = cur_line->previous;
+    memmove(out + ol, cur_line->data + dist, dict_len);
+    ol += dict_len;
+  } else {
+    int dict_len = readCount(in, bit_no, len) + NICE_LEN;
+    int dist = readCount(in, bit_no, len) + NICE_LEN - 1;
+    memcpy(out + ol, out + ol - dist, dict_len);
+    ol += dict_len;
+  }
+  return ol;
+}
+
 int unishox1_decompress(const char *in, int len, char *out, struct lnk_lst *prev_lines) {
 
   int dstate;
@@ -765,21 +792,7 @@ int unishox1_decompress(const char *in, int len, char *out, struct lnk_lst *prev
       if (is_upper) {
         out[ol++] = readCount(in, &bit_no, len);
       } else {
-        //if (getBitVal(in, bit_no++, 0)) {
-          int dict_len = readCount(in, &bit_no, len) + NICE_LEN;
-          int dist = readCount(in, &bit_no, len) + NICE_LEN - 1;
-          memcpy(out + ol, out + ol - dist, dict_len);
-          ol += dict_len;
-        //} else {
-        //  int dict_len = readCount(in, &bit_no, len) + NICE_LEN;
-        //  int dist = readCount(in, &bit_no, len);
-        //  int ctx = readCount(in, &bit_no, len);
-        //  struct lnk_lst *cur_line = prev_lines;
-        //  while (ctx--)
-        //    cur_line = cur_line->previous;
-        //  memmove(out + ol, cur_line->data + dist, dict_len);
-        //  ol += dict_len;
-        //}
+        ol = decodeRepeat(in, len, out, ol, &bit_no, prev_lines);
       }
       continue;
     }
@@ -794,12 +807,8 @@ int unishox1_decompress(const char *in, int len, char *out, struct lnk_lst *prev
             case 1:
               out[ol++] = ' ';
               break;
-            case 0: {
-                int dict_len = readCount(in, &bit_no, len) + NICE_LEN;
-                int dist = readCount(in, &bit_no, len) + NICE_LEN - 1;
-                memcpy(out + ol, out + ol - dist, dict_len);
-                ol += dict_len;
-              }
+            case 0:
+              ol = decodeRepeat(in, len, out, ol, &bit_no, prev_lines);
               break;
             case 3:
               out[ol++] = ',';
@@ -1058,6 +1067,12 @@ if (argv == 4 && (strcmp(args[1], "-g") == 0 ||
       if (is_empty(cbuf))
         continue;
       if (len > 0) {
+        struct lnk_lst *ll;
+        ll = cur_line;
+        cur_line = (struct lnk_lst *) malloc(sizeof(struct lnk_lst));
+        cur_line->data = (char *) malloc(len + 1);
+        strncpy(cur_line->data, cbuf, len);
+        cur_line->previous = ll;
         clen = unishox1_compress(cbuf, len, dbuf, cur_line);
         if (clen > 0) {
             perc = (len-clen);
@@ -1092,12 +1107,6 @@ if (argv == 4 && (strcmp(args[1], "-g") == 0 ||
         dlen = unishox1_decompress(dbuf, clen, cbuf, cur_line);
         cbuf[dlen] = 0;
         printf("\n%s\n", cbuf);
-        struct lnk_lst *ll;
-        ll = cur_line;
-        cur_line = (struct lnk_lst *) malloc(sizeof(struct lnk_lst));
-        cur_line->data = (char *) malloc(len + 1);
-        strncpy(cur_line->data, cbuf, len);
-        cur_line->previous = ll;
       }
    }
    perc = (tot_len-ctot);
