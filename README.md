@@ -6,7 +6,7 @@ This is a C library for compressing short strings.  It was developed to individu
 
 # How it works
 
-Unishox is an hybrid encoder (entropy, dictionary and delta coding).  It works by assigning fixed prefix-free codes for each letter in the above Character Set (entropy coding).  It also encodes repeating letter sets separately (dictionary coding).  For Unicode characters, delta coding is used. More information is available in [this article](Unishox_Article_0_1_0.pdf?raw=true).
+Unishox is an hybrid encoder (entropy, dictionary and delta coding).  It works by assigning fixed prefix-free codes for each letter in the above Character Set (entropy coding).  It also encodes repeating letter sets separately (dictionary coding).  For Unicode characters, delta coding is used. More information is available in [this article](Unishox_Article_1.pdf?raw=true).
 
 # Compiling
 
