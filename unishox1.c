@@ -1050,10 +1050,10 @@ if (argv == 4 && (strcmp(args[1], "-g") == 0 ||
    struct lnk_lst *cur_line = NULL;
    fputs("#ifndef __", wfp);
    fputs(args[3], wfp);
-   fputs("UNISHOX1_COMPRESSED__\n", wfp);
+   fputs("_UNISHOX1_COMPRESSED__\n", wfp);
    fputs("#define __", wfp);
    fputs(args[3], wfp);
-   fputs("UNISHOX1_COMPRESSED__\n", wfp);
+   fputs("_UNISHOX1_COMPRESSED__\n", wfp);
    int line_ctr = 0;
    int max_len = 0;
    while (fgets(cbuf, sizeof(cbuf), fp) != NULL) {
@@ -1084,7 +1084,7 @@ if (argv == 4 && (strcmp(args[1], "-g") == 0 ||
             tot_len += len;
             ctot += clen;
             char short_buf[strlen(args[3]) + 100];
-            snprintf(short_buf, sizeof(short_buf), "const byte %s0_2_%d[] PROGMEM = {", args[3], line_ctr++);
+            snprintf(short_buf, sizeof(short_buf), "const byte %s_%d[] PROGMEM = {", args[3], line_ctr++);
             fputs(short_buf, wfp);
             int len_len = encode_unsigned_varint((byte *) short_buf, clen);
             for (int i = 0; i < len_len; i++) {
@@ -1115,21 +1115,21 @@ if (argv == 4 && (strcmp(args[1], "-g") == 0 ||
    printf("\nBytes (Compressed/Original=Savings%%): %ld/%ld=", ctot, tot_len);
    printf("%.2f%%\n", perc);
    char short_buf[strlen(args[3]) + 100];
-   snprintf(short_buf, sizeof(short_buf), "const byte * const %s0_2[] PROGMEM = {", args[3]);
+   snprintf(short_buf, sizeof(short_buf), "const byte * const %s[] PROGMEM = {", args[3]);
    fputs(short_buf, wfp);
    for (int i = 0; i < line_ctr; i++) {
      if (i) {
        strcpy(short_buf, ", ");
        fputs(short_buf, wfp);
      }
-     snprintf(short_buf, strlen(args[3]) + 15, "%s0_2_%d", args[3], i);
+     snprintf(short_buf, strlen(args[3]) + 15, "%s_%d", args[3], i);
      fputs(short_buf, wfp);
    }
    strcpy(short_buf, "};\n");
    fputs(short_buf, wfp);
-   snprintf(short_buf, sizeof(short_buf), "#define %s0_2_line_count %d\n", args[3], line_ctr);
+   snprintf(short_buf, sizeof(short_buf), "#define %s_line_count %d\n", args[3], line_ctr);
    fputs(short_buf, wfp);
-   snprintf(short_buf, sizeof(short_buf), "#define %s0_2_max_len %d\n", args[3], max_len);
+   snprintf(short_buf, sizeof(short_buf), "#define %s_max_len %d\n", args[3], max_len);
    fputs(short_buf, wfp);
    fputs("#endif\n", wfp);
 } else
@@ -1153,7 +1153,7 @@ if (argv == 2) {
 } else {
    printf("Unishox (byte format version: %s)\n", UNISHOX_VERSION);
    printf("---------------------------------\n");
-   printf("Usage: unishox1 \"string\" or unishox++ [action] [in_file] [out_file] [encoding]\n");
+   printf("Usage: unishox1 \"string\" or unishox1 [action] [in_file] [out_file] [encoding]\n");
    printf("\n");
    printf("Actions:\n");
    printf("  -c    compress\n");
