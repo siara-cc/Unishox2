@@ -17,16 +17,16 @@
  * @author Arundale R.
  *
  */
-#ifndef unishox_0_1
-#define unishox_0_1
+#ifndef unishox1
+#define unishox1
 
-struct lnk_lst {
+struct us_lnk_lst {
   char *data;
-  struct lnk_lst *previous;
+  struct us_lnk_lst *previous;
 };
 
-extern int unishox_0_1_compress(const char *in, int len, char *out, struct lnk_lst *prev_lines);
-extern int unishox_0_1_decompress(const char *in, int len, char *out, struct lnk_lst *prev_lines);
+extern int unishox1_compress(const char *in, int len, char *out, struct us_lnk_lst *prev_lines);
+extern int unishox1_decompress(const char *in, int len, char *out, struct us_lnk_lst *prev_lines);
 
 #endif
 

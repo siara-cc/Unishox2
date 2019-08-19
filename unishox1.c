@@ -36,9 +36,9 @@
 typedef unsigned char byte;
 
 enum {SHX_SET1 = 0, SHX_SET1A, SHX_SET1B, SHX_SET2, SHX_SET3, SHX_SET4, SHX_SET4A};
-char vcodes[] =     {0, 2, 3, 4, 10, 11, 12, 13, 14, 30, 31};
-char vcode_lens[] = {2, 3, 3, 3,  4,  4,  4,  4,  4,  5,  5};
-char sets[][11] = {{  0, ' ', 'e',   0, 't', 'a', 'o', 'i', 'n', 's', 'r'},
+char us_vcodes[] =     {0, 2, 3, 4, 10, 11, 12, 13, 14, 30, 31};
+char us_vcode_lens[] = {2, 3, 3, 3,  4,  4,  4,  4,  4,  5,  5};
+char us_sets[][11] = {{  0, ' ', 'e',   0, 't', 'a', 'o', 'i', 'n', 's', 'r'},
                    {  0, 'l', 'c', 'd', 'h', 'u', 'p', 'm', 'b', 'g', 'w'},
                    {'f', 'y', 'v', 'k', 'q', 'j', 'x', 'z',   0,   0,   0},
                    {  0, '9', '0', '1', '2', '3', '4', '5', '6', '7', '8'},
@@ -97,7 +97,7 @@ byte lookup[65536];
 #define BIN_CODE 0x2000
 #define BIN_CODE_LEN 9
 
-//void checkPrevCodes(char c, int prev_code, char prev_code_len, int c_95, char l_95) {
+//void checkPreus_vcodes(char c, int prev_code, char prev_code_len, int c_95, char l_95) {
 //   if (prev_code != c_95 || prev_code_len != l_95) {
 //     printf("Code mismatch: %d: %d!=%d, %d!=%d\n", c, prev_code, c_95, prev_code_len, l_95);
 //   }
@@ -109,65 +109,65 @@ void init_coder() {
     return;
   for (int i = 0; i < 7; i++) {
     for (int j = 0; j < 11; j++) {
-      char c = sets[i][j];
+      char c = us_sets[i][j];
       if (c != 0 && c != 32) {
         int ascii = c - 32;
         //int prev_code = c_95[ascii];
         //int prev_code_len = l_95[ascii];
         switch (i) {
-          case SHX_SET1: // just vcode
-            c_95[ascii] = (vcodes[j] << (16 - vcode_lens[j]));
-            l_95[ascii] = vcode_lens[j];
-            //checkPrevCodes(c, prev_code, prev_code_len, c_95[ascii], l_95[ascii]);
+          case SHX_SET1: // just us_vcode
+            c_95[ascii] = (us_vcodes[j] << (16 - us_vcode_lens[j]));
+            l_95[ascii] = us_vcode_lens[j];
+            //checkPreus_vcodes(c, prev_code, prev_code_len, c_95[ascii], l_95[ascii]);
             if (c >= 'a' && c <= 'z') {
               ascii -= ('a' - 'A');
               //prev_code = c_95[ascii];
               //prev_code_len = l_95[ascii];
-              c_95[ascii] = (2 << 12) + (vcodes[j] << (12 - vcode_lens[j]));
-              l_95[ascii] = 4 + vcode_lens[j];
+              c_95[ascii] = (2 << 12) + (us_vcodes[j] << (12 - us_vcode_lens[j]));
+              l_95[ascii] = 4 + us_vcode_lens[j];
             }
             break;
-          case SHX_SET1A: // 000 + vcode
-            c_95[ascii] = 0 + (vcodes[j] << (13 - vcode_lens[j]));
-            l_95[ascii] = 3 + vcode_lens[j];
-            //checkPrevCodes(c, prev_code, prev_code_len, c_95[ascii], l_95[ascii]);
+          case SHX_SET1A: // 000 + us_vcode
+            c_95[ascii] = 0 + (us_vcodes[j] << (13 - us_vcode_lens[j]));
+            l_95[ascii] = 3 + us_vcode_lens[j];
+            //checkPreus_vcodes(c, prev_code, prev_code_len, c_95[ascii], l_95[ascii]);
             if (c >= 'a' && c <= 'z') {
               ascii -= ('a' - 'A');
               //prev_code = c_95[ascii];
               //prev_code_len = l_95[ascii];
-              c_95[ascii] = (2 << 12) + 0 + (vcodes[j] << (9 - vcode_lens[j]));
-              l_95[ascii] = 4 + 3 + vcode_lens[j];
+              c_95[ascii] = (2 << 12) + 0 + (us_vcodes[j] << (9 - us_vcode_lens[j]));
+              l_95[ascii] = 4 + 3 + us_vcode_lens[j];
             }
             break;
-          case SHX_SET1B: // 00110 + vcode
-            c_95[ascii] = (6 << 11) + (vcodes[j] << (11 - vcode_lens[j]));
-            l_95[ascii] = 5 + vcode_lens[j];
-            //checkPrevCodes(c, prev_code, prev_code_len, c_95[ascii], l_95[ascii]);
+          case SHX_SET1B: // 00110 + us_vcode
+            c_95[ascii] = (6 << 11) + (us_vcodes[j] << (11 - us_vcode_lens[j]));
+            l_95[ascii] = 5 + us_vcode_lens[j];
+            //checkPreus_vcodes(c, prev_code, prev_code_len, c_95[ascii], l_95[ascii]);
             if (c >= 'a' && c <= 'z') {
               ascii -= ('a' - 'A');
               //prev_code = c_95[ascii];
               //prev_code_len = l_95[ascii];
-              c_95[ascii] = (2 << 12) + (6 << 7) + (vcodes[j] << (7 - vcode_lens[j]));
-              l_95[ascii] = 4 + 5 + vcode_lens[j];
+              c_95[ascii] = (2 << 12) + (6 << 7) + (us_vcodes[j] << (7 - us_vcode_lens[j]));
+              l_95[ascii] = 4 + 5 + us_vcode_lens[j];
             }
             break;
-          case SHX_SET2: // 0011100 + vcode
-            c_95[ascii] = (28 << 9) + (vcodes[j] << (9 - vcode_lens[j]));
-            l_95[ascii] = 7 + vcode_lens[j];
+          case SHX_SET2: // 0011100 + us_vcode
+            c_95[ascii] = (28 << 9) + (us_vcodes[j] << (9 - us_vcode_lens[j]));
+            l_95[ascii] = 7 + us_vcode_lens[j];
             break;
-          case SHX_SET3: // 0011101 + vcode
-            c_95[ascii] = (29 << 9) + (vcodes[j] << (9 - vcode_lens[j]));
-            l_95[ascii] = 7 + vcode_lens[j];
+          case SHX_SET3: // 0011101 + us_vcode
+            c_95[ascii] = (29 << 9) + (us_vcodes[j] << (9 - us_vcode_lens[j]));
+            l_95[ascii] = 7 + us_vcode_lens[j];
             break;
-          case SHX_SET4: // 0011110 + vcode
-            c_95[ascii] = (30 << 9) + (vcodes[j] << (9 - vcode_lens[j]));
-            l_95[ascii] = 7 + vcode_lens[j];
+          case SHX_SET4: // 0011110 + us_vcode
+            c_95[ascii] = (30 << 9) + (us_vcodes[j] << (9 - us_vcode_lens[j]));
+            l_95[ascii] = 7 + us_vcode_lens[j];
             break;
-          case SHX_SET4A: // 0011111 + vcode
-            c_95[ascii] = (31 << 9) + (vcodes[j] << (9 - vcode_lens[j]));
-            l_95[ascii] = 7 + vcode_lens[j];
+          case SHX_SET4A: // 0011111 + us_vcode
+            c_95[ascii] = (31 << 9) + (us_vcodes[j] << (9 - us_vcode_lens[j]));
+            l_95[ascii] = 7 + us_vcode_lens[j];
         }
-        //checkPrevCodes(c, prev_code, prev_code_len, c_95[ascii], l_95[ascii]);
+        //checkPreus_vcodes(c, prev_code, prev_code_len, c_95[ascii], l_95[ascii]);
       }
     }
   }
@@ -177,7 +177,7 @@ void init_coder() {
   is_inited = 1;
 }
 
-unsigned int mask[] = {0x8000, 0xC000, 0xE000, 0xF000, 0xF800, 0xFC00, 0xFE00, 0xFF00};
+unsigned int us_mask[] = {0x8000, 0xC000, 0xE000, 0xF000, 0xF800, 0xFC00, 0xFE00, 0xFF00};
 int append_bits(char *out, int ol, unsigned int code, int clen, byte state) {
 
    byte cur_bit;
@@ -200,7 +200,7 @@ int append_bits(char *out, int ol, unsigned int code, int clen, byte state) {
    while (clen > 0) {
      cur_bit = ol % 8;
      blen = (clen > 8 ? 8 : clen);
-     a_byte = (code & mask[blen - 1]) >> 8;
+     a_byte = (code & us_mask[blen - 1]) >> 8;
      a_byte >>= cur_bit;
      if (blen + cur_bit > 8)
         blen = (8 - cur_bit);
@@ -346,7 +346,7 @@ int matchOccurance(const char *in, int len, int l, char *out, int *ol, byte *sta
   return -l;
 }
 
-int matchLine(const char *in, int len, int l, char *out, int *ol, struct lnk_lst *prev_lines, byte *state, byte *is_all_upper) {
+int matchLine(const char *in, int len, int l, char *out, int *ol, struct us_lnk_lst *prev_lines, byte *state, byte *is_all_upper) {
   int last_ol = *ol;
   int last_len = 0;
   int last_dist = 0;
@@ -410,7 +410,7 @@ int matchLine(const char *in, int len, int l, char *out, int *ol, struct lnk_lst
   return -l;
 }
 
-int unishox1_compress(const char *in, int len, char *out, struct lnk_lst *prev_lines) {
+int unishox1_compress(const char *in, int len, char *out, struct us_lnk_lst *prev_lines) {
 
   char *ptr;
   byte bits;
@@ -586,7 +586,7 @@ int unishox1_compress(const char *in, int len, char *out, struct lnk_lst *prev_l
 // First 2 bits 00, Next 3 bits indicate index of code from 0,
 // last 3 bits indicate code length in bits
 //                0,            1,            2,            3,            4,
-char vcode[32] = {2 + (0 << 3), 3 + (3 << 3), 3 + (1 << 3), 4 + (6 << 3), 0,
+char us_vcode[32] = {2 + (0 << 3), 3 + (3 << 3), 3 + (1 << 3), 4 + (6 << 3), 0,
 //                5,            6,            7,            8, 9, 10
                   4 + (4 << 3), 3 + (2 << 3), 4 + (8 << 3), 0, 0,  0,
 //                11,          12, 13,            14, 15
@@ -596,7 +596,7 @@ char vcode[32] = {2 + (0 << 3), 3 + (3 << 3), 3 + (1 << 3), 4 + (6 << 3), 0,
 //                24, 25, 26, 27, 28, 29, 30, 31
                    0, 0,  0,  0,  0,  0,  0,  5 + (10 << 3)};
 //                0,            1,            2, 3,            4, 5, 6, 7,
-char hcode[32] = {1 + (1 << 3), 2 + (0 << 3), 0, 3 + (2 << 3), 0, 0, 0, 5 + (3 << 3),
+char us_hcode[32] = {1 + (1 << 3), 2 + (0 << 3), 0, 3 + (2 << 3), 0, 0, 0, 5 + (3 << 3),
 //                8, 9, 10, 11, 12, 13, 14, 15,
                   0, 0,  0,  0,  0,  0,  0,  5 + (5 << 3),
 //                16, 17, 18, 19, 20, 21, 22, 23
@@ -637,7 +637,7 @@ int32_t getNumFromBits(const char *in, int bit_no, int count) {
 int readCount(const char *in, int *bit_no_p, int len) {
   const byte bit_len[7]   = {5, 2,  7,   9,  12,   16, 17};
   const uint16_t adder[7] = {4, 0, 36, 164, 676, 4772,  0};
-  int idx = getCodeIdx(hcode, in, len, bit_no_p);
+  int idx = getCodeIdx(us_hcode, in, len, bit_no_p);
   if (idx > 6)
     return 0;
   int count = getNumFromBits(in, *bit_no_p, bit_len[idx]) + adder[idx];
@@ -663,7 +663,7 @@ int32_t readUnicode(const char *in, int *bit_no_p, int len) {
     //if (idx == 0)
     //  return 0;
     if (idx == 5) {
-      int idx = getCodeIdx(hcode, in, len, bit_no_p);
+      int idx = getCodeIdx(us_hcode, in, len, bit_no_p);
       return 0x7FFFFF00 + idx;
     }
     if (idx >= 0) {
@@ -695,12 +695,12 @@ void writeUTF8(char *out, int *ol, int uni) {
   }
 }
 
-int decodeRepeat(const char *in, int len, char *out, int ol, int *bit_no, struct lnk_lst *prev_lines) {
+int decodeRepeat(const char *in, int len, char *out, int ol, int *bit_no, struct us_lnk_lst *prev_lines) {
   if (prev_lines) {
     int dict_len = readCount(in, bit_no, len) + NICE_LEN;
     int dist = readCount(in, bit_no, len);
     int ctx = readCount(in, bit_no, len);
-    struct lnk_lst *cur_line = prev_lines;
+    struct us_lnk_lst *cur_line = prev_lines;
     while (ctx--)
       cur_line = cur_line->previous;
     memmove(out + ol, cur_line->data + dist, dict_len);
@@ -714,7 +714,7 @@ int decodeRepeat(const char *in, int len, char *out, int ol, int *bit_no, struct
   return ol;
 }
 
-int unishox1_decompress(const char *in, int len, char *out, struct lnk_lst *prev_lines) {
+int unishox1_decompress(const char *in, int len, char *out, struct us_lnk_lst *prev_lines) {
 
   int dstate;
   int bit_no;
@@ -735,14 +735,14 @@ int unishox1_decompress(const char *in, int len, char *out, struct lnk_lst *prev
     char c = 0;
     byte is_upper = is_all_upper;
     int orig_bit_no = bit_no;
-    v = getCodeIdx(vcode, in, len, &bit_no);
+    v = getCodeIdx(us_vcode, in, len, &bit_no);
     if (v == 199) {
       bit_no = orig_bit_no;
       break;
     }
     h = dstate;
     if (v == 0) {
-      h = getCodeIdx(hcode, in, len, &bit_no);
+      h = getCodeIdx(us_hcode, in, len, &bit_no);
       if (h == 199) {
         bit_no = orig_bit_no;
         break;
@@ -753,13 +753,13 @@ int unishox1_decompress(const char *in, int len, char *out, struct lnk_lst *prev
              is_upper = is_all_upper = 0;
              continue;
            }
-           v = getCodeIdx(vcode, in, len, &bit_no);
+           v = getCodeIdx(us_vcode, in, len, &bit_no);
            if (v == 199) {
              bit_no = orig_bit_no;
              break;
            }
            if (v == 0) {
-              h = getCodeIdx(hcode, in, len, &bit_no);
+              h = getCodeIdx(us_hcode, in, len, &bit_no);
               if (h == 199) {
                 bit_no = orig_bit_no;
                 break;
@@ -781,7 +781,7 @@ int unishox1_decompress(const char *in, int len, char *out, struct lnk_lst *prev
          continue;
       }
       if (h != SHX_SET1) {
-        v = getCodeIdx(vcode, in, len, &bit_no);
+        v = getCodeIdx(us_vcode, in, len, &bit_no);
         if (v == 199) {
           bit_no = orig_bit_no;
           break;
@@ -836,7 +836,7 @@ int unishox1_decompress(const char *in, int len, char *out, struct lnk_lst *prev
       continue;
     }
     if (h < 64 && v < 32)
-      c = sets[h][v];
+      c = us_sets[h][v];
     if (c >= 'a' && c <= 'z') {
       if (is_upper)
         c -= 32;
@@ -1047,7 +1047,7 @@ if (argv == 4 && (strcmp(args[1], "-g") == 0 ||
    }
    tot_len = 0;
    ctot = 0;
-   struct lnk_lst *cur_line = NULL;
+   struct us_lnk_lst *cur_line = NULL;
    fputs("#ifndef __", wfp);
    fputs(args[3], wfp);
    fputs("_UNISHOX1_COMPRESSED__\n", wfp);
@@ -1067,9 +1067,9 @@ if (argv == 4 && (strcmp(args[1], "-g") == 0 ||
       if (is_empty(cbuf))
         continue;
       if (len > 0) {
-        struct lnk_lst *ll;
+        struct us_lnk_lst *ll;
         ll = cur_line;
-        cur_line = (struct lnk_lst *) malloc(sizeof(struct lnk_lst));
+        cur_line = (struct us_lnk_lst *) malloc(sizeof(struct us_lnk_lst));
         cur_line->data = (char *) malloc(len + 1);
         strncpy(cur_line->data, cbuf, len);
         cur_line->previous = ll;

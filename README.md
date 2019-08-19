@@ -2,6 +2,13 @@
 
 This is a C library for compressing short strings.  It was developed to individually compress and decompress small strings. In general compression utilities such as `zip`, `gzip` do not compress short strings well and often expand them. They also use lots of memory which makes them unusable in constrained environments like Arduino.
 
+# Applications
+
+- Compression for low memory devices such as Arduino and ESP8266
+- Compression of Chat application text exchange include Emojis
+- Storing compressed text in database
+- Faster retrieval speed when used as join keys
+
 ![Promo picture](Banner1.png?raw=true)
 
 # How it works
