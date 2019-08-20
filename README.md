@@ -9,7 +9,7 @@ This is a C library for compressing short strings.  It was developed to individu
 - Storing compressed text in database
 - Faster retrieval speed when used as join keys
 
-![Promo video](Banner2.mp4?raw=true)
+![Promo video](Banner2.gif?raw=true)
 
 # How it works
 
