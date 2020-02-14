@@ -55,6 +55,13 @@ Unishox supports the entire Unicode character set.  As of now it supports UTF-8 
 
 For Binary symbols (ASCII 0 to 31 and 128 to 255), it actually expands the input size.  This is expected to be addressed in future versions.
 
+# Projects that use Unishox
+
+- [https://github.com/siara-cc/Unishox_Arduino_Progmem_lib](Unishox Compression Library for Arduino Progmem)
+- [https://github.com/siara-cc/Unishox_Sqlite_UDF](Sqlite3 User Defined Function as loadable extension)
+- [https://github.com/siara-cc/esp32_arduino_sqlite3_lib](Sqlite3 Library for ESP32)
+- [https://github.com/siara-cc/esp_arduino_sqlite3_lib](Sqlite3 Library for ESP8266)
+
 # Issues
 
 In case of any issues, please email the Author (Arundale Ramanathan) at arun@siara.cc or create GitHub issue.
