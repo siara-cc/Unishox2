@@ -61,6 +61,7 @@ For Binary symbols (ASCII 0 to 31 and 128 to 255), it actually expands the input
 - [Sqlite3 User Defined Function as loadable extension](https://github.com/siara-cc/Unishox_Sqlite_UDF)
 - [Sqlite3 Library for ESP32](https://github.com/siara-cc/esp32_arduino_sqlite3_lib)
 - [Sqlite3 Library for ESP8266](https://github.com/siara-cc/esp_arduino_sqlite3_lib)
+- [Port of this library to Python and C++ by Stephan Hadinger for Tasmota](https://github.com/arendst/Tasmota/tree/development/lib/Unishox-1.0-shadinger)
 
 # Issues
 
