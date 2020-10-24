@@ -48,7 +48,7 @@ byte usx_sets[][28] = {{  0, ' ', 'e', 't', 'a', 'o', 'i', 'n',
 
 //                       Alpha,  Sym, Num,  Dict, Delta
 byte usx_hcodes[]     = { 0x00, 0x40, 0xE0, 0x80,  0xC0};
-byte usx_hcode_lens[] = {    2,    2,    3,     3,    2};
+byte usx_hcode_lens[] = {    2,    2,    3,    2,     3};
 byte usx_vcodes[]   = { 0x00, 0x40, 0x60, 0x80, 0x90, 0xA0, 0xB0,
                         0xC0, 0xD0, 0xD8, 0xE0, 0xE4, 0xE8, 0xEC,
                         0xEE, 0xF0, 0xF2, 0xF4, 0xF6, 0xF7, 0xF8,
@@ -61,11 +61,11 @@ byte usx_vcode_lens[] = {  2,    3,    3,    4,    4,    4,    4,
 // Stores position of letter in usx_sets.
 // First 3 bits - position in usx_hcodes
 // Next  5 bits - position in usx_vcodes
-byte usx_vcode_94[94];
+byte usx_code_94[94];
 
 char *usx_cfg_seq[] = {"\": \"", "\": ", "</", "=\"", "\\", "://"};
 byte usx_cfg_len[] = {4, 2, 2, 2, 2, 3};
-byte usx_cfg_codes[] = {(1 << 3) + 25, (1 << 3) + 26, (1 << 3) + 27, (4 << 3) + 23, (4 << 3) + 24, (4 << 3) + 25};
+byte usx_cfg_codes[] = {(1 << 3) + 25, (1 << 3) + 26, (1 << 3) + 27, (2 << 3) + 23, (2 << 3) + 24, (2 << 3) + 25};
 
 const int UTF8_MASK[] = {0xE0, 0xF0, 0xF8};
 const int UTF8_PREFIX[] = {0xC0, 0xE0, 0xF0};
@@ -78,12 +78,12 @@ byte lookup[65536];
 #define NICE_LEN 5
 
 #define RPT_CODE 26
-#define TERM_CODE ((4 << 5) + 27)
+#define TERM_CODE ((2 << 5) + 27)
 #define LF_CODE ((1 << 5) + 7)
 #define CRLF_CODE ((1 << 5) + 8)
 #define CR_CODE ((1 << 5) + 22)
 #define TAB_CODE  ((1 << 5) + 14)
-#define NUM_SPC_CODE ((4 << 5) + 17)
+#define NUM_SPC_CODE ((2 << 5) + 17)
 
 #define UNI_STATE_SPL_CODE 0xF8
 #define UNI_STATE_SPL_CODE_LEN 5
@@ -99,16 +99,15 @@ byte is_inited = 0;
 void init_coder() {
   if (is_inited)
     return;
-  memset(usx_vcode_94, '\0', sizeof(usx_vcode_94));
+  memset(usx_code_94, '\0', sizeof(usx_code_94));
   for (int i = 0; i < 3; i++) {
     for (int j = 0; j < 28; j++) {
       byte c = usx_sets[i][j];
-      byte hpos = (i == 2 ? 4 : i);
       if (c != 0 && c != 32) {
-        usx_vcode_94[c - USX_OFFSET_94] = (hpos << 5) + j;
-        printf("%c/%c: %d, ", c, c - USX_OFFSET_94, usx_vcode_94[c - USX_OFFSET_94]);
+        usx_code_94[c - USX_OFFSET_94] = (i << 5) + j;
+        printf("%c/%c: %d, ", c, c - USX_OFFSET_94, usx_code_94[c - USX_OFFSET_94]);
         if (c >= 'a' && c <= 'z')
-          usx_vcode_94[c - USX_OFFSET_94 - ('a' - 'A')] = (hpos << 5) + j;
+          usx_code_94[c - USX_OFFSET_94 - ('a' - 'A')] = (i << 5) + j;
       }
     }
   }
@@ -149,6 +148,32 @@ int append_switch_code(char *out, int ol, byte state) {
   } else
     ol = append_bits(out, ol, SW_CODE, SW_CODE_LEN);
   return ol;
+}
+
+int append_code(char *out, int ol, byte code, byte *state) {
+  byte hcode = code >> 5;
+  byte vcode = code & 0x1F;
+  switch (hcode) {
+    case USX_ALPHA:
+      if (*state != USX_ALPHA) {
+        ol = append_switch_code(out, ol, *state);
+        ol = append_bits(out, ol, usx_hcodes[USX_ALPHA], usx_hcode_lens[USX_ALPHA]);
+        *state = USX_ALPHA;
+      }
+      break;
+    case USX_SYM:
+      ol = append_switch_code(out, ol, *state);
+      ol = append_bits(out, ol, usx_hcodes[USX_SYM], usx_hcode_lens[USX_SYM]);
+      break;
+    case USX_NUM:
+      if (*state != USX_NUM) {
+        ol = append_switch_code(out, ol, *state);
+        ol = append_bits(out, ol, usx_hcodes[USX_NUM], usx_hcode_lens[USX_NUM]);
+        if (usx_sets[hcode][vcode] >= '0' && usx_sets[hcode][vcode] <= '9')
+          *state = USX_NUM;
+      }
+  }
+  return append_bits(out, ol, usx_vcodes[vcode], usx_vcode_lens[vcode]);
 }
 
 int encodeCount(char *out, int ol, int count) {
@@ -441,11 +466,6 @@ int unishox1_compress(const char *in, int len, char *out, struct us_lnk_lst *pre
           is_all_upper = 1;
         }
       }
-      if (state != USX_NUM && c_in >= '0' && c_in <= '9') {
-        ol = append_switch_code(out, ol, state);
-        ol = append_bits(out, ol, usx_hcodes[USX_NUM], usx_hcode_lens[USX_NUM]);
-        state = USX_NUM;
-      }
       c_in -= 32;
       if (is_all_upper && is_upper)
         c_in += 32;
@@ -456,8 +476,7 @@ int unishox1_compress(const char *in, int len, char *out, struct us_lnk_lst *pre
           ol = append_bits(out, ol, usx_vcodes[1], usx_vcode_lens[1]);
       } else {
         c_in--;
-        byte vcode = usx_vcode_94[c_in];
-        ol = append_bits(out, ol, usx_vcodes[vcode & 0x1F], usx_vcode_lens[vcode & 0x1F]);
+        ol = append_code(out, ol, usx_code_94[c_in], &state);
       }
     } else
     if (c_in == 13 && c_next == 10) {
@@ -581,7 +600,7 @@ int readHCodeIdx(const char *in, int len, int *bit_no_p) {
   if (char_pos < len) {
     byte code = read8bitCode(in, len, bit_no_p, char_pos);
     for (int code_pos = 0; code_pos < 5; code_pos++) {
-      if ((code & len_masks[usx_hcode_lens[code_pos]]) == usx_hcodes[code_pos]) {
+      if ((code & len_masks[usx_hcode_lens[code_pos] - 1]) == usx_hcodes[code_pos]) {
         *bit_no_p += usx_hcode_lens[code_pos];
         return code_pos;
       }
@@ -593,8 +612,13 @@ int readHCodeIdx(const char *in, int len, int *bit_no_p) {
 // TODO: Last value check.. Also len check in readBit
 int getStepCodeIdx(const char *in, int len, int *bit_no_p) {
   int idx = 0;
-  while (readBit(in, *bit_no_p))
+  while (readBit(in, *bit_no_p)) {
     idx++;
+    (*bit_no_p)++;
+    if (idx == 4)
+      break;
+  }
+  (*bit_no_p)++;
   return idx;
 }
 
@@ -608,8 +632,8 @@ int32_t getNumFromBits(const char *in, int bit_no, int count) {
 }
 
 int readCount(const char *in, int *bit_no_p, int len) {
-  const byte bit_len[7]   = {5, 2,  7,   9,  12,   16, 17};
-  const uint16_t adder[7] = {4, 0, 36, 164, 676, 4772,  0};
+  const byte bit_len[7]   = {2, 5,  7,   9,  12,   16, 17};
+  const uint16_t adder[7] = {0, 4, 36, 164, 676, 4772,  0};
   int idx = getStepCodeIdx(in, len, bit_no_p);
   if (idx > 6)
     return 0;
@@ -727,7 +751,8 @@ int unishox1_decompress(const char *in, int len, char *out, struct us_lnk_lst *p
       }
       if (dstate == USX_DELTA && h == USX_DELTA)
         continue;
-    }
+    } else
+      h = dstate;
     char c = 0;
     byte is_upper = is_all_upper;
     v = readVCodeIdx(in, len, &bit_no);
@@ -736,8 +761,10 @@ int unishox1_decompress(const char *in, int len, char *out, struct us_lnk_lst *p
       break;
     }
     if (v == 0) {
+      if (bit_no >= len)
+        break;
       h = readHCodeIdx(in, len, &bit_no);
-      if (h == 99) {
+      if (h == 99 || bit_no >= len) {
         bit_no = orig_bit_no;
         break;
       }
@@ -778,7 +805,8 @@ int unishox1_decompress(const char *in, int len, char *out, struct us_lnk_lst *p
         //printf("Code: %d\n", prev_uni);
         //printf("BitNo: %d\n", bit_no);
         continue;
-      }
+      } else
+        v = readVCodeIdx(in, len, &bit_no);
     }
     // TODO: Binary    out[ol++] = readCount(in, &bit_no, len);
     if (h < 3 && v < 28)
@@ -1083,7 +1111,7 @@ if (argv == 4 && (strcmp(args[1], "-g") == 0 ||
 } else
 if (argv == 2) {
    len = strlen(args[1]);
-   //printf("Len:%ld\n", len);
+   printf("String: %s, Len:%ld\n", args[1], len);
    //print_string_as_hex(args[1], len);
    memset(cbuf, 0, sizeof(cbuf));
    ctot = unishox1_compress(args[1], len, cbuf, NULL);
