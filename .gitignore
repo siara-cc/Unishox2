@@ -29,8 +29,14 @@ Html.h
 *.shox
 *.bz2
 *.lzma
+*.usx
+*.dsx
 utf8samples/*.gz
 utf8samples/*.zip
 utf8samples/*.shox
 utf8samples/*.bz2
 Banner4.odp
+test_unishox
+test_unishox1
+test_unishox2
+

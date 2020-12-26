@@ -563,7 +563,7 @@ int unishox1_compress(const char *in, int len, char *out, struct us_lnk_lst *pre
           state = SHX_STATE_1;
           ol = append_bits(out, ol, BACK_FROM_UNI_CODE, BACK_FROM_UNI_CODE_LEN, state);
         }
-        printf("Bin:%d:%x\n", (unsigned char) c_in, (unsigned char) c_in);
+        //printf("Bin:%d:%x\n", (unsigned char) c_in, (unsigned char) c_in);
         ol = append_bits(out, ol, BIN_CODE, BIN_CODE_LEN, state);
         ol = encodeCount(out, ol, (unsigned char) c_in);
       }
@@ -955,6 +955,32 @@ double timedifference(uint32_t t0, uint32_t t1) {
     return ret;
 }
 
+int test_ushx_cd(char *input) {
+
+  char cbuf[200];
+  char dbuf[250];
+  int len = strlen(input);
+  int clen = unishox1_compress(input, len, cbuf, NULL);
+  int dlen = unishox1_decompress(cbuf, clen, dbuf, NULL);
+  dbuf[dlen] = '\0';
+  float perc;
+  if (dlen != len) {
+    printf("Fail len: %d, %d:\n%s\n%s\n", len, dlen, input, dbuf);
+    return 0;
+  }
+  if (strncmp(input, dbuf, len)) {
+    printf("Fail cmp:\n%s\n%s\n", input, dbuf);
+    return 0;
+  }
+  perc = (len - clen);
+  perc /= len;
+  perc *= 100;
+  printf("%s: %d/%d=", input, clen, len);
+  printf("%.2f%%\n", perc);
+  return 1;
+
+}
+
 int main(int argv, char *args[]) {
 
 char cbuf[1024];
@@ -1132,6 +1158,203 @@ if (argv == 4 && (strcmp(args[1], "-g") == 0 ||
    snprintf(short_buf, sizeof(short_buf), "#define %s_max_len %d\n", args[3], max_len);
    fputs(short_buf, wfp);
    fputs("#endif\n", wfp);
+} else
+if (argv == 2 && strcmp(args[1], "-t") == 0) {
+
+    // Basic
+    if (!test_ushx_cd("Hello")) return 1;
+    if (!test_ushx_cd("Hello World")) return 1;
+    if (!test_ushx_cd("The quick brown fox jumped over the lazy dog")) return 1;
+    if (!test_ushx_cd("HELLO WORLD")) return 1;
+    if (!test_ushx_cd("HELLO WORLD HELLO WORLD")) return 1;
+
+    // Numbers
+    if (!test_ushx_cd("Hello1")) return 1;
+    if (!test_ushx_cd("Hello1 World2")) return 1;
+    if (!test_ushx_cd("Hello123")) return 1;
+    if (!test_ushx_cd("12345678")) return 1;
+    if (!test_ushx_cd("12345678 12345678")) return 1;
+    if (!test_ushx_cd("HELLO WORLD 1234 hello world12")) return 1;
+    if (!test_ushx_cd("HELLO 234 WORLD")) return 1;
+    if (!test_ushx_cd("9 HELLO, WORLD")) return 1;
+    if (!test_ushx_cd("H1e2l3l4o5 w6O7R8L9D")) return 1;
+    if (!test_ushx_cd("8+80=88")) return 1;
+
+    // Symbols
+    if (!test_ushx_cd("~!@#$%^&*()_+=-`;'\\|\":,./?><")) return 1;
+    if (!test_ushx_cd("if (!test_ushx_cd(\"H1e2l3l4o5 w6O7R8L9D\")) return 1;")) return 1;
+
+    // Repeat
+    if (!test_ushx_cd("-----------------///////////////")) return 1;
+    if (!test_ushx_cd("-----------------Hello World1111111111112222222abcdef12345abcde1234_////////Hello World///////")) return 1;
+
+    if (!test_ushx_cd("Cada buhonero alaba sus agujas. - A peddler praises his needles (wares).")) return 1;
+    if (!test_ushx_cd("Cada gallo canta en su muladar. - Each rooster sings on its dung-heap.")) return 1;
+    if (!test_ushx_cd("Cada martes tiene su domingo. - Each Tuesday has its Sunday.")) return 1;
+    if (!test_ushx_cd("Cada uno habla de la feria como le va en ella. - Our way of talking about things reflects our relevant experience, good or bad.")) return 1;
+    if (!test_ushx_cd("Dime con quien andas y te diré quién eres.. - Tell me who you walk with, and I will tell you who you are.")) return 1;
+    if (!test_ushx_cd("Donde comen dos, comen tres. - You can add one person more in any situation you are managing.")) return 1;
+    if (!test_ushx_cd("El amor es ciego. - Love is blind")) return 1;
+    if (!test_ushx_cd("El amor todo lo iguala. - Love smoothes life out.")) return 1;
+    if (!test_ushx_cd("El tiempo todo lo cura. - Time cures all.")) return 1;
+    if (!test_ushx_cd("La avaricia rompe el saco. - Greed bursts the sack.")) return 1;
+    if (!test_ushx_cd("La cara es el espejo del alma. - The face is the mirror of the soul.")) return 1;
+    if (!test_ushx_cd("La diligencia es la madre de la buena ventura. - Diligence is the mother of good fortune.")) return 1;
+    if (!test_ushx_cd("La fe mueve montañas. - Faith moves mountains.")) return 1;
+    if (!test_ushx_cd("La mejor palabra siempre es la que queda por decir. - The best word is the one left unsaid.")) return 1;
+    if (!test_ushx_cd("La peor gallina es la que más cacarea. - The worst hen is the one that clucks the most.")) return 1;
+    if (!test_ushx_cd("La sangre sin fuego hierve. - Blood boils without fire.")) return 1;
+    if (!test_ushx_cd("La vida no es un camino de rosas. - Life is not a path of roses.")) return 1;
+    if (!test_ushx_cd("Las burlas se vuelven veras. - Bad jokes become reality.")) return 1;
+    if (!test_ushx_cd("Las desgracias nunca vienen solas. - Misfortunes never come one at a time.")) return 1;
+    if (!test_ushx_cd("Lo comido es lo seguro. - You can only be really certain of what is already in your belly.")) return 1;
+    if (!test_ushx_cd("Los años no pasan en balde. - Years don't pass in vain.")) return 1;
+    if (!test_ushx_cd("Los celos son malos consejeros. - Jealousy is a bad counsellor.")) return 1;
+    if (!test_ushx_cd("Los tiempos cambian. - Times change.")) return 1;
+    if (!test_ushx_cd("Mañana será otro día. - Tomorrow will be another day.")) return 1;
+    if (!test_ushx_cd("Ningún jorobado ve su joroba. - No hunchback sees his own hump.")) return 1;
+    if (!test_ushx_cd("No cantan dos gallos en un gallinero. - Two roosters do not crow in a henhouse.")) return 1;
+    if (!test_ushx_cd("No hay harina sin salvado. - No flour without bran.")) return 1;
+    if (!test_ushx_cd("No por mucho madrugar, amanece más temprano.. - No matter if you rise early because it does not sunrise earlier.")) return 1;
+    if (!test_ushx_cd("No se puede hacer tortilla sin romper los huevos. - One can't make an omelette without breaking eggs.")) return 1;
+    if (!test_ushx_cd("No todas las verdades son para dichas. - Not every truth should be said.")) return 1;
+    if (!test_ushx_cd("No todo el monte es orégano. - The whole hillside is not covered in spice.")) return 1;
+    if (!test_ushx_cd("Nunca llueve a gusto de todos. - It never rains to everyone's taste.")) return 1;
+    if (!test_ushx_cd("Perro ladrador, poco mordedor.. - A dog that barks often seldom bites.")) return 1;
+    if (!test_ushx_cd("Todos los caminos llevan a Roma. - All roads lead to Rome.")) return 1;
+
+    // Unicode
+    if (!test_ushx_cd("案ずるより産むが易し。 - Giving birth to a baby is easier than worrying about it.")) return 1;
+    if (!test_ushx_cd("出る杭は打たれる。 - The stake that sticks up gets hammered down.")) return 1;
+    if (!test_ushx_cd("知らぬが仏。 - Not knowing is Buddha. - Ignorance is bliss.")) return 1;
+    if (!test_ushx_cd("見ぬが花。 - Not seeing is a flower. - Reality can't compete with imagination.")) return 1;
+    if (!test_ushx_cd("花は桜木人は武士 - Of flowers, the cherry blossom; of men, the warrior.")) return 1;
+
+    if (!test_ushx_cd("小洞不补，大洞吃苦 - A small hole not mended in time will become a big hole much more difficult to mend.")) return 1;
+    if (!test_ushx_cd("读万卷书不如行万里路 - Reading thousands of books is not as good as traveling thousands of miles")) return 1;
+    if (!test_ushx_cd("福无重至,祸不单行 - Fortune does not come twice. Misfortune does not come alone.")) return 1;
+    if (!test_ushx_cd("风向转变时,有人筑墙,有人造风车 - When the wind changes, some people build walls and have artificial windmills.")) return 1;
+    if (!test_ushx_cd("父债子还 - Father's debt, son to give back.")) return 1;
+    if (!test_ushx_cd("害人之心不可有 - Do not harbour intentions to hurt others.")) return 1;
+    if (!test_ushx_cd("今日事，今日毕 - Things of today, accomplished today.")) return 1;
+    if (!test_ushx_cd("空穴来风,未必无因 - Where there's smoke, there's fire.")) return 1;
+    if (!test_ushx_cd("良药苦口 - Good medicine tastes bitter.")) return 1;
+    if (!test_ushx_cd("人算不如天算 - Man proposes and God disposes")) return 1;
+    if (!test_ushx_cd("师傅领进门，修行在个人 - Teachers open the door. You enter by yourself.")) return 1;
+    if (!test_ushx_cd("授人以鱼不如授之以渔 - Teach a man to take a fish is not equal to teach a man how to fish.")) return 1;
+    if (!test_ushx_cd("树倒猢狲散 - When the tree falls, the monkeys scatter.")) return 1;
+    if (!test_ushx_cd("水能载舟，亦能覆舟 - Not only can water float a boat, it can sink it also.")) return 1;
+    if (!test_ushx_cd("朝被蛇咬，十年怕井绳 - Once bitten by a snake for a snap dreads a rope for a decade.")) return 1;
+    if (!test_ushx_cd("一分耕耘，一分收获 - If one does not plow, there will be no harvest.")) return 1;
+    if (!test_ushx_cd("有钱能使鬼推磨 - If you have money you can make the devil push your grind stone.")) return 1;
+    if (!test_ushx_cd("一失足成千古恨，再回头已百年身 - A single slip may cause lasting sorrow.")) return 1;
+    if (!test_ushx_cd("自助者天助 - Those who help themselves, God will help.")) return 1;
+    if (!test_ushx_cd("早起的鸟儿有虫吃 - Early bird gets the worm.")) return 1;
+    if (!test_ushx_cd("{\"menu\": {\n  \"id\": \"file\",\n  \"value\": \"File\",\n  \"popup\": {\n    \"menuitem\": [\n      {\"value\": \"New\", \"onclick\": \"CreateNewDoc()\"},\n      {\"value\": \"Open\", \"onclick\": \"OpenDoc()\"},\n      {\"value\": \"Close\", \"onclick\": \"CloseDoc()\"}\n    ]\n  }\n}}")) return 1;
+
+    // English
+    if (!test_ushx_cd("Beauty is not in the face. Beauty is a light in the heart.")) return 1;
+    // Spanish
+    if (!test_ushx_cd("La belleza no está en la cara. La belleza es una luz en el corazón.")) return 1;
+    // French
+    if (!test_ushx_cd("La beauté est pas dans le visage. La beauté est la lumière dans le coeur.")) return 1;
+    // Portugese
+    if (!test_ushx_cd("A beleza não está na cara. A beleza é a luz no coração.")) return 1;
+    // Dutch
+    if (!test_ushx_cd("Schoonheid is niet in het gezicht. Schoonheid is een licht in het hart.")) return 1;
+
+    // German
+    if (!test_ushx_cd("Schönheit ist nicht im Gesicht. Schönheit ist ein Licht im Herzen.")) return 1;
+    // Spanish
+    if (!test_ushx_cd("La belleza no está en la cara. La belleza es una luz en el corazón.")) return 1;
+    // French
+    if (!test_ushx_cd("La beauté est pas dans le visage. La beauté est la lumière dans le coeur.")) return 1;
+    // Italian
+    if (!test_ushx_cd("La bellezza non è in faccia. La bellezza è la luce nel cuore.")) return 1;
+    // Swedish
+    if (!test_ushx_cd("Skönhet är inte i ansiktet. Skönhet är ett ljus i hjärtat.")) return 1;
+    // Romanian
+    if (!test_ushx_cd("Frumusețea nu este în față. Frumusețea este o lumină în inimă.")) return 1;
+    // Ukranian
+    if (!test_ushx_cd("Краса не в особі. Краса - це світло в серці.")) return 1;
+    // Greek
+    if (!test_ushx_cd("Η ομορφιά δεν είναι στο πρόσωπο. Η ομορφιά είναι ένα φως στην καρδιά.")) return 1;
+    // Turkish
+    if (!test_ushx_cd("Güzellik yüzünde değil. Güzellik, kalbin içindeki bir ışıktır.")) return 1;
+    // Polish
+    if (!test_ushx_cd("Piękno nie jest na twarzy. Piękno jest światłem w sercu.")) return 1;
+
+    // Africans
+    if (!test_ushx_cd("Skoonheid is nie in die gesig nie. Skoonheid is 'n lig in die hart.")) return 1;
+    // Swahili
+    if (!test_ushx_cd("Beauty si katika uso. Uzuri ni nuru moyoni.")) return 1;
+    // Zulu
+    if (!test_ushx_cd("Ubuhle abukho ebusweni. Ubuhle bungukukhanya enhliziyweni.")) return 1;
+    // Somali
+    if (!test_ushx_cd("Beauty ma aha in wajiga. Beauty waa iftiin ah ee wadnaha.")) return 1;
+
+    // Russian
+    if (!test_ushx_cd("Красота не в лицо. Красота - это свет в сердце.")) return 1;
+    // Arabic
+    if (!test_ushx_cd("الجمال ليس في الوجه. الجمال هو النور الذي في القلب.")) return 1;
+    // Persian
+    if (!test_ushx_cd("زیبایی در چهره نیست. زیبایی نور در قلب است.")) return 1;
+    // Pashto
+    if (!test_ushx_cd("ښکلا په مخ کې نه ده. ښکلا په زړه کی یوه رڼا ده.")) return 1;
+    // Azerbaijani
+    if (!test_ushx_cd("Gözəllik üzdə deyil. Gözəllik qəlbdə bir işıqdır.")) return 1;
+    // Uzbek
+    if (!test_ushx_cd("Go'zallik yuzida emas. Go'zallik - qalbdagi nur.")) return 1;
+    // Kurdish
+    if (!test_ushx_cd("Bedewî ne di rû de ye. Bedewî di dil de ronahiyek e.")) return 1;
+    // Urdu
+    if (!test_ushx_cd("خوبصورتی چہرے میں نہیں ہے۔ خوبصورتی دل میں روشنی ہے۔")) return 1;
+
+    // Hindi
+    if (!test_ushx_cd("सुंदरता चेहरे में नहीं है। सौंदर्य हृदय में प्रकाश है।")) return 1;
+    // Bangla
+    if (!test_ushx_cd("সৌন্দর্য মুখে নেই। সৌন্দর্য হৃদয় একটি আলো।")) return 1;
+    // Punjabi
+    if (!test_ushx_cd("ਸੁੰਦਰਤਾ ਚਿਹਰੇ ਵਿੱਚ ਨਹੀਂ ਹੈ. ਸੁੰਦਰਤਾ ਦੇ ਦਿਲ ਵਿਚ ਚਾਨਣ ਹੈ.")) return 1;
+    // Telugu
+    if (!test_ushx_cd("అందం ముఖంలో లేదు. అందం హృదయంలో ఒక కాంతి.")) return 1;
+    // Tamil
+    if (!test_ushx_cd("அழகு முகத்தில் இல்லை. அழகு என்பது இதயத்தின் ஒளி.")) return 1;
+    // Marathi
+    if (!test_ushx_cd("सौंदर्य चेहरा नाही. सौंदर्य हे हृदयातील एक प्रकाश आहे.")) return 1;
+    // Kannada
+    if (!test_ushx_cd("ಸೌಂದರ್ಯವು ಮುಖದ ಮೇಲೆ ಇಲ್ಲ. ಸೌಂದರ್ಯವು ಹೃದಯದಲ್ಲಿ ಒಂದು ಬೆಳಕು.")) return 1;
+    // Gujarati
+    if (!test_ushx_cd("સુંદરતા ચહેરા પર નથી. સુંદરતા હૃદયમાં પ્રકાશ છે.")) return 1;
+    // Malayalam
+    if (!test_ushx_cd("സൗന്ദര്യം മുഖത്ത് ഇല്ല. സൗന്ദര്യം ഹൃദയത്തിലെ ഒരു പ്രകാശമാണ്.")) return 1;
+    // Nepali
+    if (!test_ushx_cd("सौन्दर्य अनुहारमा छैन। सौन्दर्य मुटुको उज्यालो हो।")) return 1;
+    // Sinhala
+    if (!test_ushx_cd("රූපලාවන්ය මුහුණේ නොවේ. රූපලාවන්ය හදවත තුළ ඇති ආලෝකය වේ.")) return 1;
+
+    // Chinese
+    if (!test_ushx_cd("美是不是在脸上。 美是心中的亮光。")) return 1;
+    // Javanese
+    if (!test_ushx_cd("Beauty ora ing pasuryan. Kaendahan iku cahya ing sajroning ati.")) return 1;
+    // Japanese
+    if (!test_ushx_cd("美は顔にありません。美は心の中の光です。")) return 1;
+    // Filipino
+    if (!test_ushx_cd("Ang kagandahan ay wala sa mukha. Ang kagandahan ay ang ilaw sa puso.")) return 1;
+    // Korean
+    if (!test_ushx_cd("아름다움은 얼굴에 없습니다。아름다움은 마음의 빛입니다。")) return 1;
+    // Vietnam
+    if (!test_ushx_cd("Vẻ đẹp không nằm trong khuôn mặt. Vẻ đẹp là ánh sáng trong tim.")) return 1;
+    // Thai
+    if (!test_ushx_cd("ความงามไม่ได้อยู่ที่ใบหน้า ความงามเป็นแสงสว่างในใจ")) return 1;
+    // Burmese
+    if (!test_ushx_cd("အလှအပမျက်နှာပေါ်မှာမဟုတ်ပါဘူး။ အလှအပစိတ်နှလုံးထဲမှာအလင်းကိုဖြစ်ပါတယ်။")) return 1;
+    // Malay
+    if (!test_ushx_cd("Kecantikan bukan di muka. Kecantikan adalah cahaya di dalam hati.")) return 1;
+
+    // Emoji
+    if (!test_ushx_cd("🤣🤣🤣🤣🤣🤣🤣🤣🤣🤣🤣")) return 1;
+
 } else
 if (argv == 2) {
    len = strlen(args[1]);
