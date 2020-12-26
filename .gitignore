@@ -1,5 +1,6 @@
 *.h
 !unishox1.h
+!unishox2.h
 ._*
 .vscode*
 a.out
