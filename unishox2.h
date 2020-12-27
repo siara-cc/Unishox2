@@ -67,7 +67,7 @@
 #define USX_HCODES_NO_UNI {0x00, 0x40, 0x80, 0x00, 0xC0}
 #define USX_HCODE_LENS_NO_UNI {2, 2, 2, 0, 2}
 
-#define USX_FREQ_SEQ_DFLT {"\": \"", "\": ", "</", "=\"", "\\", "https://"}
+#define USX_FREQ_SEQ_DFLT {"\": \"", "\": ", "</", "=\"", "\":\"", "://"}
 #define USX_FREQ_SEQ_TXT {" the ", " and ", "tion", " with", "ing", "ment"}
 #define USX_FREQ_SEQ_URL {"https://", "www.", ".com", "http://", ".org", ".net"}
 

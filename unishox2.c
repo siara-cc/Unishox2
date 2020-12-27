@@ -138,6 +138,8 @@ int append_switch_code(char *out, int ol, byte state) {
 int append_code(char *out, int ol, byte code, byte *state, const byte usx_hcodes[], const byte usx_hcode_lens[]) {
   byte hcode = code >> 5;
   byte vcode = code & 0x1F;
+  if (!usx_hcode_lens[hcode] && hcode != USX_ALPHA)
+    return ol;
   switch (hcode) {
     case USX_ALPHA:
       if (*state != USX_ALPHA) {
@@ -370,7 +372,7 @@ int unishox2_compress(const char *in, int len, char *out, const byte usx_hcodes[
 
     c_in = in[l];
 
-    if (to_match_repeats && l < (len - NICE_LEN + 1)) {
+    if (to_match_repeats && usx_hcode_lens[USX_DICT] && l < (len - NICE_LEN + 1)) {
       if (prev_lines) {
         l = matchLine(in, len, l, out, &ol, prev_lines, &state, usx_hcodes, usx_hcode_lens);
         if (l > 0) {
@@ -394,7 +396,7 @@ int unishox2_compress(const char *in, int len, char *out, const byte usx_hcodes[
       }
     }
 
-    if (l && l < len - 4) {
+    if (l && l < len - 4 && usx_hcode_lens[USX_NUM]) {
       if (c_in == in[l - 1] && c_in == in[l + 1] && c_in == in[l + 2] && c_in == in[l + 3]) {
         int rpt_count = l + 4;
         while (rpt_count < len && in[rpt_count] == c_in)
@@ -408,13 +410,15 @@ int unishox2_compress(const char *in, int len, char *out, const byte usx_hcodes[
       }
     }
 
-    for (int i = 0; i < 6; i++) {
-      int seq_len = strlen(usx_freq_seq[i]);
-      if (len - seq_len > 0 && l < len - seq_len) {
-        if (memcmp(usx_freq_seq[i], in + l, seq_len) == 0) {
-          ol = append_code(out, ol, usx_freq_codes[i], &state, usx_hcodes, usx_hcode_lens);
-          l += seq_len;
-          i = -1;
+    if (usx_freq_seq != NULL) {
+      for (int i = 0; i < 6; i++) {
+        int seq_len = strlen(usx_freq_seq[i]);
+        if (len - seq_len > 0 && l < len - seq_len) {
+          if (memcmp(usx_freq_seq[i], in + l, seq_len) == 0 && usx_hcode_lens[usx_freq_codes[i] >> 5]) {
+            ol = append_code(out, ol, usx_freq_codes[i], &state, usx_hcodes, usx_hcode_lens);
+            l += seq_len;
+            i = -1;
+          }
         }
       }
     }
@@ -521,16 +525,18 @@ int unishox2_compress(const char *in, int len, char *out, const byte usx_hcodes[
         if (uni != 0x3002)
           prev_uni = uni;
       } else {
+        // Encoding Binary characters does not work
         //printf("Bin:%d:%x\n", (unsigned char) c_in, (unsigned char) c_in);
+        uni = c_in;
         ol = encodeUnicode(out, ol, uni, prev_uni);
+        prev_uni = uni;
       }
     }
   }
   int ret = ol/8+(ol%8?1:0);
   if (ol % 8) {
-    if (state == USX_DELTA) {
+    if (state == USX_DELTA)
       ol = append_bits(out, ol, UNI_STATE_SPL_CODE, UNI_STATE_SPL_CODE_LEN);
-    }
     ol = append_code(out, ol, TERM_CODE, &state, usx_hcodes, usx_hcode_lens);
   }
   //printf("\n%ld\n", ol);
@@ -550,10 +556,10 @@ int unishox2_compress_preset(const char *in, int len, char *out, int preset, str
         (const unsigned char[])USX_HCODE_LENS_DFLT, (const char *[])USX_FREQ_SEQ_DFLT, prev_lines);
     case USX_PSET_ALPHA_ONLY:
       return unishox2_compress(in, len, out, (const unsigned char[])USX_HCODES_ALPHA_ONLY, 
-        (const unsigned char[])USX_HCODE_LENS_ALPHA_ONLY, (const char *[])USX_FREQ_SEQ_TXT, prev_lines);
+        (const unsigned char[])USX_HCODE_LENS_ALPHA_ONLY, NULL, prev_lines);
     case USX_PSET_ALPHA_NUM_ONLY:
       return unishox2_compress(in, len, out, (const unsigned char[])USX_HCODES_ALPHA_NUM_ONLY, 
-        (const unsigned char[])USX_HCODE_LENS_ALPHA_NUM_ONLY, (const char *[])USX_FREQ_SEQ_TXT, prev_lines);
+        (const unsigned char[])USX_HCODE_LENS_ALPHA_NUM_ONLY, NULL, prev_lines);
     case USX_PSET_ALPHA_NUM_SYM_ONLY:
       return unishox2_compress(in, len, out, (const unsigned char[])USX_HCODES_ALPHA_NUM_SYM_ONLY, 
         (const unsigned char[])USX_HCODE_LENS_ALPHA_NUM_SYM_ONLY, (const char *[])USX_FREQ_SEQ_DFLT, prev_lines);
@@ -575,6 +581,9 @@ int unishox2_compress_preset(const char *in, int len, char *out, int preset, str
     case USX_PSET_NO_UNI:
       return unishox2_compress(in, len, out, (const unsigned char[])USX_HCODES_NO_UNI, 
         (const unsigned char[])USX_HCODE_LENS_NO_UNI, (const char *[])USX_FREQ_SEQ_DFLT, prev_lines);
+    case USX_PSET_URL:
+      return unishox2_compress(in, len, out, (const unsigned char[])USX_HCODES_DFLT, 
+        (const unsigned char[])USX_HCODE_LENS_DFLT, (const char *[])USX_FREQ_SEQ_URL, prev_lines);
   }
   return 0;
 }
@@ -930,10 +939,10 @@ int unishox2_decompress_preset(const char *in, int len, char *out, int preset, s
         (const unsigned char[])USX_HCODE_LENS_DFLT, (const char *[])USX_FREQ_SEQ_DFLT, prev_lines);
     case USX_PSET_ALPHA_ONLY:
       return unishox2_decompress(in, len, out, (const unsigned char[])USX_HCODES_ALPHA_ONLY, 
-        (const unsigned char[])USX_HCODE_LENS_ALPHA_ONLY, (const char *[])USX_FREQ_SEQ_TXT, prev_lines);
+        (const unsigned char[])USX_HCODE_LENS_ALPHA_ONLY, NULL, prev_lines);
     case USX_PSET_ALPHA_NUM_ONLY:
       return unishox2_decompress(in, len, out, (const unsigned char[])USX_HCODES_ALPHA_NUM_ONLY, 
-        (const unsigned char[])USX_HCODE_LENS_ALPHA_NUM_ONLY, (const char *[])USX_FREQ_SEQ_TXT, prev_lines);
+        (const unsigned char[])USX_HCODE_LENS_ALPHA_NUM_ONLY, NULL, prev_lines);
     case USX_PSET_ALPHA_NUM_SYM_ONLY:
       return unishox2_decompress(in, len, out, (const unsigned char[])USX_HCODES_ALPHA_NUM_SYM_ONLY, 
         (const unsigned char[])USX_HCODE_LENS_ALPHA_NUM_SYM_ONLY, (const char *[])USX_FREQ_SEQ_DFLT, prev_lines);
@@ -955,6 +964,9 @@ int unishox2_decompress_preset(const char *in, int len, char *out, int preset, s
     case USX_PSET_NO_UNI:
       return unishox2_decompress(in, len, out, (const unsigned char[])USX_HCODES_NO_UNI, 
         (const unsigned char[])USX_HCODE_LENS_NO_UNI, (const char *[])USX_FREQ_SEQ_DFLT, prev_lines);
+    case USX_PSET_URL:
+      return unishox2_decompress(in, len, out, (const unsigned char[])USX_HCODES_DFLT, 
+        (const unsigned char[])USX_HCODE_LENS_DFLT, (const char *[])USX_FREQ_SEQ_URL, prev_lines);
   }
   return 0;
 }

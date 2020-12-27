@@ -30,7 +30,7 @@ Html.h
 *.shox
 *.bz2
 *.lzma
-*.usx
+*.us?
 *.dsx
 utf8samples/*.gz
 utf8samples/*.zip
