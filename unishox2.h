@@ -24,10 +24,10 @@
 #define USX_PSET_ALPHA_ONLY 1
 #define USX_PSET_ALPHA_NUM_ONLY 2
 #define USX_PSET_ALPHA_NUM_SYM_ONLY 3
-#define USX_PSET_FAVOUR_ALPHA 4
-#define USX_PSET_FAVOUR_NUM 5
-#define USX_PSET_FAVOUR_SYM 6
-#define USX_PSET_FAVOUR_UMLAUT 7
+#define USX_PSET_FAVOR_ALPHA 4
+#define USX_PSET_FAVOR_NUM 5
+#define USX_PSET_FAVOR_SYM 6
+#define USX_PSET_FAVOR_UMLAUT 7
 #define USX_PSET_NO_DICT 8
 #define USX_PSET_NO_UNI 9
 #define USX_PSET_URL 10
@@ -46,20 +46,20 @@
 #define USX_HCODES_ALPHA_NUM_SYM_ONLY {0x00, 0x80, 0xC0, 0x00, 0x00}
 #define USX_HCODE_LENS_ALPHA_NUM_SYM_ONLY {1, 2, 2, 0, 0}
 
-#define USX_HCODES_FAVOUR_ALPHA {0x00, 0x80, 0xA0, 0xC0, 0xE0}
-#define USX_HCODE_LENS_FAVOUR_ALPHA {1, 3, 3, 3, 3}
+#define USX_HCODES_FAVOR_ALPHA {0x00, 0x80, 0xA0, 0xC0, 0xE0}
+#define USX_HCODE_LENS_FAVOR_ALPHA {1, 3, 3, 3, 3}
 
-#define USX_HCODES_FAVOUR_NUM {0x80, 0xA0, 0xC0, 0xE0, 0x00}
-#define USX_HCODE_LENS_FAVOUR_NUM {3, 3, 3, 3, 1}
+#define USX_HCODES_FAVOR_NUM {0x80, 0xA0, 0xC0, 0xE0, 0x00}
+#define USX_HCODE_LENS_FAVOR_NUM {3, 3, 3, 3, 1}
 
-#define USX_HCODES_FAVOUR_SYM {0x80, 0x00, 0xA0, 0xC0, 0xE0}
-#define USX_HCODE_LENS_FAVOUR_SYM {3, 1, 3, 3, 3}
+#define USX_HCODES_FAVOR_SYM {0x80, 0x00, 0xA0, 0xC0, 0xE0}
+#define USX_HCODE_LENS_FAVOR_SYM {3, 1, 3, 3, 3}
 
-//#define USX_HCODES_FAVOUR_UMLAUT {0x00, 0x40, 0xE0, 0xC0, 0x80}
-//#define USX_HCODE_LENS_FAVOUR_UMLAUT {2, 2, 3, 3, 2}
+//#define USX_HCODES_FAVOR_UMLAUT {0x00, 0x40, 0xE0, 0xC0, 0x80}
+//#define USX_HCODE_LENS_FAVOR_UMLAUT {2, 2, 3, 3, 2}
 
-#define USX_HCODES_FAVOUR_UMLAUT {0x80,  0xA0, 0xC0, 0xE0, 0x00}
-#define USX_HCODE_LENS_FAVOUR_UMLAUT {3, 3, 3, 3, 1}
+#define USX_HCODES_FAVOR_UMLAUT {0x80,  0xA0, 0xC0, 0xE0, 0x00}
+#define USX_HCODE_LENS_FAVOR_UMLAUT {3, 3, 3, 3, 1}
 
 #define USX_HCODES_NO_DICT {0x00, 0x40, 0x00, 0x80, 0xC0}
 #define USX_HCODE_LENS_NO_DICT {2, 2, 0, 2, 2}
@@ -78,8 +78,10 @@ struct us_lnk_lst {
 
 extern int unishox2_compress_simple(const char *in, int len, char *out);
 extern int unishox2_decompress_simple(const char *in, int len, char *out);
-extern int unishox2_compress_preset(const char *in, int len, char *out, int preset, struct us_lnk_lst *prev_lines);
-extern int unishox2_decompress_preset(const char *in, int len, char *out, int preset, struct us_lnk_lst *prev_lines);
+extern int unishox2_compress_preset(const char *in, int len, char *out, int preset);
+extern int unishox2_decompress_preset(const char *in, int len, char *out, int preset);
+extern int unishox2_compress_preset_lines(const char *in, int len, char *out, int preset, struct us_lnk_lst *prev_lines);
+extern int unishox2_decompress_preset_lines(const char *in, int len, char *out, int preset, struct us_lnk_lst *prev_lines);
 extern int unishox2_compress(const char *in, int len, char *out, 
               const unsigned char usx_hcodes[], const unsigned char usx_hcode_lens[], 
               const char *usx_freq_seq[], struct us_lnk_lst *prev_lines);
