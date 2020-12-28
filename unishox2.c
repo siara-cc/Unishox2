@@ -61,7 +61,7 @@ byte to_match_repeats = 1;
 #if USE_64K_LOOKUP == 1
 byte lookup[65536];
 #endif
-#define NICE_LEN 6
+#define NICE_LEN 5
 
 #define RPT_CODE ((2 << 5) + 26)
 #define TERM_CODE ((2 << 5) + 27)
@@ -545,53 +545,52 @@ int unishox2_compress(const char *in, int len, char *out, const byte usx_hcodes[
 }
 
 int unishox2_compress_simple(const char *in, int len, char *out) {
-  return unishox2_compress(in, len, out, (const unsigned char[])USX_HCODES_DFLT, 
-    (const unsigned char[])USX_HCODE_LENS_DFLT, (const char *[])USX_FREQ_SEQ_DFLT, NULL);
+  return unishox2_compress(in, len, out, USX_HCODES_DFLT, 
+    USX_HCODE_LENS_DFLT, USX_FREQ_SEQ_DFLT, NULL);
 }
 
 int unishox2_compress_preset(const char *in, int len, char *out, int preset) {
   return unishox2_compress_preset_lines(in, len, out, preset, NULL);
 }
 
+
 int unishox2_compress_preset_lines(const char *in, int len, char *out, int preset, struct us_lnk_lst *prev_lines) {
   switch (preset) {
     case 0:
-      return unishox2_compress(in, len, out, (const unsigned char[])USX_HCODES_DFLT, 
-        (const unsigned char[])USX_HCODE_LENS_DFLT, (const char *[])USX_FREQ_SEQ_DFLT, prev_lines);
+      return unishox2_compress(in, len, out, USX_HCODES_DFLT, USX_HCODE_LENS_DFLT, USX_FREQ_SEQ_DFLT, prev_lines);
     case USX_PSET_ALPHA_ONLY:
-      return unishox2_compress(in, len, out, (const unsigned char[])USX_HCODES_ALPHA_ONLY, 
-        (const unsigned char[])USX_HCODE_LENS_ALPHA_ONLY, NULL, prev_lines);
+      return unishox2_compress(in, len, out, USX_HCODES_ALPHA_ONLY, USX_HCODE_LENS_ALPHA_ONLY, NULL, prev_lines);
     case USX_PSET_ALPHA_NUM_ONLY:
-      return unishox2_compress(in, len, out, (const unsigned char[])USX_HCODES_ALPHA_NUM_ONLY, 
-        (const unsigned char[])USX_HCODE_LENS_ALPHA_NUM_ONLY, NULL, prev_lines);
+      return unishox2_compress(in, len, out, USX_HCODES_ALPHA_NUM_ONLY, USX_HCODE_LENS_ALPHA_NUM_ONLY, NULL, prev_lines);
     case USX_PSET_ALPHA_NUM_SYM_ONLY:
-      return unishox2_compress(in, len, out, (const unsigned char[])USX_HCODES_ALPHA_NUM_SYM_ONLY, 
-        (const unsigned char[])USX_HCODE_LENS_ALPHA_NUM_SYM_ONLY, (const char *[])USX_FREQ_SEQ_DFLT, prev_lines);
+      return unishox2_compress(in, len, out, USX_HCODES_ALPHA_NUM_SYM_ONLY, USX_HCODE_LENS_ALPHA_NUM_SYM_ONLY, USX_FREQ_SEQ_DFLT, prev_lines);
+    case USX_PSET_ALPHA_NUM_SYM_ONLY_TXT:
+      return unishox2_compress(in, len, out, USX_HCODES_ALPHA_NUM_SYM_ONLY, USX_HCODE_LENS_ALPHA_NUM_SYM_ONLY, USX_FREQ_SEQ_TXT, prev_lines);
     case USX_PSET_FAVOR_ALPHA:
-      return unishox2_compress(in, len, out, (const unsigned char[])USX_HCODES_FAVOR_ALPHA, 
-        (const unsigned char[])USX_HCODE_LENS_FAVOR_ALPHA, (const char *[])USX_FREQ_SEQ_TXT, prev_lines);
+      return unishox2_compress(in, len, out, USX_HCODES_FAVOR_ALPHA, USX_HCODE_LENS_FAVOR_ALPHA, USX_FREQ_SEQ_TXT, prev_lines);
     case USX_PSET_FAVOR_NUM:
-      return unishox2_compress(in, len, out, (const unsigned char[])USX_HCODES_FAVOR_NUM, 
-        (const unsigned char[])USX_HCODE_LENS_FAVOR_NUM, (const char *[])USX_FREQ_SEQ_DFLT, prev_lines);
+      return unishox2_compress(in, len, out, USX_HCODES_FAVOR_NUM, USX_HCODE_LENS_FAVOR_NUM, USX_FREQ_SEQ_DFLT, prev_lines);
     case USX_PSET_FAVOR_SYM:
-      return unishox2_compress(in, len, out, (const unsigned char[])USX_HCODES_FAVOR_SYM, 
-        (const unsigned char[])USX_HCODE_LENS_FAVOR_SYM, (const char *[])USX_FREQ_SEQ_DFLT, prev_lines);
+      return unishox2_compress(in, len, out, USX_HCODES_FAVOR_SYM, USX_HCODE_LENS_FAVOR_SYM, USX_FREQ_SEQ_DFLT, prev_lines);
     case USX_PSET_FAVOR_UMLAUT:
-      return unishox2_compress(in, len, out, (const unsigned char[])USX_HCODES_FAVOR_UMLAUT, 
-        (const unsigned char[])USX_HCODE_LENS_FAVOR_UMLAUT, (const char *[])USX_FREQ_SEQ_DFLT, prev_lines);
+      return unishox2_compress(in, len, out, USX_HCODES_FAVOR_UMLAUT, USX_HCODE_LENS_FAVOR_UMLAUT, USX_FREQ_SEQ_DFLT, prev_lines);
     case USX_PSET_NO_DICT:
-      return unishox2_compress(in, len, out, (const unsigned char[])USX_HCODES_NO_DICT, 
-        (const unsigned char[])USX_HCODE_LENS_NO_DICT, (const char *[])USX_FREQ_SEQ_DFLT, prev_lines);
+      return unishox2_compress(in, len, out, USX_HCODES_NO_DICT, USX_HCODE_LENS_NO_DICT, USX_FREQ_SEQ_DFLT, prev_lines);
     case USX_PSET_NO_UNI:
-      return unishox2_compress(in, len, out, (const unsigned char[])USX_HCODES_NO_UNI, 
-        (const unsigned char[])USX_HCODE_LENS_NO_UNI, (const char *[])USX_FREQ_SEQ_DFLT, prev_lines);
+      return unishox2_compress(in, len, out, USX_HCODES_NO_UNI, USX_HCODE_LENS_NO_UNI, USX_FREQ_SEQ_DFLT, prev_lines);
     case USX_PSET_URL:
-      return unishox2_compress(in, len, out, (const unsigned char[])USX_HCODES_DFLT, 
-        (const unsigned char[])USX_HCODE_LENS_DFLT, (const char *[])USX_FREQ_SEQ_URL, prev_lines);
+      return unishox2_compress(in, len, out, USX_HCODES_DFLT, USX_HCODE_LENS_DFLT, USX_FREQ_SEQ_URL, prev_lines);
+    case USX_PSET_JSON:
+      return unishox2_compress(in, len, out, USX_HCODES_DFLT, USX_HCODE_LENS_DFLT, USX_FREQ_SEQ_JSON, prev_lines);
+    case USX_PSET_JSON_NO_UNI:
+      return unishox2_compress(in, len, out, USX_HCODES_NO_UNI, USX_HCODE_LENS_NO_UNI, USX_FREQ_SEQ_JSON, prev_lines);
+    case USX_PSET_XML:
+      return unishox2_compress(in, len, out, USX_HCODES_DFLT, USX_HCODE_LENS_DFLT, USX_FREQ_SEQ_XML, prev_lines);
+    case USX_PSET_HTML:
+      return unishox2_compress(in, len, out, USX_HCODES_DFLT, USX_HCODE_LENS_DFLT, USX_FREQ_SEQ_HTML, prev_lines);
   }
   return 0;
 }
-
 int readBit(const char *in, int bit_no) {
    return in[bit_no >> 3] & (0x80 >> (bit_no % 8));
 }
@@ -932,8 +931,7 @@ int unishox2_decompress(const char *in, int len, char *out, const byte usx_hcode
 }
 
 int unishox2_decompress_simple(const char *in, int len, char *out) {
-  return unishox2_decompress(in, len, out, (const unsigned char[])USX_HCODES_DFLT, 
-    (const unsigned char[])USX_HCODE_LENS_DFLT, (const char *[])USX_FREQ_SEQ_DFLT, NULL);
+  return unishox2_decompress(in, len, out, USX_HCODES_DFLT, USX_HCODE_LENS_DFLT, USX_FREQ_SEQ_DFLT, NULL);
 }
 
 int unishox2_decompress_preset(const char *in, int len, char *out, int preset) {
@@ -943,38 +941,37 @@ int unishox2_decompress_preset(const char *in, int len, char *out, int preset) {
 int unishox2_decompress_preset_lines(const char *in, int len, char *out, int preset, struct us_lnk_lst *prev_lines) {
   switch (preset) {
     case 0:
-      return unishox2_decompress(in, len, out, (const unsigned char[])USX_HCODES_DFLT, 
-        (const unsigned char[])USX_HCODE_LENS_DFLT, (const char *[])USX_FREQ_SEQ_DFLT, prev_lines);
+      return unishox2_decompress(in, len, out, USX_HCODES_DFLT, USX_HCODE_LENS_DFLT, USX_FREQ_SEQ_DFLT, prev_lines);
     case USX_PSET_ALPHA_ONLY:
-      return unishox2_decompress(in, len, out, (const unsigned char[])USX_HCODES_ALPHA_ONLY, 
-        (const unsigned char[])USX_HCODE_LENS_ALPHA_ONLY, NULL, prev_lines);
+      return unishox2_decompress(in, len, out, USX_HCODES_ALPHA_ONLY, USX_HCODE_LENS_ALPHA_ONLY, NULL, prev_lines);
     case USX_PSET_ALPHA_NUM_ONLY:
-      return unishox2_decompress(in, len, out, (const unsigned char[])USX_HCODES_ALPHA_NUM_ONLY, 
-        (const unsigned char[])USX_HCODE_LENS_ALPHA_NUM_ONLY, NULL, prev_lines);
+      return unishox2_decompress(in, len, out, USX_HCODES_ALPHA_NUM_ONLY, USX_HCODE_LENS_ALPHA_NUM_ONLY, NULL, prev_lines);
     case USX_PSET_ALPHA_NUM_SYM_ONLY:
-      return unishox2_decompress(in, len, out, (const unsigned char[])USX_HCODES_ALPHA_NUM_SYM_ONLY, 
-        (const unsigned char[])USX_HCODE_LENS_ALPHA_NUM_SYM_ONLY, (const char *[])USX_FREQ_SEQ_DFLT, prev_lines);
+      return unishox2_decompress(in, len, out, USX_HCODES_ALPHA_NUM_SYM_ONLY, USX_HCODE_LENS_ALPHA_NUM_SYM_ONLY, USX_FREQ_SEQ_DFLT, prev_lines);
+    case USX_PSET_ALPHA_NUM_SYM_ONLY_TXT:
+      return unishox2_decompress(in, len, out, USX_HCODES_ALPHA_NUM_SYM_ONLY, USX_HCODE_LENS_ALPHA_NUM_SYM_ONLY, USX_FREQ_SEQ_TXT, prev_lines);
     case USX_PSET_FAVOR_ALPHA:
-      return unishox2_decompress(in, len, out, (const unsigned char[])USX_HCODES_FAVOR_ALPHA, 
-        (const unsigned char[])USX_HCODE_LENS_FAVOR_ALPHA, (const char *[])USX_FREQ_SEQ_TXT, prev_lines);
+      return unishox2_decompress(in, len, out, USX_HCODES_FAVOR_ALPHA, USX_HCODE_LENS_FAVOR_ALPHA, USX_FREQ_SEQ_TXT, prev_lines);
     case USX_PSET_FAVOR_NUM:
-      return unishox2_decompress(in, len, out, (const unsigned char[])USX_HCODES_FAVOR_NUM, 
-        (const unsigned char[])USX_HCODE_LENS_FAVOR_NUM, (const char *[])USX_FREQ_SEQ_DFLT, prev_lines);
+      return unishox2_decompress(in, len, out, USX_HCODES_FAVOR_NUM, USX_HCODE_LENS_FAVOR_NUM, USX_FREQ_SEQ_DFLT, prev_lines);
     case USX_PSET_FAVOR_SYM:
-      return unishox2_decompress(in, len, out, (const unsigned char[])USX_HCODES_FAVOR_SYM, 
-        (const unsigned char[])USX_HCODE_LENS_FAVOR_SYM, (const char *[])USX_FREQ_SEQ_DFLT, prev_lines);
+      return unishox2_decompress(in, len, out, USX_HCODES_FAVOR_SYM, USX_HCODE_LENS_FAVOR_SYM, USX_FREQ_SEQ_DFLT, prev_lines);
     case USX_PSET_FAVOR_UMLAUT:
-      return unishox2_decompress(in, len, out, (const unsigned char[])USX_HCODES_FAVOR_UMLAUT, 
-        (const unsigned char[])USX_HCODE_LENS_FAVOR_UMLAUT, (const char *[])USX_FREQ_SEQ_DFLT, prev_lines);
+      return unishox2_decompress(in, len, out, USX_HCODES_FAVOR_UMLAUT, USX_HCODE_LENS_FAVOR_UMLAUT, USX_FREQ_SEQ_DFLT, prev_lines);
     case USX_PSET_NO_DICT:
-      return unishox2_decompress(in, len, out, (const unsigned char[])USX_HCODES_NO_DICT, 
-        (const unsigned char[])USX_HCODE_LENS_NO_DICT, (const char *[])USX_FREQ_SEQ_DFLT, prev_lines);
+      return unishox2_decompress(in, len, out, USX_HCODES_NO_DICT, USX_HCODE_LENS_NO_DICT, USX_FREQ_SEQ_DFLT, prev_lines);
     case USX_PSET_NO_UNI:
-      return unishox2_decompress(in, len, out, (const unsigned char[])USX_HCODES_NO_UNI, 
-        (const unsigned char[])USX_HCODE_LENS_NO_UNI, (const char *[])USX_FREQ_SEQ_DFLT, prev_lines);
+      return unishox2_decompress(in, len, out, USX_HCODES_NO_UNI, USX_HCODE_LENS_NO_UNI, USX_FREQ_SEQ_DFLT, prev_lines);
     case USX_PSET_URL:
-      return unishox2_decompress(in, len, out, (const unsigned char[])USX_HCODES_DFLT, 
-        (const unsigned char[])USX_HCODE_LENS_DFLT, (const char *[])USX_FREQ_SEQ_URL, prev_lines);
+      return unishox2_decompress(in, len, out, USX_HCODES_DFLT, USX_HCODE_LENS_DFLT, USX_FREQ_SEQ_URL, prev_lines);
+    case USX_PSET_JSON:
+      return unishox2_decompress(in, len, out, USX_HCODES_DFLT, USX_HCODE_LENS_DFLT, USX_FREQ_SEQ_JSON, prev_lines);
+    case USX_PSET_JSON_NO_UNI:
+      return unishox2_decompress(in, len, out, USX_HCODES_NO_UNI, USX_HCODE_LENS_NO_UNI, USX_FREQ_SEQ_JSON, prev_lines);
+    case USX_PSET_XML:
+      return unishox2_decompress(in, len, out, USX_HCODES_DFLT, USX_HCODE_LENS_DFLT, USX_FREQ_SEQ_XML, prev_lines);
+    case USX_PSET_HTML:
+      return unishox2_decompress(in, len, out, USX_HCODES_DFLT, USX_HCODE_LENS_DFLT, USX_FREQ_SEQ_HTML, prev_lines);
   }
   return 0;
 }

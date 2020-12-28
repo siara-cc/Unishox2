@@ -24,52 +24,60 @@
 #define USX_PSET_ALPHA_ONLY 1
 #define USX_PSET_ALPHA_NUM_ONLY 2
 #define USX_PSET_ALPHA_NUM_SYM_ONLY 3
-#define USX_PSET_FAVOR_ALPHA 4
-#define USX_PSET_FAVOR_NUM 5
-#define USX_PSET_FAVOR_SYM 6
-#define USX_PSET_FAVOR_UMLAUT 7
-#define USX_PSET_NO_DICT 8
-#define USX_PSET_NO_UNI 9
-#define USX_PSET_URL 10
+#define USX_PSET_ALPHA_NUM_SYM_ONLY_TXT 4
+#define USX_PSET_FAVOR_ALPHA 5
+#define USX_PSET_FAVOR_NUM 6
+#define USX_PSET_FAVOR_SYM 7
+#define USX_PSET_FAVOR_UMLAUT 8
+#define USX_PSET_NO_DICT 9
+#define USX_PSET_NO_UNI 10
+#define USX_PSET_URL 11
+#define USX_PSET_JSON 12
+#define USX_PSET_JSON_NO_UNI 13
+#define USX_PSET_XML 14
+#define USX_PSET_HTML 15
 
 //enum {USX_ALPHA = 0, USX_SYM, USX_NUM, USX_DICT, USX_DELTA};
 
-#define USX_HCODES_DFLT {0x00, 0x40, 0xE0, 0x80, 0xC0}
-#define USX_HCODE_LENS_DFLT {2, 2, 3, 2, 3}
+#define USX_HCODES_DFLT (const unsigned char[]){0x00, 0x40, 0xE0, 0x80, 0xC0}
+#define USX_HCODE_LENS_DFLT (const unsigned char[]){2, 2, 3, 2, 3}
 
-#define USX_HCODES_ALPHA_ONLY {0x00, 0x00, 0x00, 0x00, 0x00}
-#define USX_HCODE_LENS_ALPHA_ONLY {0, 0, 0, 0, 0}
+#define USX_HCODES_ALPHA_ONLY (const unsigned char[]){0x00, 0x00, 0x00, 0x00, 0x00}
+#define USX_HCODE_LENS_ALPHA_ONLY (const unsigned char[]){0, 0, 0, 0, 0}
 
-#define USX_HCODES_ALPHA_NUM_ONLY {0x00, 0x00, 0x80, 0x00, 0x00}
-#define USX_HCODE_LENS_ALPHA_NUM_ONLY {1, 0, 1, 0, 0}
+#define USX_HCODES_ALPHA_NUM_ONLY (const unsigned char[]){0x00, 0x00, 0x80, 0x00, 0x00}
+#define USX_HCODE_LENS_ALPHA_NUM_ONLY (const unsigned char[]){1, 0, 1, 0, 0}
 
-#define USX_HCODES_ALPHA_NUM_SYM_ONLY {0x00, 0x80, 0xC0, 0x00, 0x00}
-#define USX_HCODE_LENS_ALPHA_NUM_SYM_ONLY {1, 2, 2, 0, 0}
+#define USX_HCODES_ALPHA_NUM_SYM_ONLY (const unsigned char[]){0x00, 0x80, 0xC0, 0x00, 0x00}
+#define USX_HCODE_LENS_ALPHA_NUM_SYM_ONLY (const unsigned char[]){1, 2, 2, 0, 0}
 
-#define USX_HCODES_FAVOR_ALPHA {0x00, 0x80, 0xA0, 0xC0, 0xE0}
-#define USX_HCODE_LENS_FAVOR_ALPHA {1, 3, 3, 3, 3}
+#define USX_HCODES_FAVOR_ALPHA (const unsigned char[]){0x00, 0x80, 0xA0, 0xC0, 0xE0}
+#define USX_HCODE_LENS_FAVOR_ALPHA (const unsigned char[]){1, 3, 3, 3, 3}
 
-#define USX_HCODES_FAVOR_NUM {0x80, 0xA0, 0xC0, 0xE0, 0x00}
-#define USX_HCODE_LENS_FAVOR_NUM {3, 3, 3, 3, 1}
+#define USX_HCODES_FAVOR_NUM (const unsigned char[]){0x80, 0xA0, 0xC0, 0xE0, 0x00}
+#define USX_HCODE_LENS_FAVOR_NUM (const unsigned char[]){3, 3, 3, 3, 1}
 
-#define USX_HCODES_FAVOR_SYM {0x80, 0x00, 0xA0, 0xC0, 0xE0}
-#define USX_HCODE_LENS_FAVOR_SYM {3, 1, 3, 3, 3}
+#define USX_HCODES_FAVOR_SYM (const unsigned char[]){0x80, 0x00, 0xA0, 0xC0, 0xE0}
+#define USX_HCODE_LENS_FAVOR_SYM (const unsigned char[]){3, 1, 3, 3, 3}
 
 //#define USX_HCODES_FAVOR_UMLAUT {0x00, 0x40, 0xE0, 0xC0, 0x80}
 //#define USX_HCODE_LENS_FAVOR_UMLAUT {2, 2, 3, 3, 2}
 
-#define USX_HCODES_FAVOR_UMLAUT {0x80,  0xA0, 0xC0, 0xE0, 0x00}
-#define USX_HCODE_LENS_FAVOR_UMLAUT {3, 3, 3, 3, 1}
+#define USX_HCODES_FAVOR_UMLAUT (const unsigned char[]){0x80,  0xA0, 0xC0, 0xE0, 0x00}
+#define USX_HCODE_LENS_FAVOR_UMLAUT (const unsigned char[]){3, 3, 3, 3, 1}
 
-#define USX_HCODES_NO_DICT {0x00, 0x40, 0x00, 0x80, 0xC0}
-#define USX_HCODE_LENS_NO_DICT {2, 2, 0, 2, 2}
+#define USX_HCODES_NO_DICT (const unsigned char[]){0x00, 0x40, 0x80, 0x00, 0xC0}
+#define USX_HCODE_LENS_NO_DICT (const unsigned char[]){2, 2, 2, 0, 2}
 
-#define USX_HCODES_NO_UNI {0x00, 0x40, 0x80, 0x00, 0xC0}
-#define USX_HCODE_LENS_NO_UNI {2, 2, 2, 0, 2}
+#define USX_HCODES_NO_UNI (const unsigned char[]){0x00, 0x40, 0x80, 0xC0, 0x00}
+#define USX_HCODE_LENS_NO_UNI (const unsigned char[]){2, 2, 2, 2, 0}
 
-#define USX_FREQ_SEQ_DFLT {"\": \"", "\": ", "</", "=\"", "\":\"", "://"}
-#define USX_FREQ_SEQ_TXT {" the ", " and ", "tion", " with", "ing", "ment"}
-#define USX_FREQ_SEQ_URL {"https://", "www.", ".com", "http://", ".org", ".net"}
+#define USX_FREQ_SEQ_DFLT (const char *[]){"\": \"", "\": ", "</", "=\"", "\":\"", "://"}
+#define USX_FREQ_SEQ_TXT (const char *[]){" the ", " and ", "tion", " with", "ing", "ment"}
+#define USX_FREQ_SEQ_URL (const char *[]){"https://", "www.", ".com", "http://", ".org", ".net"}
+#define USX_FREQ_SEQ_JSON (const char *[]){"\": \"", "\": ", "\",", "}}}", "\":\"", "}}"}
+#define USX_FREQ_SEQ_HTML (const char *[]){"</", "=\"", "div", "href", "class", "<p>"}
+#define USX_FREQ_SEQ_XML (const char *[]){"</", "=\"", "\">", "<?xml version=\"1.0\"", "xmlns:", "://"}
 
 struct us_lnk_lst {
   char *data;
@@ -80,6 +88,8 @@ extern int unishox2_compress_simple(const char *in, int len, char *out);
 extern int unishox2_decompress_simple(const char *in, int len, char *out);
 extern int unishox2_compress_preset(const char *in, int len, char *out, int preset);
 extern int unishox2_decompress_preset(const char *in, int len, char *out, int preset);
+extern int unishox2_compress_preset_seq(const char *in, int len, char *out, int preset, const char *usx_freq_seq[]);
+extern int unishox2_decompress_preset_seq(const char *in, int len, char *out, int preset, const char *usx_freq_seq[]);
 extern int unishox2_compress_preset_lines(const char *in, int len, char *out, int preset, struct us_lnk_lst *prev_lines);
 extern int unishox2_decompress_preset_lines(const char *in, int len, char *out, int preset, struct us_lnk_lst *prev_lines);
 extern int unishox2_compress(const char *in, int len, char *out, 
