@@ -21,22 +21,6 @@
 
 #define UNISHOX_VERSION "2.0"
 
-#define USX_PSET_ALPHA_ONLY 1
-#define USX_PSET_ALPHA_NUM_ONLY 2
-#define USX_PSET_ALPHA_NUM_SYM_ONLY 3
-#define USX_PSET_ALPHA_NUM_SYM_ONLY_TXT 4
-#define USX_PSET_FAVOR_ALPHA 5
-#define USX_PSET_FAVOR_NUM 6
-#define USX_PSET_FAVOR_SYM 7
-#define USX_PSET_FAVOR_UMLAUT 8
-#define USX_PSET_NO_DICT 9
-#define USX_PSET_NO_UNI 10
-#define USX_PSET_URL 11
-#define USX_PSET_JSON 12
-#define USX_PSET_JSON_NO_UNI 13
-#define USX_PSET_XML 14
-#define USX_PSET_HTML 15
-
 //enum {USX_ALPHA = 0, USX_SYM, USX_NUM, USX_DICT, USX_DELTA};
 
 #define USX_HCODES_DFLT (const unsigned char[]){0x00, 0x40, 0xE0, 0x80, 0xC0}
@@ -79,6 +63,24 @@
 #define USX_FREQ_SEQ_HTML (const char *[]){"</", "=\"", "div", "href", "class", "<p>"}
 #define USX_FREQ_SEQ_XML (const char *[]){"</", "=\"", "\">", "<?xml version=\"1.0\"", "xmlns:", "://"}
 
+#define USX_PSET_DFLT USX_HCODES_DFLT, USX_HCODE_LENS_DFLT, USX_FREQ_SEQ_DFLT
+#define USX_PSET_ALPHA_ONLY USX_HCODES_ALPHA_ONLY, USX_HCODE_LENS_ALPHA_ONLY, USX_FREQ_SEQ_TXT
+#define USX_PSET_ALPHA_NUM_ONLY USX_HCODES_ALPHA_NUM_ONLY, USX_HCODE_LENS_ALPHA_NUM_ONLY, USX_FREQ_SEQ_TXT
+#define USX_PSET_ALPHA_NUM_SYM_ONLY USX_HCODES_ALPHA_NUM_SYM_ONLY, USX_HCODE_LENS_ALPHA_NUM_SYM_ONLY, USX_FREQ_SEQ_DFLT
+#define USX_PSET_ALPHA_NUM_SYM_ONLY_TXT USX_HCODES_ALPHA_NUM_SYM_ONLY, USX_HCODE_LENS_ALPHA_NUM_SYM_ONLY, USX_FREQ_SEQ_DFLT
+#define USX_PSET_FAVOR_ALPHA USX_HCODES_ALPHA_NUM_SYM_ONLY, USX_HCODE_LENS_ALPHA_NUM_SYM_ONLY, USX_FREQ_SEQ_TXT
+#define USX_PSET_FAVOR_NUM USX_HCODES_FAVOR_NUM, USX_HCODE_LENS_FAVOR_NUM, USX_FREQ_SEQ_DFLT
+#define USX_PSET_FAVOR_SYM USX_HCODES_FAVOR_SYM, USX_HCODE_LENS_FAVOR_SYM, USX_FREQ_SEQ_DFLT
+#define USX_PSET_FAVOR_UMLAUT USX_HCODES_FAVOR_UMLAUT, USX_HCODE_LENS_FAVOR_UMLAUT, USX_FREQ_SEQ_DFLT
+#define USX_PSET_NO_DICT USX_HCODES_NO_DICT, USX_HCODE_LENS_NO_DICT, USX_FREQ_SEQ_DFLT
+#define USX_PSET_NO_UNI USX_HCODES_NO_UNI, USX_HCODE_LENS_NO_UNI, USX_FREQ_SEQ_DFLT
+#define USX_PSET_NO_UNI_FAVOR_TEXT USX_HCODES_NO_UNI, USX_HCODE_LENS_NO_UNI, USX_FREQ_SEQ_TXT
+#define USX_PSET_URL USX_HCODES_DFLT, USX_HCODE_LENS_DFLT, USX_FREQ_SEQ_URL
+#define USX_PSET_JSON USX_HCODES_DFLT, USX_HCODE_LENS_DFLT, USX_FREQ_SEQ_JSON
+#define USX_PSET_JSON_NO_UNI USX_HCODES_NO_UNI, USX_HCODE_LENS_NO_UNI, USX_FREQ_SEQ_JSON
+#define USX_PSET_XML USX_HCODES_DFLT, USX_HCODE_LENS_DFLT, USX_FREQ_SEQ_XML
+#define USX_PSET_HTML USX_HCODES_DFLT, USX_HCODE_LENS_DFLT, USX_FREQ_SEQ_HTML
+
 struct us_lnk_lst {
   char *data;
   struct us_lnk_lst *previous;
@@ -86,16 +88,16 @@ struct us_lnk_lst {
 
 extern int unishox2_compress_simple(const char *in, int len, char *out);
 extern int unishox2_decompress_simple(const char *in, int len, char *out);
-extern int unishox2_compress_preset(const char *in, int len, char *out, int preset);
-extern int unishox2_decompress_preset(const char *in, int len, char *out, int preset);
-extern int unishox2_compress_preset_seq(const char *in, int len, char *out, int preset, const char *usx_freq_seq[]);
-extern int unishox2_decompress_preset_seq(const char *in, int len, char *out, int preset, const char *usx_freq_seq[]);
-extern int unishox2_compress_preset_lines(const char *in, int len, char *out, int preset, struct us_lnk_lst *prev_lines);
-extern int unishox2_decompress_preset_lines(const char *in, int len, char *out, int preset, struct us_lnk_lst *prev_lines);
 extern int unishox2_compress(const char *in, int len, char *out, 
               const unsigned char usx_hcodes[], const unsigned char usx_hcode_lens[], 
-              const char *usx_freq_seq[], struct us_lnk_lst *prev_lines);
+              const char *usx_freq_seq[]);
 extern int unishox2_decompress(const char *in, int len, char *out, 
+              const unsigned char usx_hcodes[], const unsigned char usx_hcode_lens[],
+              const char *usx_freq_seq[]);
+extern int unishox2_compress_lines(const char *in, int len, char *out, 
+              const unsigned char usx_hcodes[], const unsigned char usx_hcode_lens[], 
+              const char *usx_freq_seq[], struct us_lnk_lst *prev_lines);
+extern int unishox2_decompress_lines(const char *in, int len, char *out, 
               const unsigned char usx_hcodes[], const unsigned char usx_hcode_lens[],
               const char *usx_freq_seq[], struct us_lnk_lst *prev_lines);
 
