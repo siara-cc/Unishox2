@@ -185,8 +185,13 @@ int encodeCount(char *out, int ol, int count) {
   return ol;
 }
 
-const byte uni_bit_len[5] = {6, 12, 14, 16, 21};
-const int32_t uni_adder[5] = {0, 64, 4160, 20544, 86080};
+const byte high_bit_len[5] = {6, 12, 14, 16, 21};
+const int32_t high_adder[5] = {0, 64, 4160, 20544, 86080};
+
+const byte low_bit_len[5] = {4, 7, 12, 16, 21};
+const int32_t low_adder[5] = {0, 16, 144, 4240, 69776};
+
+#define HIGH_LOW_THRESHOLD 128
 
 int encodeUnicode(char *out, int ol, int32_t code, int32_t prev_code) {
   // First five bits are code and Last three bits of codes represent length
@@ -205,26 +210,26 @@ int encodeUnicode(char *out, int ol, int32_t code, int32_t prev_code) {
   //printf("%ld, ", code);
   //printf("Diff: %d\n", diff);
   for (int i = 0; i < 5; i++) {
-    till += (1 << uni_bit_len[i]);
+    till += (1 << (prev_code < HIGH_LOW_THRESHOLD ? low_bit_len[i] : high_bit_len[i]));
     if (diff < till) {
       ol = append_bits(out, ol, (codes[i] & 0xF8), codes[i] & 0x07);
       //if (diff) {
         ol = append_bits(out, ol, prev_code > code ? 0x80 : 0, 1);
-        int32_t val = diff - uni_adder[i];
+        int32_t val = diff - (prev_code < HIGH_LOW_THRESHOLD ? low_adder[i] : high_adder[i]);
         //printf("Val: %d\n", val);
-        if (uni_bit_len[i] > 16) {
-          val <<= (24 - uni_bit_len[i]);
+        if ((prev_code < HIGH_LOW_THRESHOLD ? low_bit_len[i] : high_bit_len[i]) > 16) {
+          val <<= (24 - (prev_code < HIGH_LOW_THRESHOLD ? low_bit_len[i] : high_bit_len[i]));
           ol = append_bits(out, ol, val >> 16, 8);
           ol = append_bits(out, ol, (val >> 8) & 0xFF, 8);
-          ol = append_bits(out, ol, val & 0xFF, uni_bit_len[i] - 16);
+          ol = append_bits(out, ol, val & 0xFF, high_bit_len[i] - 16);
         } else
-        if (uni_bit_len[i] > 8) {
-          val <<= (16 - uni_bit_len[i]);
+        if ((prev_code < HIGH_LOW_THRESHOLD ? low_bit_len[i] : high_bit_len[i]) > 8) {
+          val <<= (16 - (prev_code < HIGH_LOW_THRESHOLD ? low_bit_len[i] : high_bit_len[i]));
           ol = append_bits(out, ol, val >> 8, 8);
-          ol = append_bits(out, ol, val & 0xFF, uni_bit_len[i] - 8);
+          ol = append_bits(out, ol, val & 0xFF, (prev_code < HIGH_LOW_THRESHOLD ? low_bit_len[i] : high_bit_len[i]) - 8);
         } else {
-          val <<= (8 - uni_bit_len[i]);
-          ol = append_bits(out, ol, val & 0xFF, uni_bit_len[i]);
+          val <<= (8 - (prev_code < HIGH_LOW_THRESHOLD ? low_bit_len[i] : high_bit_len[i]));
+          ol = append_bits(out, ol, val & 0xFF, (prev_code < HIGH_LOW_THRESHOLD ? low_bit_len[i] : high_bit_len[i]));
         }
       //}
       //printf("bits:%d\n", ol-orig_ol);
@@ -234,9 +239,9 @@ int encodeUnicode(char *out, int ol, int32_t code, int32_t prev_code) {
   return ol;
 }
 
-int readUTF8(const char *in, int len, int l, int *utf8len) {
+int32_t readUTF8(const char *in, int len, int l, int *utf8len) {
   int bc = 0;
-  int uni = 0;
+  int32_t uni = 0;
   byte c_in = in[l];
   for (; bc < 3; bc++) {
     if (UTF8_PREFIX[bc] == (c_in & UTF8_MASK[bc]) && len - (bc + 1) > l) {
@@ -356,16 +361,20 @@ int unishox2_compress_lines(const char *in, int len, char *out, const byte usx_h
 
   int l, ll, ol;
   char c_in, c_next;
-  int prev_uni;
+  int32_t prev_uni;
   byte is_upper, is_all_upper, is_sentence_start;
 
   init_coder();
   ol = 0;
+  state = USX_ALPHA;
   prev_uni = 0;
+  if (usx_hcode_lens[USX_ALPHA] == 0) {
+    state = USX_DELTA;
+    prev_uni = (int32_t) 'T';
+  }
 #if USE_64K_LOOKUP == 1
   memset(lookup, 0, sizeof(lookup));
 #endif
-  state = USX_ALPHA;
   is_all_upper = 0;
   is_sentence_start = 1;
   for (l=0; l<len; l++) {
@@ -423,6 +432,14 @@ int unishox2_compress_lines(const char *in, int len, char *out, const byte usx_h
       }
     }
     c_in = in[l];
+
+    if (state == USX_DELTA) {
+      if (c_in > 0 && prev_uni < 128) {
+        ol = encodeUnicode(out, ol, c_in, prev_uni);
+        prev_uni = c_in;
+        continue;
+      }
+    }
 
     is_upper = 0;
     if (c_in >= 'A' && c_in <= 'Z')
@@ -506,22 +523,17 @@ int unishox2_compress_lines(const char *in, int len, char *out, const byte usx_h
       ol = append_code(out, ol, TAB_CODE, &state, usx_hcodes, usx_hcode_lens);
     } else {
       int utf8len;
-      int uni = readUTF8(in, len, l, &utf8len);
+      int32_t uni = readUTF8(in, len, l, &utf8len);
       if (uni) {
         l += utf8len;
         if (state != USX_DELTA) {
+          ol = append_switch_code(out, ol, state);
+          ol = append_bits(out, ol, usx_hcodes[USX_DELTA], usx_hcode_lens[USX_DELTA]);
           int uni2 = readUTF8(in, len, l + 1, &utf8len);
           if (uni2) {
-            if (state != USX_ALPHA) {
-              ol = append_switch_code(out, ol, state);
-              ol = append_bits(out, ol, usx_hcodes[USX_ALPHA], usx_hcode_lens[USX_ALPHA]);
-            }
-            ol = append_switch_code(out, ol, state);
-            ol = append_bits(out, ol, usx_hcodes[USX_ALPHA], usx_hcode_lens[USX_ALPHA]);
-            ol = append_bits(out, ol, usx_vcodes[1], usx_vcode_lens[1]); // code for space (' ')
             state = USX_DELTA;
-          } else {
-            ol = append_switch_code(out, ol, state);
+            ol = append_bits(out, ol, UNI_STATE_SPL_CODE, UNI_STATE_SPL_CODE_LEN);
+            ol = append_bits(out, ol, UNI_STATE_SW_CODE, UNI_STATE_SW_CODE_LEN);
             ol = append_bits(out, ol, usx_hcodes[USX_DELTA], usx_hcode_lens[USX_DELTA]);
           }
         }
@@ -663,7 +675,7 @@ int readCount(const char *in, int *bit_no_p, int len) {
   return count;
 }
 
-int32_t readUnicode(const char *in, int *bit_no_p, int len) {
+int32_t readUnicode(const char *in, int *bit_no_p, int len, int32_t prev_code) {
   int idx = getStepCodeIdx(in, len, bit_no_p, 5);
   if (idx == 99)
     return 0x7FFFFF00 + 99;
@@ -674,11 +686,11 @@ int32_t readUnicode(const char *in, int *bit_no_p, int len) {
   if (idx >= 0) {
     int sign = readBit(in, *bit_no_p);
     (*bit_no_p)++;
-    if (*bit_no_p + uni_bit_len[idx] - 1 >= len)
+    if (*bit_no_p + (prev_code < HIGH_LOW_THRESHOLD ? low_bit_len[idx] : high_bit_len[idx]) - 1 >= len)
       return 0x7FFFFF00 + 99;
-    int32_t count = getNumFromBits(in, *bit_no_p, uni_bit_len[idx]);
-    count += uni_adder[idx];
-    (*bit_no_p) += uni_bit_len[idx];
+    int32_t count = getNumFromBits(in, *bit_no_p, (prev_code < HIGH_LOW_THRESHOLD ? low_bit_len[idx] : high_bit_len[idx]));
+    count += (prev_code < HIGH_LOW_THRESHOLD ? low_adder[idx] : high_adder[idx]);
+    (*bit_no_p) += (prev_code < HIGH_LOW_THRESHOLD ? low_bit_len[idx] : high_bit_len[idx]);
     //printf("Sign: %d, Val:%d", sign, count);
     return sign ? -count : count;
   }
@@ -686,6 +698,9 @@ int32_t readUnicode(const char *in, int *bit_no_p, int len) {
 }
 
 void writeUTF8(char *out, int *ol, int uni) {
+  if (uni < (1 << 7)) {
+    out[(*ol)++] = uni;
+  } else
   if (uni < (1 << 11)) {
     out[(*ol)++] = (0xC0 + (uni >> 6));
     out[(*ol)++] = (0x80 + (uni & 63));
@@ -745,7 +760,13 @@ int unishox2_decompress_lines(const char *in, int len, char *out, const byte usx
   dstate = h = USX_ALPHA;
   is_all_upper = 0;
 
-  int prev_uni = 0;
+  int32_t prev_uni = 0;
+
+  if (usx_hcode_lens[USX_ALPHA] == 0) {
+    dstate = USX_DELTA;
+    h = USX_DELTA;
+    prev_uni = (int32_t) 'T';
+  }
 
   len <<= 3;
   out[ol] = 0;
@@ -754,7 +775,7 @@ int unishox2_decompress_lines(const char *in, int len, char *out, const byte usx
     if (dstate == USX_DELTA || h == USX_DELTA) {
       if (dstate != USX_DELTA)
         h = dstate;
-      int32_t delta = readUnicode(in, &bit_no, len);
+      int32_t delta = readUnicode(in, &bit_no, len, prev_uni);
       if ((delta >> 8) == 0x7FFFFF) {
         int spl_code_idx = delta & 0x000000FF;
         if (spl_code_idx == 99)
@@ -851,10 +872,6 @@ int unishox2_decompress_lines(const char *in, int len, char *out, const byte usx
         continue;
       } else
         v = readVCodeIdx(in, len, &bit_no);
-    }
-    if (is_upper && v == 1) {
-      h = dstate = USX_DELTA; // continuous delta coding
-      continue;
     }
     // TODO: Binary    out[ol++] = readCount(in, &bit_no, len);
     if (h < 3 && v < 28)

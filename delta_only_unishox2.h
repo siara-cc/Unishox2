@@ -38,8 +38,8 @@
 #define USX_HCODES_FAVOR_ALPHA (const unsigned char[]){0x00, 0x80, 0xA0, 0xC0, 0xE0}
 #define USX_HCODE_LENS_FAVOR_ALPHA (const unsigned char[]){1, 3, 3, 3, 3}
 
-#define USX_HCODES_FAVOR_NUM (const unsigned char[]){0x80, 0xA0, 0xC0, 0xE0, 0x00}
-#define USX_HCODE_LENS_FAVOR_NUM (const unsigned char[]){3, 3, 3, 3, 1}
+#define USX_HCODES_FAVOR_NUM (const unsigned char[]){0x80, 0xA0, 0x00, 0xE0, 0xC0}
+#define USX_HCODE_LENS_FAVOR_NUM (const unsigned char[]){3, 3, 1, 3, 3}
 
 #define USX_HCODES_FAVOR_SYM (const unsigned char[]){0x80, 0x00, 0xA0, 0xC0, 0xE0}
 #define USX_HCODE_LENS_FAVOR_SYM (const unsigned char[]){3, 1, 3, 3, 3}
@@ -56,6 +56,9 @@
 #define USX_HCODES_NO_UNI (const unsigned char[]){0x00, 0x40, 0x80, 0xC0, 0x00}
 #define USX_HCODE_LENS_NO_UNI (const unsigned char[]){2, 2, 2, 2, 0}
 
+#define USX_HCODES_ONLY_DELTA (const unsigned char[]){0x00, 0x00, 0x40, 0x80, 0xC0}
+#define USX_HCODE_LENS_ONLY_DELTA (const unsigned char[]){0, 2, 2, 2, 2}
+
 #define USX_FREQ_SEQ_DFLT (const char *[]){"\": \"", "\": ", "</", "=\"", "\":\"", "://"}
 #define USX_FREQ_SEQ_TXT (const char *[]){" the ", " and ", "tion", " with", "ing", "ment"}
 #define USX_FREQ_SEQ_URL (const char *[]){"https://", "www.", ".com", "http://", ".org", ".net"}
@@ -68,7 +71,7 @@
 #define USX_PSET_ALPHA_NUM_ONLY USX_HCODES_ALPHA_NUM_ONLY, USX_HCODE_LENS_ALPHA_NUM_ONLY, USX_FREQ_SEQ_TXT
 #define USX_PSET_ALPHA_NUM_SYM_ONLY USX_HCODES_ALPHA_NUM_SYM_ONLY, USX_HCODE_LENS_ALPHA_NUM_SYM_ONLY, USX_FREQ_SEQ_DFLT
 #define USX_PSET_ALPHA_NUM_SYM_ONLY_TXT USX_HCODES_ALPHA_NUM_SYM_ONLY, USX_HCODE_LENS_ALPHA_NUM_SYM_ONLY, USX_FREQ_SEQ_DFLT
-#define USX_PSET_FAVOR_ALPHA USX_HCODES_FAVOR_ALPHA, USX_HCODE_LENS_FAVOR_ALPHA, USX_FREQ_SEQ_TXT
+#define USX_PSET_FAVOR_ALPHA USX_HCODES_ALPHA_NUM_SYM_ONLY, USX_HCODE_LENS_ALPHA_NUM_SYM_ONLY, USX_FREQ_SEQ_TXT
 #define USX_PSET_FAVOR_NUM USX_HCODES_FAVOR_NUM, USX_HCODE_LENS_FAVOR_NUM, USX_FREQ_SEQ_DFLT
 #define USX_PSET_FAVOR_SYM USX_HCODES_FAVOR_SYM, USX_HCODE_LENS_FAVOR_SYM, USX_FREQ_SEQ_DFLT
 #define USX_PSET_FAVOR_UMLAUT USX_HCODES_FAVOR_UMLAUT, USX_HCODE_LENS_FAVOR_UMLAUT, USX_FREQ_SEQ_DFLT
@@ -80,6 +83,7 @@
 #define USX_PSET_JSON_NO_UNI USX_HCODES_NO_UNI, USX_HCODE_LENS_NO_UNI, USX_FREQ_SEQ_JSON
 #define USX_PSET_XML USX_HCODES_DFLT, USX_HCODE_LENS_DFLT, USX_FREQ_SEQ_XML
 #define USX_PSET_HTML USX_HCODES_DFLT, USX_HCODE_LENS_DFLT, USX_FREQ_SEQ_HTML
+#define USX_PSET_ONLY_DELTA USX_HCODES_ONLY_DELTA, USX_HCODE_LENS_ONLY_DELTA, USX_FREQ_SEQ_DFLT
 
 struct us_lnk_lst {
   char *data;
