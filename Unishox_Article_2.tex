@@ -11,7 +11,7 @@
 \fancyfoot[R]{\thepage}
 
 %opening
-\title{Unishox 2 - Guaranteed Configurable Compression of Short Unicode Strings using Entropy, Dictionary and Delta encoding techniques}
+\title{Unishox 2 - Guaranteed Configurable Compression for Short Strings using Entropy, Dictionary and Delta encoding techniques}
 \author{Arundale Ramanathan}
 
 \begin{document}
@@ -165,7 +165,7 @@ With these two sets of codes, we form several sets of letters as shown in the ta
 
 \subsection{Repeating letters}
 \begin{itemize}
-	\item[$\bullet$] If any letter repeats more than 3 times, we use a special code (rpt) shown in Set1b of the model.
+	\item[$\bullet$] If any letter repeats more than 3 times, we use a special code (rpt) shown in Set 3 of the model.
 	\item[$\bullet$] The encoder first codes the letter using the above codes.  Then the rpt code is used followed by the number of times the letter repeats.
 	\item[$\bullet$] The number of times the letter repeats is coded using a special bit sequence as explained in section "Encoding counts" that follows.
 \end{itemize}
@@ -224,8 +224,8 @@ With these two sets of codes, we form several sets of letters as shown in the ta
 
 \subsection{Encoding continuous Unicode characters}
 \begin{itemize}
-	\item[$\bullet$] Since the prefix 00 110 may become an overhead when several Unicode are to be encoded, a continuous unicode encoding code is used (0000010).
-	\item[$\bullet$] When 0000010 is used, unicode characters are encoded continously using delta encoding, until a non-unicode character is encountered.  When this happens, state is returned to Set 1 using the Special code 11111 00 in the table shown in previous section is used.
+	\item[$\bullet$] Since the prefix 00 110 may become an overhead when several Unicode are to be encoded contigously, a continuous unicode encoding code is used (0000010).
+	\item[$\bullet$] After 0000010 is encoded, unicode characters are encoded continously using delta encoding, until a non-unicode character is encountered.  When this happens, state is returned to Set 1 using the Special code 11111 00 in the table shown in previous section is used.
 	\item[$\bullet$] The Special codes are used only when Unicode characters are coded continuously, to indicate special characters and situations occuring in-between. What follows the Special code 11111 is indicated using the table below:
 	\item[] \begin{tabular}{ | l | l |} \hline
 	﻿\textbf{Code} & ﻿\textbf{Character/Situation} \\ \hline
@@ -264,155 +264,55 @@ With these two sets of codes, we form several sets of letters as shown in the ta
 \begin{itemize}
 	\item[$\bullet$] Provision for six frequently occuring text sequences is available with Unishox 2.
 	\item[$\bullet$] Depending on the type of text being encoded following sequences have been identified.
-	\item[] \begin{tabular}{ | l | l |} \hline
-		﻿\textbf{Type of text} & ﻿\textbf{Frequently occuring sequences} \\ \hline
-		Default (favours all types) & "\": \"", "\": ", "</", "=\"", "\":\"", "://" \\ \hline
-		English sentences & " the ", " and ", "tion", " with", "ing", "ment" \\ \hline
-		JSON & "\": \"", "\": ", "\",", "\}\}\}", "\":\"", "\}\}" \\ \hline
-		HTML & "</", "=\"", "div", "href", "class", "<p>" \\ \hline
-		XML & "</", "=\"", "\">", "<?xml version=\"1.0\"", "xmlns:", "://" \\ \hline
-		\end{tabular}
-	\item[$\bullet$] 
 \end{itemize}
+\begin{tabular}{ | l | l |} \hline
+	﻿\textbf{Type of text} & ﻿\textbf{Frequently occuring sequences} \\ \hline
+	Default (favours all types) & [\": \"], [\": ], [$\textless$/], [=\"], [\":\"], [://] \\ \hline
+	English sentences & [ the ], [ and ], [tion], [ with], [ing], [ment] \\ \hline
+	JSON & [\": \"], [\": ], [\",], [\}\}\}], [\":\"], [\}\}] \\ \hline
+	HTML & [$\textless$/], [=\"], [div], [href], [class], [$\textless$p$\textgreater$] \\ \hline
+	XML & [$\textless$/], [=\"], ["$\textgreater$ ], [$\textless$?xml version=\"1.0\"], [xmlns:], [://] \\ \hline
+\end{tabular}
 
-\subsection{Redefinition of Horizontal codes}
+\subsection{Redefinition of Horizontal codes and Presets}
 \begin{itemize}
 	\item[$\bullet$] The horizontal codes can be redefined to get better compression ratio, depending on composition of the text to be encoded.
-	\item[$\bullet$] Several "preset" con
-	\item[$\bullet$] It is followed by the ASCII value of the symbol, encoded using the method described in section "Encoding counts" in this document.
-	\item[$\bullet$] This method actually expands the original size and is provided for the rare cases where such binary symbols appear.
+	\item[$\bullet$] Several "preset" codes have been identified for achieving better compression ratios for different compositions as below (Codes are for Alpha, Sym, Num, Dict, Delta):
+	\item[$\bullet$] For preset 1 (Alpha only) there are no horizontal code required.  For encoding upper case symbols, just the switch code followed by the letter code is sufficient.  Further continuous upper case can be accomplished by using two switch codes.
+	\item[$\bullet$] The codes marked x in the table are the sets that are not expected in the text.
 \end{itemize}
+\begin{tabular}{ | l | l | l |} \hline
+	﻿\textbf{Preset} & ﻿\textbf{Codes} & \textbf{Frequent Sequences} \\ \hline
+	0 Default (favours all types) & 00, 111, 01, 10, 110 & Default \\ \hline
+	1 Alpha only & None * & English sentences \\ \hline
+	2 Alpha \& Numeric only & 0, 10, 11, x, x & English sentences \\ \hline
+	3 Alpha, Num \& Sym only & 0, x, x, x, 1 & Default \\ \hline
+	4 Alpha, Num \& Sym only (Text) & 0, x, x, x, 1 & English sentences \\ \hline
+	5 Favor Alpha & 0, 100, 101, 110, 111 & English sentences \\ \hline
+	6 Favor Numeric & 00, 01, 10, 110, 111 & Default \\ \hline
+	7 Favor Numeric & 100, 0, 101, 110, 111 & Default \\ \hline
+	8 Favor Umlaut & 100, 101, 110, 111, 0 & Default \\ \hline
+	9 No Dictionary & 00, 01, 10, x, 11 & Default \\ \hline
+	10 No Unicode & 00, 01, 10, 11, x & Default \\ \hline
+	11 No Unicode (Text) & 00, 01, 10, 11, x & English sentences \\ \hline
+	12 Favor URL & 00, 111, 01, 10, 110 & URL \\ \hline
+	13 Favor JSON & 00, 111, 01, 10, 110 & JSON \\ \hline
+	14 Favor JSON No Unicode & 00, 01, 10, 11, x & JSON \\ \hline
+	15 Favor XML & 00, 111, 01, 10, 110 & XML \\ \hline
+	16 Favor HTML & 00, 111, 01, 10, 110 & HTML \\ \hline
+\end{tabular}
 
-
-Based on the above rules, the following Frequency table is formed.
-
-\section{Frequency table}
-
-\begin{center}
-\begin{tabular}{ | l | l | l | l |} \hline
-	﻿\textbf{ASCII Code} & ﻿\textbf{Letter} & ﻿\textbf{Code} & ﻿\textbf{Length} \\ \hline
-        32 &   & 010 & 3 \\ \hline
-		33 & ! & 00111111100 & 11 \\ \hline
-		34 & \textquotedblleft & 00111101100 & 11 \\ \hline
-		35 & \# & 00111111010 & 11 \\ \hline
-		36 & \$ & 001110111110 & 11 \\ \hline
-		37 & \% & 001110111111 & 12 \\ \hline
-		38 & \& & 001111000    & 9 \\ \hline
-		39 & '  & 0011111011   & 10 \\ \hline
-		40 & (  & 00111011101  & 11 \\ \hline
-		41 & )  & 00111011110  & 11 \\ \hline
-		42 & *  & 00111101011  & 11 \\ \hline
-		43 & +  & 00111011011  & 11 \\ \hline
-		44 & ,  & 0011101010   & 10 \\ \hline
-		45 & -  & 0011101011   & 10 \\ \hline
-		46 & .  & 001110100    & 9 \\ \hline
-		47 & /  & 0011101100   & 10 \\ \hline
-		48 & 0  & 0011100011   & 10 \\ \hline
-		49 & 1  & 0011100100   & 10 \\ \hline
-		50 & 2  & 00111001010  & 11 \\ \hline
-		51 & 3  & 00111001011  & 11 \\ \hline
-		52 & 4  & 00111001100  & 11 \\ \hline
-		53 & 5  & 00111001101  & 11 \\ \hline
-		54 & 6  & 00111001110  & 11 \\ \hline
-		55 & 7  & 001110011110 & 12 \\ \hline
-		56 & 8  & 001110011111 & 12 \\ \hline
-		57 & 9  & 0011100010   & 10 \\ \hline
-		58 & :  & 0011110011   & 10 \\ \hline
-		59 & ;  & 0011110010   & 10 \\ \hline
-		60 & $\textless$ & 0011110100 & 10 \\ \hline
-		61 & = & 00111011010 & 11 \\ \hline
-		62 & $\textgreater$ & 00111101010 & 11 \\ \hline
-		63 & ? & 0011111010 & 10 \\ \hline
-		64 & @ & 001111100 & 9 \\ \hline
-	﻿\end{tabular}
-\end{center}
-
-\begin{center}
-	\begin{tabular}{ | l | l | l | l |} \hline
-		﻿\textbf{ASCII Code} & ﻿\textbf{Letter} & ﻿\textbf{Code} & ﻿\textbf{Length} \\ \hline
-	65 & A & 00101011 & 8 \\ \hline
-	66 & B & 00100001110 & 11 \\ \hline
-	67 & C & 001000000 & 9 \\ \hline
-	68 & D & 0010000011 & 10 \\ \hline
-	69 & E & 0010011 & 7 \\ \hline
-	70 & F & 00100011000 & 11 \\ \hline
-	71 & G & 001000011110 & 12 \\ \hline
-	72 & H & 00100001010 & 12 \\ \hline
-	73 & I & 00101101 & 8 \\ \hline
-	74 & J & 0010001101011 & 13 \\ \hline
-	75 & K & 001000110100 & 12 \\ \hline
-	76 & L & 0010000010 & 10 \\ \hline
-	77 & M & 00100001101 & 11 \\ \hline
-	78 & N & 00101110 & 8 \\ \hline
-	79 & O & 00101100 & 8 \\ \hline
-	80 & P & 00100001100 & 11 \\ \hline
-	81 & Q & 0010001101010 & 13 \\ \hline
-	82 & R & 001011111 & 9 \\ \hline
-	83 & S & 001011110 & 9 \\ \hline
-	84 & T & 00101010 & 8 \\ \hline
-	85 & U & 00100001011 & 11 \\ \hline
-	86 & V & 001000110011 & 12 \\ \hline
-	87 & W & 001000011111 & 12 \\ \hline
-	88 & X & 0010001101100 & 13 \\ \hline
-	89 & Y & 001000110010 & 12 \\ \hline
-	90 & Z & 0010001101101 & 13 \\ \hline
-	91 & [ & 001111011110 & 12 \\ \hline
-	92 & \textbackslash & 00111111101 & 11 \\ \hline
-	93 & ] & 001111011111 & 12 \\ \hline
-	94 & \^{} & 0011111100 & 10 \\ \hline
-	95 & \_ & 00111111011 & 11 \\ \hline
-	96 & ` & 001111111111 & 12 \\ \hline
-	﻿\end{tabular}
-\end{center}
-
-\begin{center}
-\begin{tabular}{ | l | l | l | l |} \hline
-﻿\textbf{ASCII Code} & ﻿\textbf{Letter} & ﻿\textbf{Code} & ﻿\textbf{Length} \\ \hline
-	97 & a & 1011 & 4 \\ \hline
-	98 & b & 0001110 & 7 \\ \hline
-	99 & c & 000011 & 6 \\ \hline
-	100 & d & 000100 & 6 \\ \hline
-	101 & e & 011 & 3 \\ \hline
-	102 & f & 0011000 & 7 \\ \hline
-	103 & g & 00011110 & 8 \\ \hline
-	104 & h & 0001010 & 7 \\ \hline
-	105 & i & 1101 & 4 \\ \hline
-	106 & j & 001101011 & 9 \\ \hline
-	107 & k & 00110100 & 8 \\ \hline
-	108 & l & 000010 & 6 \\ \hline
-	109 & m & 0001101 & 7 \\ \hline
-	110 & n & 1110 & 4 \\ \hline
-	111 & o & 1100 & 4 \\ \hline
-	112 & p & 0001100 & 7 \\ \hline
-	113 & q & 001101010 & 9 \\ \hline
-	114 & r & 11111 & 5 \\ \hline
-	115 & s & 11110 & 5 \\ \hline
-	116 & t & 1010 & 4 \\ \hline
-	117 & u & 0001011 & 7 \\ \hline
-	118 & v & 00110011 & 8 \\ \hline
-	119 & w & 00011111 & 8 \\ \hline
-	120 & x & 001101100 & 9 \\ \hline
-	121 & y & 00110010 & 8 \\ \hline
-	122 & z & 001101101 & 9 \\ \hline
-	123 & \{ & 1101101 & 7 \\ \hline
-	124 & | & 1111110 & 7 \\ \hline
-	125 & \} & 1101110 & 7 \\ \hline
-	126 & \~{} & 11111110 & 8 \\ \hline
-	﻿\end{tabular}
-\end{center}
-
-Even after the freqency table is formed, the original model is still needed for encoding Sticky sets as explained in the Rules section.
+However, the default horizontal codes work fine for most cases.
 
 \section{Implementation}
 
-According to the above Rules and Frequency table, a reference implementation has been developed and made available at https://github.com/siara-cc/Unishox 2 as Unishox 21.c.  This is released under Apache License 2.0.
+According to the above Rules and Frequency table, a reference implementation has been developed and made available at https://github.com/siara-cc/Unishox as unishox2.c.  This is released under Apache License 2.0.
 
-Further, Unishox 2 has been used in several open source projects shown below:
+Further, Unishox has been used in several open source projects shown below:
 
 \begin{itemize}
-	\item[$\bullet$] Unishox 2 Compression Library for Arduino Progmem - https://github.com/siara-cc/Shox96\_Arduino\_Progmem\_lib
-	\item[$\bullet$] Unishox 2 Compression Library for Arduino - https://github.com/siara-cc/Shox96\_Arduino\_lib
-	\item[$\bullet$] Sqlite3 User Defined Function for Unishox 2 as loadable extension - https://github.com/siara-cc/Unishox 2\_Sqlite\_UDF
+	\item[$\bullet$] Unishox Compression Library for Arduino Progmem - https://github.com/siara-cc/Unishox\_Arduino\_Progmem\_lib
+	\item[$\bullet$] Sqlite3 User Defined Function for Unishox as loadable extension - https://github.com/siara-cc/Unishox 2\_Sqlite\_UDF
 	\item[$\bullet$] Sqlite3 Library for ESP32 - https://github.com/siara-cc/esp32\_arduino\_sqlite3\_lib
 	\item[$\bullet$] Sqlite3 Library for ESP8266 - https://github.com/siara-cc/esp\_arduino\_sqlite3\_lib
 	\item[$\bullet$] Sqlite3 Library for ESP-IDF - https://github.com/siara-cc/esp32-idf-sqlite3
@@ -420,29 +320,31 @@ Further, Unishox 2 has been used in several open source projects shown below:
 
 \section{Performance Comparison}
 
-The compression performance of all three techniques - Smaz, shoco and Shox96 were compared for different types of strings and results are tabulated below:
+The compression performance of all three techniques - Smaz, shoco and Unishox were compared for different types of strings and results are tabulated below:
 
 \begin{center}
 \begin{tabular}{ | p{0.5\textwidth} | p{0.1\textwidth} | p{0.1\textwidth} | p{0.1\textwidth} | p{0.1\textwidth} |} \hline
-﻿\textbf{String} & ﻿\textbf{Length} & ﻿\textbf{Smaz} & ﻿\textbf{shoco} & ﻿\textbf{Shox96} \\ \hline
+﻿\textbf{String} & ﻿\textbf{Length} & ﻿\textbf{Smaz} & ﻿\textbf{shoco} & ﻿\textbf{Unishox} \\ \hline
 Hello World & 11 & 10 & 8 & 8 \\ \hline
-The quick brown fox jumps over the lazy dog & 43 & 30 & 34 & 29 \\ \hline
-I would have NEVER said that & 28 & 20 & 20 & 18 \\ \hline
-In (1970-89), \$25.9 billion; OPEC bilateral aid [1979-89], \$213 million & 67 & 65 & 52 & 54 \\ \hline
+The quick brown fox jumps over the lazy dog & 43 & 30 & 34 & 30 \\ \hline
+I would have NEVER said that & 28 & 20 & 20 & 19 \\ \hline
+In (1970-89), \$25.9 billion; OPEC bilateral aid [1979-89], \$213 million & 67 & 65 & 52 & 50 \\ \hline
 	﻿\end{tabular}
 \end{center}
 
 Further - world95.txt - the text file obtained from \emph{The Project Gutenberg Etext of the 1995 CIA World Factbook} was compressed using the three techniques and following are the results:
 
-Original size: 2988577 bytes
+Original size: 2,988,577 bytes
 
-After Compression using shoco original model: 2385934 bytes
+After Compression using shoco original model: 2,385,934 bytes
 
-After Compression using shoco trained using world95.txt: 2088141 bytes
+After Compression using shoco trained using world95.txt: 2,088,141 bytes
 
-After Compression using Shox96: 1966019 bytes
+After Compression using Unishox (1024 block size): 1,689,289 bytes
 
-As for memory requirements, shoco requires over 2k bytes, smaz requires over 1k. But Shox96 requires only around $95 * 3 = 285$ bytes for compressor and decompressor together, ideal for using it with even Arduino Uno.
+After Compression using Unishox (65536 block size): 1,128,302 bytes
+
+As for memory requirements, shoco requires over 2k bytes, smaz requires over 1k. But Unishox requires only around $300$ bytes for compressor and decompressor together, ideal for using it with even Arduino Uno.
 
 \section{Proving guaranteed compression}
 
@@ -474,11 +376,11 @@ For Unicode text, the codes in section "Encoding Unicode characters" have been s
 
 \section{Conclusion}
 
-As can be seen from the performance numbers, Unishox 2 performs better than available techniques.  It can also be seen that it performs better for a variety of texts, especially those having a mixture of numbers and special characters.
+As can be seen from the performance numbers, Unishox performs better than available techniques.  It can also be seen that it performs better for a variety of texts, especially those having a mixture of numbers and special characters.
 
 \section{Further work}
 
-We propose to improve Unishox 2 by including support for compressing binary symbols.  We also propose to develop such models for other languages and types of text such as Programs.
+We propose to improve Unishox 2 by making it available in more languages than just C, such as Javascript, Python, Java, C\#.Net.
 
 \section{About the Author}
 

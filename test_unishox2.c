@@ -207,8 +207,8 @@ double timedifference(uint32_t t0, uint32_t t1) {
 
 int main(int argv, char *args[]) {
 
-char cbuf[65536];
-char dbuf[65536];
+char cbuf[2048];
+char dbuf[2048];
 long len, tot_len, clen, ctot, dlen, l;
 float perc;
 FILE *fp, *wfp;

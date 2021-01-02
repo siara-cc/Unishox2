@@ -38,8 +38,8 @@
 #define USX_HCODES_FAVOR_ALPHA (const unsigned char[]){0x00, 0x80, 0xA0, 0xC0, 0xE0}
 #define USX_HCODE_LENS_FAVOR_ALPHA (const unsigned char[]){1, 3, 3, 3, 3}
 
-#define USX_HCODES_FAVOR_NUM (const unsigned char[]){0x80, 0xA0, 0xC0, 0xE0, 0x00}
-#define USX_HCODE_LENS_FAVOR_NUM (const unsigned char[]){3, 3, 3, 3, 1}
+#define USX_HCODES_FAVOR_NUM (const unsigned char[]){0x00, 0x40, 0x80, 0xC0, 0xE0}
+#define USX_HCODE_LENS_FAVOR_NUM (const unsigned char[]){2, 2, 2, 3, 3}
 
 #define USX_HCODES_FAVOR_SYM (const unsigned char[]){0x80, 0x00, 0xA0, 0xC0, 0xE0}
 #define USX_HCODE_LENS_FAVOR_SYM (const unsigned char[]){3, 1, 3, 3, 3}
@@ -47,7 +47,7 @@
 //#define USX_HCODES_FAVOR_UMLAUT {0x00, 0x40, 0xE0, 0xC0, 0x80}
 //#define USX_HCODE_LENS_FAVOR_UMLAUT {2, 2, 3, 3, 2}
 
-#define USX_HCODES_FAVOR_UMLAUT (const unsigned char[]){0x80,  0xA0, 0xC0, 0xE0, 0x00}
+#define USX_HCODES_FAVOR_UMLAUT (const unsigned char[]){0x80, 0xA0, 0xC0, 0xE0, 0x00}
 #define USX_HCODE_LENS_FAVOR_UMLAUT (const unsigned char[]){3, 3, 3, 3, 1}
 
 #define USX_HCODES_NO_DICT (const unsigned char[]){0x00, 0x40, 0x80, 0x00, 0xC0}
