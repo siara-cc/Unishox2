@@ -188,8 +188,8 @@ int encodeCount(char *out, int ol, int count) {
 const byte high_bit_len[5] = {6, 12, 14, 16, 21};
 const int32_t high_adder[5] = {0, 64, 4160, 20544, 86080};
 
-const byte low_bit_len[5] = {4, 7, 12, 16, 21};
-const int32_t low_adder[5] = {0, 16, 144, 4240, 69776};
+const byte low_bit_len[5] = {3, 4, 5, 6, 21};
+const int32_t low_adder[5] = {0, 8, 24, 56, 120};
 
 #define HIGH_LOW_THRESHOLD 128
 

@@ -30,7 +30,7 @@ int unishox2_compress_preset_lines(const char *in, int len, char *out, int prese
     case 5:
       return unishox2_compress_lines(in, len, out, USX_PSET_FAVOR_ALPHA, prev_lines);
     case 6:
-      return unishox2_compress_lines(in, len, out, USX_PSET_FAVOR_NUM, prev_lines);
+      return unishox2_compress_lines(in, len, out, USX_PSET_FAVOR_DICT, prev_lines);
     case 7:
       return unishox2_compress_lines(in, len, out, USX_PSET_FAVOR_SYM, prev_lines);
     case 8:
@@ -70,7 +70,7 @@ int unishox2_decompress_preset_lines(const char *in, int len, char *out, int pre
     case 5:
       return unishox2_decompress_lines(in, len, out, USX_PSET_FAVOR_ALPHA, prev_lines);
     case 6:
-      return unishox2_decompress_lines(in, len, out, USX_PSET_FAVOR_NUM, prev_lines);
+      return unishox2_decompress_lines(in, len, out, USX_PSET_FAVOR_DICT, prev_lines);
     case 7:
       return unishox2_decompress_lines(in, len, out, USX_PSET_FAVOR_SYM, prev_lines);
     case 8:
@@ -635,11 +635,11 @@ if (argv == 2 || (argv == 3 && atoi(args[2]) > 0)) {
    printf("         3    Alphanumeric and symbols only\n");
    printf("         4    Alphanumeric and symbols only (Favor English text)\n");
    printf("         5    Favor Alphabets\n");
-   printf("         6    Favor Numbers\n");
+   printf("         6    Favor Dictionary coding\n");
    printf("         7    Favor Symbols\n");
    printf("         8    Favor Umlaut\n");
    printf("         9    No dictionary\n");
-   printf("         10    No Unicode\n");
+   printf("         10   No Unicode\n");
    printf("         11   Favor URLs\n");
    printf("         12   Favor JSON\n");
    printf("         13   Favor JSON (No Unicode)\n");

@@ -28,13 +28,13 @@ typedef unsigned char byte;
 
 enum {USX_ALPHA = 0, USX_SYM, USX_NUM, USX_DICT, USX_DELTA};
 byte usx_sets[][28] = {{  0, ' ', 'e', 't', 'a', 'o', 'i', 'n',
-                        's', 'r', 'l', 'c', 'd', 'h', 'u', 'p', 'm', 'b', 
+                        's', 'r', 'l', 'c', 'd', 'h', 'u', 'p', 'm', 'b',
                         'g', 'w', 'f', 'y', 'v', 'k', 'q', 'j', 'x', 'z'},
                        {'"', '{', '}', '_', '<', '>', ':', '\n',
                           0, '[', ']', '\\', ';', '\'', '\t', '@', '*', '&',
                         '?', '!', '^', '|', '\r', '~', '`', 0, 0, 0},
-                       {  0, ',', '.', '/', '(', ')', '-', '1',
-                        '0', '9', '2', '3', '4', '5', '6', '7', '8', ' ',
+                       {  0, ',', '.', '1', '0', '9', '2', '3', '4',
+                        '5', '6', '7', '8', '/', '(', ')', '-', ' ',
                         '=', '+', '$', '%', '#', 0, 0, 0, 0, 0}};
 
 // Stores position of letter in usx_sets.
@@ -849,8 +849,13 @@ int unishox2_decompress_lines(const char *in, int len, char *out, const byte usx
         //printf("Code: %d\n", prev_uni);
         //printf("BitNo: %d\n", bit_no);
         continue;
-      } else
+      } else {
         v = readVCodeIdx(in, len, &bit_no);
+        if (v == 99) {
+          bit_no = orig_bit_no;
+          break;
+        }
+      }
     }
     if (is_upper && v == 1) {
       h = dstate = USX_DELTA; // continuous delta coding
