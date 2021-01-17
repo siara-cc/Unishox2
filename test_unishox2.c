@@ -253,6 +253,7 @@ if (argv >= 4 && strcmp(args[1], "-c") == 0) {
    perc = (tot_len-ctot);
    perc /= tot_len;
    perc *= 100;
+   perc = 100 - perc;
    printf("\nBytes (Compressed/Original=Savings%%): %ld/%ld=", ctot, tot_len);
    printf("%.2f%%\n", perc);
 } else
@@ -371,6 +372,7 @@ if (argv >= 4 && (strcmp(args[1], "-g") == 0 ||
    perc = (tot_len-ctot);
    perc /= tot_len;
    perc *= 100;
+   perc = 100 - perc;
    printf("\nBytes (Compressed/Original=Savings%%): %ld/%ld=", ctot, tot_len);
    printf("%.2f%%\n", perc);
    char short_buf[strlen(args[3]) + 100];
@@ -612,6 +614,7 @@ if (argv == 2 || (argv == 3 && atoi(args[2]) > 0)) {
    perc = (len-ctot);
    perc /= len;
    perc *= 100;
+   perc = 100 - perc;
    printf("\nBytes (Compressed/Original=Savings%%): %ld/%ld=", ctot, len);
    printf("%.2f%%\n", perc);
 } else {

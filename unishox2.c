@@ -26,15 +26,15 @@
 
 typedef unsigned char byte;
 
-enum {USX_ALPHA = 0, USX_SYM, USX_NUM, USX_DICT, USX_DELTA};
+enum {USX_ALPHA = 0, USX_SYM, USX_NUM, USX_DICT, USX_DELTA, USX_NUM_TEMP};
 byte usx_sets[][28] = {{  0, ' ', 'e', 't', 'a', 'o', 'i', 'n',
                         's', 'r', 'l', 'c', 'd', 'h', 'u', 'p', 'm', 'b',
                         'g', 'w', 'f', 'y', 'v', 'k', 'q', 'j', 'x', 'z'},
                        {'"', '{', '}', '_', '<', '>', ':', '\n',
                           0, '[', ']', '\\', ';', '\'', '\t', '@', '*', '&',
                         '?', '!', '^', '|', '\r', '~', '`', 0, 0, 0},
-                       {  0, ',', '.', '1', '0', '9', '2', '3', '4',
-                        '5', '6', '7', '8', '/', '(', ')', '-', ' ',
+                       {  0, ',', '.', '0', '1', '9', '2', '5', '-',
+                        '/', '3', '4', '6', '7', '8', '(', ')', ' ',
                         '=', '+', '$', '%', '#', 0, 0, 0, 0, 0}};
 
 // Stores position of letter in usx_sets.
@@ -70,6 +70,7 @@ byte lookup[65536];
 #define CR_CODE ((1 << 5) + 22)
 #define TAB_CODE  ((1 << 5) + 14)
 #define NUM_SPC_CODE ((2 << 5) + 17)
+#define NUM_SW_CODE ((2 << 5) + 0)
 
 #define UNI_STATE_SPL_CODE 0xF8
 #define UNI_STATE_SPL_CODE_LEN 5
@@ -410,6 +411,45 @@ int unishox2_compress_lines(const char *in, int len, char *out, const byte usx_h
       }
     }
 
+    if (l <= len - 36 &&  usx_hcode_lens[USX_NUM]) {
+      int is_uid_upper = 0;
+      int uid_pos = l;
+      for (; uid_pos < l + 36; uid_pos++) {
+        char c_uid = in[uid_pos];
+        //8ff71973-3e52-4da0-a599-8e0508f190c7
+        if (uid_pos == l + 8 || uid_pos == l + 13 || uid_pos == l + 18 || uid_pos == l + 23) {
+          if (c_uid == '-')
+            continue;
+          else
+            break;
+        } else
+        if ((c_uid >= '0' && c_uid <= '9') || (c_uid >= 'A' && c_uid <= 'F') || (c_uid >= 'a' && c_uid <= 'f')) {
+          if (c_uid >= 'A' && c_uid <= 'F')
+            is_uid_upper = 1;
+          continue;
+        }
+        break;
+      }
+      if (uid_pos == l + 36) {
+        ol = append_code(out, ol, NUM_SW_CODE, &state, usx_hcodes, usx_hcode_lens);
+        ol = append_bits(out, ol, (is_uid_upper ? 0xF0 : 0x80), (is_uid_upper ? 4 : 2));
+        for (uid_pos = l; uid_pos < l + 36; uid_pos++) {
+          char c_uid = in[uid_pos];
+          byte code_uid = 0;
+          if (c_uid >= '0' && c_uid <= '9')
+            code_uid = (c_uid - '0') << 4;
+          else if (c_uid >= 'A' && c_uid <= 'F')
+            code_uid = (c_uid - 'A' + 10) << 4;
+          else if (c_uid >= 'a' && c_uid <= 'f')
+            code_uid = (c_uid - 'a' + 10) << 4;
+          if (c_uid != '-')
+            ol = append_bits(out, ol, code_uid, 4);
+        }
+        l += 36;
+        continue;
+      }
+    }
+
     if (usx_freq_seq != NULL) {
       for (int i = 0; i < 6; i++) {
         int seq_len = strlen(usx_freq_seq[i]);
@@ -641,6 +681,7 @@ int getStepCodeIdx(const char *in, int len, int *bit_no_p, int limit) {
   return idx;
 }
 
+// TODO: Check length
 int32_t getNumFromBits(const char *in, int bit_no, int count) {
    int32_t ret = 0;
    while (count--) {
@@ -855,6 +896,26 @@ int unishox2_decompress_lines(const char *in, int len, char *out, const byte usx
           bit_no = orig_bit_no;
           break;
         }
+        if (h == USX_NUM && v == 0) {
+          int idx = getStepCodeIdx(in, len, &bit_no, 4);
+          int32_t nibble = 0;
+          int nibble_count = 32;
+          switch (idx) {
+            case 1:
+            case 4:
+              do {
+                nibble = getNumFromBits(in, bit_no, 4);
+                if (nibble >= 0 && nibble <= 9)
+                  out[ol++] = '0' + nibble;
+                else if (idx == 1)
+                  out[ol++] = 'a' + nibble - 10;
+                else if (idx == 4)
+                  out[ol++] = 'A' + nibble - 10;
+                bit_no += 4;
+              } while (--nibble_count);
+          }
+          continue;
+        }
       }
     }
     if (is_upper && v == 1) {
@@ -869,9 +930,9 @@ int unishox2_decompress_lines(const char *in, int len, char *out, const byte usx
       if (is_upper)
         c -= 32;
     } else {
-      if (c >= '0' && c <= '9')
+      if (c >= '0' && c <= '9') {
         dstate = USX_NUM;
-      else if (c == 0) {
+      } else if (c == 0) {
         if (v == 8) {
           out[ol++] = '\r';
           out[ol++] = '\n';
