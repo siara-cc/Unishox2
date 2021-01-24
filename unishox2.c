@@ -349,6 +349,27 @@ int matchLine(const char *in, int len, int l, char *out, int *ol, struct us_lnk_
   return -l;
 }
 
+byte getBaseCode(char ch) {
+  if (ch >= '0' && ch <= '9')
+    return (ch - '0') << 4;
+  else if (ch >= 'A' && ch <= 'F')
+    return (ch - 'A' + 10) << 4;
+  else if (ch >= 'a' && ch <= 'f')
+    return (ch - 'a' + 10) << 4;
+  return 0;
+}
+
+enum {USX_NIB_NUM = 0, USX_NIB_HEX_LOWER, USX_NIB_HEX_UPPER, USX_NIB_NOT};
+char getNibbleType(char ch) {
+  if (ch >= '0' && ch <= '9')
+    return USX_NIB_NUM;
+  else if (ch >= 'a' && ch <= 'f')
+    return USX_NIB_HEX_LOWER;
+  else if (ch >= 'A' && ch <= 'F')
+    return USX_NIB_HEX_UPPER;
+  return USX_NIB_NOT;
+}
+
 int unishox2_compress_lines(const char *in, int len, char *out, const byte usx_hcodes[], const byte usx_hcode_lens[], const char *usx_freq_seq[], struct us_lnk_lst *prev_lines) {
 
   char *ptr;
@@ -411,42 +432,65 @@ int unishox2_compress_lines(const char *in, int len, char *out, const byte usx_h
       }
     }
 
-    if (l <= len - 36 &&  usx_hcode_lens[USX_NUM]) {
-      int is_uid_upper = 0;
-      int uid_pos = l;
-      for (; uid_pos < l + 36; uid_pos++) {
-        char c_uid = in[uid_pos];
-        //8ff71973-3e52-4da0-a599-8e0508f190c7
-        if (uid_pos == l + 8 || uid_pos == l + 13 || uid_pos == l + 18 || uid_pos == l + 23) {
+    if (l <= len - 36 && usx_hcode_lens[USX_NUM]) {
+      if (in[l + 8] == '-' && in[l + 13] == '-' && in[l + 18] == '-' && in[l + 23] == '-') {
+        int is_uid_upper = 0;
+        int uid_pos = l;
+        for (; uid_pos < l + 36; uid_pos++) {
+          char c_uid = in[uid_pos];
+          //8ff71973-3e52-4da0-a599-8e0508f190c7
           if (c_uid == '-')
             continue;
-          else
-            break;
-        } else
-        if ((c_uid >= '0' && c_uid <= '9') || (c_uid >= 'A' && c_uid <= 'F') || (c_uid >= 'a' && c_uid <= 'f')) {
-          if (c_uid >= 'A' && c_uid <= 'F')
-            is_uid_upper = 1;
+          c_uid = getNibbleType(c_uid);
+          if (c_uid < USX_NIB_NOT) {
+            if (c_uid == USX_NIB_HEX_UPPER)
+              is_uid_upper = 1;
+            continue;
+          }
+          break;
+        }
+        if (uid_pos == l + 36) {
+          ol = append_code(out, ol, NUM_SW_CODE, &state, usx_hcodes, usx_hcode_lens);
+          ol = append_bits(out, ol, (is_uid_upper ? 0xF0 : 0xC0), (is_uid_upper ? 4 : 3));
+          for (uid_pos = l; uid_pos < l + 36; uid_pos++) {
+            char c_uid = in[uid_pos];
+            if (c_uid != '-')
+              ol = append_bits(out, ol, getBaseCode(c_uid), 4);
+          }
+          l += 35;
           continue;
         }
-        break;
       }
-      if (uid_pos == l + 36) {
-        ol = append_code(out, ol, NUM_SW_CODE, &state, usx_hcodes, usx_hcode_lens);
-        ol = append_bits(out, ol, (is_uid_upper ? 0xF0 : 0x80), (is_uid_upper ? 4 : 2));
-        for (uid_pos = l; uid_pos < l + 36; uid_pos++) {
-          char c_uid = in[uid_pos];
-          byte code_uid = 0;
-          if (c_uid >= '0' && c_uid <= '9')
-            code_uid = (c_uid - '0') << 4;
-          else if (c_uid >= 'A' && c_uid <= 'F')
-            code_uid = (c_uid - 'A' + 10) << 4;
-          else if (c_uid >= 'a' && c_uid <= 'f')
-            code_uid = (c_uid - 'a' + 10) << 4;
-          if (c_uid != '-')
-            ol = append_bits(out, ol, code_uid, 4);
+    }
+
+    if (l < len - 5 && usx_hcode_lens[USX_NUM]) {
+      char hex_type = USX_NIB_NUM;
+      int hex_len = 0;
+      do {
+        char nib_type = getNibbleType(in[l + hex_len]);
+        if (nib_type == USX_NIB_NOT)
+          break;
+        if (nib_type == USX_NIB_HEX_LOWER) {
+          if (hex_type == USX_NIB_HEX_UPPER)
+            break;
+          hex_type = nib_type;
+        } else
+        if (nib_type == USX_NIB_HEX_UPPER) {
+          if (hex_type == USX_NIB_HEX_LOWER)
+            break;
+          hex_type = nib_type;
         }
-        l += 36;
-        continue;
+        hex_len++;
+      } while (l + hex_len < len);
+      if (hex_len > 5 && hex_type == USX_NIB_NUM)
+        hex_type = USX_NIB_HEX_LOWER;
+      if ((hex_type == USX_NIB_HEX_LOWER || hex_type == USX_NIB_HEX_UPPER) && hex_len > 3) {
+        ol = append_code(out, ol, NUM_SW_CODE, &state, usx_hcodes, usx_hcode_lens);
+        ol = append_bits(out, ol, (hex_type == USX_NIB_HEX_LOWER ? 0x80 : 0xE0), (hex_type == USX_NIB_HEX_LOWER ? 2 : 4));
+        ol = encodeCount(out, ol, hex_len);
+        do {
+          ol = append_bits(out, ol, getBaseCode(in[l++]), 4);
+        } while (--hex_len);
       }
     }
 
@@ -773,6 +817,14 @@ int decodeRepeat(const char *in, int len, char *out, int ol, int *bit_no, struct
   return ol;
 }
 
+char getHexChar(int nibble, int hex_type) {
+  if (nibble >= 0 && nibble <= 9)
+    return '0' + nibble;
+  else if (hex_type < 3)
+    return 'a' + nibble - 10;
+  return 'A' + nibble - 10;
+}
+
 int unishox2_decompress_lines(const char *in, int len, char *out, const byte usx_hcodes[], const byte usx_hcode_lens[], const char *usx_freq_seq[], struct us_lnk_lst *prev_lines) {
 
   int dstate;
@@ -898,21 +950,17 @@ int unishox2_decompress_lines(const char *in, int len, char *out, const byte usx
         }
         if (h == USX_NUM && v == 0) {
           int idx = getStepCodeIdx(in, len, &bit_no, 4);
-          int32_t nibble = 0;
-          int nibble_count = 32;
-          switch (idx) {
-            case 1:
-            case 4:
-              do {
-                nibble = getNumFromBits(in, bit_no, 4);
-                if (nibble >= 0 && nibble <= 9)
-                  out[ol++] = '0' + nibble;
-                else if (idx == 1)
-                  out[ol++] = 'a' + nibble - 10;
-                else if (idx == 4)
-                  out[ol++] = 'A' + nibble - 10;
-                bit_no += 4;
-              } while (--nibble_count);
+          if (idx == 0) {
+
+          } else {
+            int nibble_count = (idx == 2 || idx == 4 ? 32 : readCount(in, &bit_no, len));
+            do {
+              int nibble = (int) getNumFromBits(in, bit_no, 4);
+              out[ol++] = getHexChar(nibble, idx);
+              if ((idx == 2 || idx == 4) && (nibble_count == 25 || nibble_count == 21 || nibble_count == 17 || nibble_count == 13))
+                out[ol++] = '-';
+              bit_no += 4;
+            } while (--nibble_count);
           }
           continue;
         }
