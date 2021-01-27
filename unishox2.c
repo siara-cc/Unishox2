@@ -377,7 +377,7 @@ int unishox2_compress_lines(const char *in, int len, char *out, const byte usx_h
   byte state;
 
   int l, ll, ol;
-  char c_in, c_next;
+  unsigned int c_in, c_next;
   int prev_uni;
   byte is_upper, is_all_upper, is_sentence_start;
 
