@@ -207,8 +207,8 @@ double timedifference(uint32_t t0, uint32_t t1) {
 
 int main(int argv, char *args[]) {
 
-char cbuf[2048];
-char dbuf[2048];
+char cbuf[65536];
+char dbuf[65536];
 long len, tot_len, clen, ctot, dlen, l;
 float perc;
 FILE *fp, *wfp;
@@ -424,6 +424,21 @@ if (argv >= 2 && strcmp(args[1], "-t") == 0) {
     // Repeat
     if (!test_ushx_cd("-----------------///////////////", preset)) return 1;
     if (!test_ushx_cd("-----------------Hello World1111111111112222222abcdef12345abcde1234_////////Hello World///////", preset)) return 1;
+
+    // Nibbles
+    if (!test_ushx_cd("fa01b51e-7ecc-4e3e-be7b-918a4c2c891c", preset)) return 1;
+    if (!test_ushx_cd("fa01b51e-7ecc-4e3e-be7b-9182c891c", preset)) return 1;
+    if (!test_ushx_cd("760FBCA3-272E-4F1A-BF88-8472DF6BD994", preset)) return 1;
+    if (!test_ushx_cd("FBCA3-272E-4F1A-BF88-8472DF6BD994", preset)) return 1;
+    if (!test_ushx_cd("Hello 1 5347a688-d8bf-445d-86d1-b470f95b007fHello World", preset)) return 1;
+
+    // Templates
+    if (!test_ushx_cd("2020-12-31", preset)) return 1;
+    if (!test_ushx_cd("1934-02", preset)) return 1;
+    if (!test_ushx_cd("2020-12-31T12:23:59.234Z", preset)) return 1;
+    if (!test_ushx_cd("1899-05-12T23:59:59.23434", preset)) return 1;
+    if (!test_ushx_cd("1899-05-12T23:59:59", preset)) return 1;
+    if (!test_ushx_cd("2020-12-31T12:23:59.234Zfa01b51e-7ecc-4e3e-be7b-918a4c2c891c", preset)) return 1;
 
     if (!test_ushx_cd("Cada buhonero alaba sus agujas. - A peddler praises his needles (wares).", preset)) return 1;
     if (!test_ushx_cd("Cada gallo canta en su muladar. - Each rooster sings on its dung-heap.", preset)) return 1;

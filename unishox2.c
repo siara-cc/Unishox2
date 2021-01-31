@@ -164,22 +164,20 @@ int append_code(char *out, int ol, byte code, byte *state, const byte usx_hcodes
   return append_bits(out, ol, usx_vcodes[vcode], usx_vcode_lens[vcode]);
 }
 
+const byte count_bit_lens[5] = {2, 4, 7, 11, 16};
+const int32_t count_adder[5] = {4, 20, 148, 2196, 67732};
+const byte count_codes[] = {0x01, 0x82, 0xC3, 0xE4, 0xF4};
 int encodeCount(char *out, int ol, int count) {
   // First five bits are code and Last three bits of codes represent length
-  const byte codes[] = {0x01, 0x82, 0xC3, 0xE4, 0xF5, 0xFD};
-  const byte bit_len[] = {2, 5, 7, 9, 12, 16};
-  const uint16_t adder[] = {0, 4, 36, 164, 676, 4772};
-  int till = 0;
-  for (int i = 0; i < 6; i++) {
-    till += (1 << bit_len[i]);
-    if (count < till) {
-      ol = append_bits(out, ol, (codes[i] & 0xF8), codes[i] & 0x07);
-      uint16_t count16 = (count - adder[i]) << (16 - bit_len[i]);
-      if (bit_len[i] > 8) {
+  for (int i = 0; i < 5; i++) {
+    if (count < count_adder[i]) {
+      ol = append_bits(out, ol, (count_codes[i] & 0xF8), count_codes[i] & 0x07);
+      uint16_t count16 = (count - (i ? count_adder[i - 1] : 0)) << (16 - count_bit_lens[i]);
+      if (count_bit_lens[i] > 8) {
         ol = append_bits(out, ol, count16 >> 8, 8);
-        ol = append_bits(out, ol, count16 & 0xFF, bit_len[i] - 8);
+        ol = append_bits(out, ol, count16 & 0xFF, count_bit_lens[i] - 8);
       } else
-        ol = append_bits(out, ol, count16 >> 8, bit_len[i]);
+        ol = append_bits(out, ol, count16 >> 8, count_bit_lens[i]);
       return ol;
     }
   }
@@ -282,7 +280,7 @@ int matchOccurance(const char *in, int len, int l, char *out, int *ol, byte *sta
   if (longest_len) {
     *ol = append_switch_code(out, *ol, *state);
     *ol = append_bits(out, *ol, usx_hcodes[USX_DICT], usx_hcode_lens[USX_DICT]);
-    //printf("Len:%d / Dist:%d\n", longest_len, longest_dist);
+    //printf("Len:%d / Dist:%d/%.*s\n", longest_len, longest_dist, longest_len + NICE_LEN, in + l - longest_dist - NICE_LEN + 1);
     *ol = encodeCount(out, *ol, longest_len);
     *ol = encodeCount(out, *ol, longest_dist);
     l += (longest_len + NICE_LEN);
@@ -370,7 +368,14 @@ char getNibbleType(char ch) {
   return USX_NIB_NOT;
 }
 
-int unishox2_compress_lines(const char *in, int len, char *out, const byte usx_hcodes[], const byte usx_hcode_lens[], const char *usx_freq_seq[], struct us_lnk_lst *prev_lines) {
+int append_nibble_escape(char *out, int ol, byte state, const byte usx_hcodes[], const byte usx_hcode_lens[]) {
+  ol = append_switch_code(out, ol, state);
+  ol = append_bits(out, ol, usx_hcodes[USX_NUM], usx_hcode_lens[USX_NUM]);
+  ol = append_bits(out, ol, 0, 2);
+  return ol;
+}
+
+int unishox2_compress_lines(const char *in, int len, char *out, const byte usx_hcodes[], const byte usx_hcode_lens[], const char *usx_freq_seq[], const char *usx_templates[], struct us_lnk_lst *prev_lines) {
 
   char *ptr;
   byte bits;
@@ -438,7 +443,6 @@ int unishox2_compress_lines(const char *in, int len, char *out, const byte usx_h
         int uid_pos = l;
         for (; uid_pos < l + 36; uid_pos++) {
           char c_uid = in[uid_pos];
-          //8ff71973-3e52-4da0-a599-8e0508f190c7
           if (c_uid == '-')
             continue;
           c_uid = getNibbleType(c_uid);
@@ -450,13 +454,14 @@ int unishox2_compress_lines(const char *in, int len, char *out, const byte usx_h
           break;
         }
         if (uid_pos == l + 36) {
-          ol = append_code(out, ol, NUM_SW_CODE, &state, usx_hcodes, usx_hcode_lens);
-          ol = append_bits(out, ol, (is_uid_upper ? 0xF0 : 0xC0), (is_uid_upper ? 4 : 3));
+          ol = append_nibble_escape(out, ol, state, usx_hcodes, usx_hcode_lens);
+          ol = append_bits(out, ol, (is_uid_upper ? 0xF0 : 0xC0), (is_uid_upper ? 5 : 3));
           for (uid_pos = l; uid_pos < l + 36; uid_pos++) {
             char c_uid = in[uid_pos];
             if (c_uid != '-')
               ol = append_bits(out, ol, getBaseCode(c_uid), 4);
           }
+          //printf("GUID:\n");
           l += 35;
           continue;
         }
@@ -470,42 +475,92 @@ int unishox2_compress_lines(const char *in, int len, char *out, const byte usx_h
         char nib_type = getNibbleType(in[l + hex_len]);
         if (nib_type == USX_NIB_NOT)
           break;
-        if (nib_type == USX_NIB_HEX_LOWER) {
-          if (hex_type == USX_NIB_HEX_UPPER)
-            break;
-          hex_type = nib_type;
-        } else
-        if (nib_type == USX_NIB_HEX_UPPER) {
-          if (hex_type == USX_NIB_HEX_LOWER)
+        if (nib_type != USX_NIB_NUM) {
+          if (hex_type != nib_type)
             break;
           hex_type = nib_type;
         }
         hex_len++;
       } while (l + hex_len < len);
-      if (hex_len > 5 && hex_type == USX_NIB_NUM)
+      if (hex_len > 10 && hex_type == USX_NIB_NUM)
         hex_type = USX_NIB_HEX_LOWER;
       if ((hex_type == USX_NIB_HEX_LOWER || hex_type == USX_NIB_HEX_UPPER) && hex_len > 3) {
-        ol = append_code(out, ol, NUM_SW_CODE, &state, usx_hcodes, usx_hcode_lens);
+        ol = append_nibble_escape(out, ol, state, usx_hcodes, usx_hcode_lens);
         ol = append_bits(out, ol, (hex_type == USX_NIB_HEX_LOWER ? 0x80 : 0xE0), (hex_type == USX_NIB_HEX_LOWER ? 2 : 4));
         ol = encodeCount(out, ol, hex_len);
         do {
           ol = append_bits(out, ol, getBaseCode(in[l++]), 4);
         } while (--hex_len);
+        l--;
+        continue;
       }
     }
 
-    if (usx_freq_seq != NULL) {
-      for (int i = 0; i < 6; i++) {
-        int seq_len = strlen(usx_freq_seq[i]);
-        if (len - seq_len > 0 && l < len - seq_len) {
-          if (memcmp(usx_freq_seq[i], in + l, seq_len) == 0 && usx_hcode_lens[usx_freq_codes[i] >> 5]) {
-            ol = append_code(out, ol, usx_freq_codes[i], &state, usx_hcodes, usx_hcode_lens);
-            l += seq_len;
-            i = -1;
+    if (usx_templates != NULL) {
+      int i;
+      for (i = 0; i < 5; i++) {
+        if (usx_templates[i]) {
+          int rem = strlen(usx_templates[i]);
+          int j = 0;
+          for (; j < rem && l + j < len; j++) {
+            char c_t = usx_templates[i][j];
+            c_in = in[l + j];
+            if (c_t == 'f' || c_t == 'F') {
+              if (getNibbleType(c_in) != (c_t == 'f' ? USX_NIB_HEX_LOWER : USX_NIB_HEX_UPPER)
+                       && getNibbleType(c_in) != USX_NIB_NUM) {
+                break;
+              }
+            } else
+            if (c_t == 'r' || c_t == 't' || c_t == 'o') {
+              if (c_in < '0' || c_in > (c_t == 'r' ? '7' : (c_t == 't' ? '3' : '1')))
+                break;
+            } else
+            if (c_t != c_in)
+              break;
+          }
+          if (((float)j / rem) > 0.66) {
+            //printf("%s\n", usx_templates[i]);
+            rem = rem - j;
+            ol = append_nibble_escape(out, ol, state, usx_hcodes, usx_hcode_lens);
+            ol = append_bits(out, ol, 0, 1);
+            ol = append_bits(out, ol, (count_codes[i] & 0xF8), count_codes[i] & 0x07);
+            ol = encodeCount(out, ol, rem);
+            for (int k = 0; k < j; k++) {
+              char c_t = usx_templates[i][k];
+              if (c_t == 'f' || c_t == 'F')
+                ol = append_bits(out, ol, getBaseCode(in[l + k]), 4);
+              else if (c_t == 'r' || c_t == 't' || c_t == 'o') {
+                c_t = (c_t == 'r' ? 3 : (c_t == 't' ? 2 : 1));
+                ol = append_bits(out, ol, (in[l + k] - '0') << (8 - c_t), c_t);
+              }
+            }
+            l += j;
+            l--;
+            break;
           }
         }
       }
+      if (i < 5)
+        continue;
     }
+
+    if (usx_freq_seq != NULL) {
+      int i;
+      for (i = 0; i < 6; i++) {
+        int seq_len = strlen(usx_freq_seq[i]);
+        if (len - seq_len >= 0 && l <= len - seq_len) {
+          if (memcmp(usx_freq_seq[i], in + l, seq_len) == 0 && usx_hcode_lens[usx_freq_codes[i] >> 5]) {
+            ol = append_code(out, ol, usx_freq_codes[i], &state, usx_hcodes, usx_hcode_lens);
+            l += seq_len;
+            l--;
+            break;
+          }
+        }
+      }
+      if (i < 6)
+        continue;
+    }
+
     c_in = in[l];
 
     is_upper = 0;
@@ -610,15 +665,22 @@ int unishox2_compress_lines(const char *in, int len, char *out, const byte usx_h
           }
         }
         ol = encodeUnicode(out, ol, uni, prev_uni);
-        //printf("%d:%d:%d,", l, utf8len, uni);
+        printf("%d:%d:%d\n", l, utf8len, uni);
         if (uni != 0x3002)
           prev_uni = uni;
       } else {
-        // Encoding Binary characters does not work
-        //printf("Bin:%d:%x\n", (unsigned char) c_in, (unsigned char) c_in);
-        uni = c_in;
-        ol = encodeUnicode(out, ol, uni, prev_uni);
-        prev_uni = uni;
+        ol = append_nibble_escape(out, ol, state, usx_hcodes, usx_hcode_lens);
+        ol = append_bits(out, ol, 0xF8, 5);
+        int bin_count = 0;
+        for (int bi = l; bi < len; bi++) {
+          if (in[bi] > 31)
+            break;
+          bin_count++;
+        }
+        //printf("Bin:%d:%x:%d\n", (unsigned char) c_in, (unsigned char) c_in, bin_count);
+        ol = encodeCount(out, ol, bin_count);
+        while (bin_count--)
+          ol = append_bits(out, ol, in[l++], 8);
       }
     }
   }
@@ -633,12 +695,12 @@ int unishox2_compress_lines(const char *in, int len, char *out, const byte usx_h
 
 }
 
-int unishox2_compress(const char *in, int len, char *out, const byte usx_hcodes[], const byte usx_hcode_lens[], const char *usx_freq_seq[]) {
-  return unishox2_compress_lines(in, len, out, usx_hcodes, usx_hcode_lens, usx_freq_seq, NULL);
+int unishox2_compress(const char *in, int len, char *out, const byte usx_hcodes[], const byte usx_hcode_lens[], const char *usx_freq_seq[], const char *usx_templates[]) {
+  return unishox2_compress_lines(in, len, out, usx_hcodes, usx_hcode_lens, usx_freq_seq, usx_templates, NULL);
 }
 
 int unishox2_compress_simple(const char *in, int len, char *out) {
-  return unishox2_compress_lines(in, len, out, USX_HCODES_DFLT, USX_HCODE_LENS_DFLT, USX_FREQ_SEQ_DFLT, NULL);
+  return unishox2_compress_lines(in, len, out, USX_HCODES_DFLT, USX_HCODE_LENS_DFLT, USX_FREQ_SEQ_DFLT, USX_TEMPLATES, NULL);
 }
 
 int readBit(const char *in, int bit_no) {
@@ -736,15 +798,13 @@ int32_t getNumFromBits(const char *in, int bit_no, int count) {
 }
 
 int readCount(const char *in, int *bit_no_p, int len) {
-  const byte bit_len[7]   = {2, 5,  7,   9,  12,   16, 17};
-  const uint16_t adder[7] = {0, 4, 36, 164, 676, 4772,  0};
-  int idx = getStepCodeIdx(in, len, bit_no_p, 5);
+  int idx = getStepCodeIdx(in, len, bit_no_p, 4);
   if (idx == 99)
     return -1;
-  if (*bit_no_p + bit_len[idx] - 1 >= len)
+  if (*bit_no_p + count_bit_lens[idx] - 1 >= len)
     return -1;
-  int count = getNumFromBits(in, *bit_no_p, bit_len[idx]) + adder[idx];
-  (*bit_no_p) += bit_len[idx];
+  int count = getNumFromBits(in, *bit_no_p, count_bit_lens[idx]) + (idx ? count_adder[idx - 1] : 0);
+  (*bit_no_p) += count_bit_lens[idx];
   return count;
 }
 
@@ -825,7 +885,7 @@ char getHexChar(int nibble, int hex_type) {
   return 'A' + nibble - 10;
 }
 
-int unishox2_decompress_lines(const char *in, int len, char *out, const byte usx_hcodes[], const byte usx_hcode_lens[], const char *usx_freq_seq[], struct us_lnk_lst *prev_lines) {
+int unishox2_decompress_lines(const char *in, int len, char *out, const byte usx_hcodes[], const byte usx_hcode_lens[], const char *usx_freq_seq[], const char *usx_templates[], struct us_lnk_lst *prev_lines) {
 
   int dstate;
   int bit_no;
@@ -949,9 +1009,27 @@ int unishox2_decompress_lines(const char *in, int len, char *out, const byte usx
           break;
         }
         if (h == USX_NUM && v == 0) {
-          int idx = getStepCodeIdx(in, len, &bit_no, 4);
+          int idx = getStepCodeIdx(in, len, &bit_no, 5);
           if (idx == 0) {
-
+            idx = getStepCodeIdx(in, len, &bit_no, 4);
+            int rem = strlen(usx_templates[idx]) - readCount(in, &bit_no, len);
+            for (int j = 0; j < rem; j++) {
+              char c_t = usx_templates[idx][j];
+              if (c_t == 'f' || c_t == 'r' || c_t == 't' || c_t == 'o' || c_t == 'F') {
+                  char nibble_len = (c_t == 'f' || c_t == 'F' ? 4 : (c_t == 'r' ? 3 : (c_t == 't' ? 2 : 1)));
+                  out[ol++] = getHexChar(getNumFromBits(in, bit_no, nibble_len),
+                      c_t == 'f' ? USX_NIB_HEX_LOWER : USX_NIB_HEX_UPPER);
+                  bit_no += nibble_len;
+              } else
+                out[ol++] = c_t;
+            }
+          } else
+          if (idx == 5) {
+            int bin_count = readCount(in, &bit_no, len);
+            do {
+              out[ol++] = getNumFromBits(in, bit_no, 8);
+              bit_no += 8;
+            } while (--bin_count);
           } else {
             int nibble_count = (idx == 2 || idx == 4 ? 32 : readCount(in, &bit_no, len));
             do {
@@ -1014,10 +1092,10 @@ int unishox2_decompress_lines(const char *in, int len, char *out, const byte usx
 
 }
 
-int unishox2_decompress(const char *in, int len, char *out, const byte usx_hcodes[], const byte usx_hcode_lens[], const char *usx_freq_seq[]) {
-  return unishox2_decompress_lines(in, len, out, usx_hcodes, usx_hcode_lens, usx_freq_seq, NULL);
+int unishox2_decompress(const char *in, int len, char *out, const byte usx_hcodes[], const byte usx_hcode_lens[], const char *usx_freq_seq[], const char *usx_templates[]) {
+  return unishox2_decompress_lines(in, len, out, usx_hcodes, usx_hcode_lens, usx_freq_seq, usx_templates, NULL);
 }
 
 int unishox2_decompress_simple(const char *in, int len, char *out) {
-  return unishox2_decompress(in, len, out, USX_HCODES_DFLT, USX_HCODE_LENS_DFLT, USX_FREQ_SEQ_DFLT);
+  return unishox2_decompress(in, len, out, USX_HCODES_DFLT, USX_HCODE_LENS_DFLT, USX_FREQ_SEQ_DFLT, USX_TEMPLATES);
 }

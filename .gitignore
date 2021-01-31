@@ -5,6 +5,7 @@
 ._*
 .vscode*
 a.out
+*.bin
 unishox
 unishox1
 unishox2
