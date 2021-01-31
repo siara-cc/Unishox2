@@ -233,26 +233,35 @@ int encodeUnicode(char *out, int ol, int32_t code, int32_t prev_code) {
   return ol;
 }
 
-int readUTF8(const char *in, int len, int l, int *utf8len) {
-  int bc = 0;
-  int uni = 0;
-  byte c_in = in[l];
-  for (; bc < 3; bc++) {
-    if (UTF8_PREFIX[bc] == (c_in & UTF8_MASK[bc]) && len - (bc + 1) > l) {
-      int j = 0;
-      uni = c_in & ~UTF8_MASK[bc] & 0xFF;
-      do {
-        uni <<= 6;
-        uni += (in[l + j + 1] & 0x3F);
-      } while (j++ < bc);
-      break;
-    }
+int32_t readUTF8(const char *in, int len, int l, int *utf8len) {
+  int32_t ret = 0;
+  if (l < len - 1 && (in[l] & 0xE0) == 0xC0 && (in[l + 1] & 0xC0) == 0x80) {
+    *utf8len = 2;
+    ret = (in[l] & 0x1F);
+    ret <<= 6;
+    ret += (in[l + 1] & 0x3F);
+  } else
+  if (l < len - 2 && (in[l] & 0xF0) == 0xE0 && (in[l + 1] & 0xC0) == 0x80
+          && (in[l + 2] & 0xC0) == 0x80) {
+    *utf8len = 3;
+    ret = (in[l] & 0x0F);
+    ret <<= 6;
+    ret += (in[l + 1] & 0x3F);
+    ret <<= 6;
+    ret += (in[l + 2] & 0x3F);
+  } else
+  if (l < len - 3 && (in[l] & 0xF8) == 0xF0 && (in[l + 1] & 0xC0) == 0x80
+          && (in[l + 2] & 0xC0) == 0x80 && (in[l + 3] & 0xC0) == 0x80) {
+    *utf8len = 4;
+    ret = (in[l] & 0x07);
+    ret <<= 6;
+    ret += (in[l + 1] & 0x3F);
+    ret <<= 6;
+    ret += (in[l + 2] & 0x3F);
+    ret <<= 6;
+    ret += (in[l + 3] & 0x3F);
   }
-  if (bc < 3) {
-    *utf8len = bc + 1;
-    return uni;
-  }
-  return 0;
+  return ret;
 }
 
 int matchOccurance(const char *in, int len, int l, char *out, int *ol, byte *state, const byte usx_hcodes[], const byte usx_hcode_lens[]) {
@@ -645,11 +654,11 @@ int unishox2_compress_lines(const char *in, int len, char *out, const byte usx_h
       ol = append_code(out, ol, TAB_CODE, &state, usx_hcodes, usx_hcode_lens);
     } else {
       int utf8len;
-      int uni = readUTF8(in, len, l, &utf8len);
+      int32_t uni = readUTF8(in, len, l, &utf8len);
       if (uni) {
         l += utf8len;
         if (state != USX_DELTA) {
-          int uni2 = readUTF8(in, len, l + 1, &utf8len);
+          int32_t uni2 = readUTF8(in, len, l, &utf8len);
           if (uni2) {
             if (state != USX_ALPHA) {
               ol = append_switch_code(out, ol, state);
@@ -668,19 +677,23 @@ int unishox2_compress_lines(const char *in, int len, char *out, const byte usx_h
         printf("%d:%d:%d\n", l, utf8len, uni);
         if (uni != 0x3002)
           prev_uni = uni;
+        l--;
       } else {
         ol = append_nibble_escape(out, ol, state, usx_hcodes, usx_hcode_lens);
         ol = append_bits(out, ol, 0xF8, 5);
         int bin_count = 0;
         for (int bi = l; bi < len; bi++) {
-          if (in[bi] > 31)
+          if (in[bi] > 31 && in[bi] != 0x7F)
             break;
           bin_count++;
         }
-        //printf("Bin:%d:%x:%d\n", (unsigned char) c_in, (unsigned char) c_in, bin_count);
-        ol = encodeCount(out, ol, bin_count);
-        while (bin_count--)
-          ol = append_bits(out, ol, in[l++], 8);
+        if (bin_count) {
+          //printf("Bin:%d:%x:%d\n", (unsigned char) c_in, (unsigned char) c_in, bin_count);
+          ol = encodeCount(out, ol, bin_count);
+          while (bin_count--)
+            ol = append_bits(out, ol, in[l++], 8);
+          l--;
+        }
       }
     }
   }
