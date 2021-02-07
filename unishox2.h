@@ -63,7 +63,7 @@
 #define USX_FREQ_SEQ_HTML (const char *[]){"</", "=\"", "div", "href", "class", "<p>"}
 #define USX_FREQ_SEQ_XML (const char *[]){"</", "=\"", "\">", "<?xml version=\"1.0\"", "xmlns:", "://"}
 
-#define USX_TEMPLATES (const char *[]){"tfff-of-tfTtf:rf:rf.fffZ", "tfff-of-tf", "(fff) fff-ffff", 0, 0}
+#define USX_TEMPLATES (const char *[]){"tfff-of-tfTtf:rf:rf.fffZ", "tfff-of-tf", "(fff) fff-ffff", "tf:rf:rf", 0}
 
 #define USX_PSET_DFLT USX_HCODES_DFLT, USX_HCODE_LENS_DFLT, USX_FREQ_SEQ_DFLT, USX_TEMPLATES
 #define USX_PSET_ALPHA_ONLY USX_HCODES_ALPHA_ONLY, USX_HCODE_LENS_ALPHA_ONLY, USX_FREQ_SEQ_TXT, USX_TEMPLATES

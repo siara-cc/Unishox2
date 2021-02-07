@@ -15,6 +15,11 @@ unishox_0_1_0
 *.txt
 !json?.txt
 !xml?.txt
+!chinese.txt
+!tamil.txt
+!korean.txt
+!japanese.txt
+!hindi.txt
 *.aux
 *.log
 *.out

@@ -13,7 +13,6 @@
 #include "unishox2.h"
 
 typedef unsigned char byte;
-extern byte to_match_repeats;
 
 int unishox2_compress_preset_lines(const char *in, int len, char *out, int preset, struct us_lnk_lst *prev_lines) {
   switch (preset) {
@@ -207,8 +206,8 @@ double timedifference(uint32_t t0, uint32_t t1) {
 
 int main(int argv, char *args[]) {
 
-char cbuf[65536];
-char dbuf[65536];
+char cbuf[4096];
+char dbuf[8192];
 long len, tot_len, clen, ctot, dlen, l;
 float perc;
 FILE *fp, *wfp;
@@ -292,7 +291,7 @@ if (argv >= 4 && (strcmp(args[1], "-g") == 0 ||
    if (argv > 4)
      preset = atoi(args[4]);
    if (strcmp(args[1], "-g") == 0)
-     to_match_repeats = 0;
+     preset = 9; // = USX_PSET_NO_DICT;
    fp = fopen(args[2], "r");
    if (fp == NULL) {
       perror(args[2]);
@@ -439,6 +438,10 @@ if (argv >= 2 && strcmp(args[1], "-t") == 0) {
     if (!test_ushx_cd("1899-05-12T23:59:59.23434", preset)) return 1;
     if (!test_ushx_cd("1899-05-12T23:59:59", preset)) return 1;
     if (!test_ushx_cd("2020-12-31T12:23:59.234Zfa01b51e-7ecc-4e3e-be7b-918a4c2c891c", preset)) return 1;
+    if (!test_ushx_cd("顔に(993) 345-3495あり", preset)) return 1;
+    if (!test_ushx_cd("HELLO(993) 345-3495WORLD", preset)) return 1;
+    if (!test_ushx_cd("顔に1899-05-12T23:59:59あり", preset)) return 1;
+    if (!test_ushx_cd("HELLO1899-05-12T23:59:59WORLD", preset)) return 1;
 
     if (!test_ushx_cd("Cada buhonero alaba sus agujas. - A peddler praises his needles (wares).", preset)) return 1;
     if (!test_ushx_cd("Cada gallo canta en su muladar. - Each rooster sings on its dung-heap.", preset)) return 1;
@@ -503,6 +506,10 @@ if (argv >= 2 && strcmp(args[1], "-t") == 0) {
     if (!test_ushx_cd("自助者天助 - Those who help themselves, God will help.", preset)) return 1;
     if (!test_ushx_cd("早起的鸟儿有虫吃 - Early bird gets the worm.", preset)) return 1;
     if (!test_ushx_cd("{\"menu\": {\n  \"id\": \"file\",\n  \"value\": \"File\",\n  \"popup\": {\n    \"menuitem\": [\n      {\"value\": \"New\", \"onclick\": \"CreateNewDoc()\"},\n      {\"value\": \"Open\", \"onclick\": \"OpenDoc()\"},\n      {\"value\": \"Close\", \"onclick\": \"CloseDoc()\"}\n    ]\n  }\n}}", preset)) return 1;
+
+    if (!test_ushx_cd("符号\"δ\"表", preset)) return 1;
+    if (!test_ushx_cd("学者地”[3]。学者", preset)) return 1;
+    if (!test_ushx_cd("한데......아무", preset)) return 1;
 
     // English
     if (!test_ushx_cd("Beauty is not in the face. Beauty is a light in the heart.", preset)) return 1;

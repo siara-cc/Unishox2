@@ -56,11 +56,6 @@ byte usx_freq_codes[] = {(1 << 5) + 25, (1 << 5) + 26, (1 << 5) + 27, (2 << 5) +
 const int UTF8_MASK[] = {0xE0, 0xF0, 0xF8};
 const int UTF8_PREFIX[] = {0xC0, 0xE0, 0xF0};
 
-byte to_match_repeats = 1;
-#define USE_64K_LOOKUP 0
-#if USE_64K_LOOKUP == 1
-byte lookup[65536];
-#endif
 #define NICE_LEN 5
 
 #define RPT_CODE ((2 << 5) + 26)
@@ -191,11 +186,6 @@ int encodeUnicode(char *out, int ol, int32_t code, int32_t prev_code) {
   // First five bits are code and Last three bits of codes represent length
   //const byte codes[8] = {0x00, 0x42, 0x83, 0xA3, 0xC3, 0xE4, 0xF5, 0xFD};
   const byte codes[6] = {0x01, 0x82, 0xC3, 0xE4, 0xF5, 0xFD};
-  if (code == 0x3002) {
-    ol = append_bits(out, ol, UNI_STATE_SPL_CODE, UNI_STATE_SPL_CODE_LEN);
-    ol = append_bits(out, ol, 0xE0, 4);
-    return ol;
-  }
   int32_t till = 0;
   int orig_ol = ol;
   int32_t diff = code - prev_code;
@@ -235,13 +225,15 @@ int encodeUnicode(char *out, int ol, int32_t code, int32_t prev_code) {
 
 int32_t readUTF8(const char *in, int len, int l, int *utf8len) {
   int32_t ret = 0;
-  if (l < len - 1 && (in[l] & 0xE0) == 0xC0 && (in[l + 1] & 0xC0) == 0x80) {
+  if (l < (len - 1) && (in[l] & 0xE0) == 0xC0 && (in[l + 1] & 0xC0) == 0x80) {
     *utf8len = 2;
     ret = (in[l] & 0x1F);
     ret <<= 6;
     ret += (in[l + 1] & 0x3F);
+    if (ret < 0x80)
+      ret = 0;
   } else
-  if (l < len - 2 && (in[l] & 0xF0) == 0xE0 && (in[l + 1] & 0xC0) == 0x80
+  if (l < (len - 2) && (in[l] & 0xF0) == 0xE0 && (in[l + 1] & 0xC0) == 0x80
           && (in[l + 2] & 0xC0) == 0x80) {
     *utf8len = 3;
     ret = (in[l] & 0x0F);
@@ -249,8 +241,10 @@ int32_t readUTF8(const char *in, int len, int l, int *utf8len) {
     ret += (in[l + 1] & 0x3F);
     ret <<= 6;
     ret += (in[l + 2] & 0x3F);
+    if (ret < 0x0800)
+      ret = 0;
   } else
-  if (l < len - 3 && (in[l] & 0xF8) == 0xF0 && (in[l + 1] & 0xC0) == 0x80
+  if (l < (len - 3) && (in[l] & 0xF8) == 0xF0 && (in[l + 1] & 0xC0) == 0x80
           && (in[l + 2] & 0xC0) == 0x80 && (in[l + 3] & 0xC0) == 0x80) {
     *utf8len = 4;
     ret = (in[l] & 0x07);
@@ -260,6 +254,8 @@ int32_t readUTF8(const char *in, int len, int l, int *utf8len) {
     ret += (in[l + 2] & 0x3F);
     ret <<= 6;
     ret += (in[l + 3] & 0x3F);
+    if (ret < 0x10000)
+      ret = 0;
   }
   return ret;
 }
@@ -277,7 +273,7 @@ int matchOccurance(const char *in, int len, int l, char *out, int *ol, byte *sta
       k--; // Skip partial UTF-8 matches
     //if ((in[k - 1] >> 3) == 0x1E || (in[k - 1] >> 4) == 0x0E || (in[k - 1] >> 5) == 0x06)
     //  k--;
-    if (k - l > NICE_LEN - 1) {
+    if ((k - l) > (NICE_LEN - 1)) {
       int match_len = k - l - NICE_LEN;
       int match_dist = l - j - NICE_LEN + 1;
       if (match_len > longest_len) {
@@ -393,22 +389,18 @@ int unishox2_compress_lines(const char *in, int len, char *out, const byte usx_h
   int l, ll, ol;
   char c_in, c_next;
   int prev_uni;
-  byte is_upper, is_all_upper, is_sentence_start;
+  byte is_upper, is_all_upper;
 
   init_coder();
   ol = 0;
   prev_uni = 0;
-#if USE_64K_LOOKUP == 1
-  memset(lookup, 0, sizeof(lookup));
-#endif
   state = USX_ALPHA;
   is_all_upper = 0;
-  is_sentence_start = 1;
+  ol = append_bits(out, ol, 0x80, 1); // magic bit
   for (l=0; l<len; l++) {
 
     c_in = in[l];
-
-    if (to_match_repeats && usx_hcode_lens[USX_DICT] && l < (len - NICE_LEN + 1)) {
+    if (usx_hcode_lens[USX_DICT] && l < (len - NICE_LEN + 1)) {
       if (prev_lines) {
         l = matchLine(in, len, l, out, &ol, prev_lines, &state, usx_hcodes, usx_hcode_lens);
         if (l > 0) {
@@ -416,23 +408,16 @@ int unishox2_compress_lines(const char *in, int len, char *out, const byte usx_h
         }
         l = -l;
       } else {
-    #if USE_64K_LOOKUP == 1
-        uint16_t to_lookup = c_in ^ in[l + 1] + ((in[l + 2] ^ in[l + 3]) << 8);
-        if (lookup[to_lookup]) {
-    #endif
           l = matchOccurance(in, len, l, out, &ol, &state, usx_hcodes, usx_hcode_lens);
           if (l > 0) {
             continue;
           }
           l = -l;
-    #if USE_64K_LOOKUP == 1
-        } else
-          lookup[to_lookup] = 1;
-    #endif
       }
     }
 
-    if (l && l < len - 4 && usx_hcode_lens[USX_NUM]) {
+    c_in = in[l];
+    if (l && len > 4 && l < (len - 4) && usx_hcode_lens[USX_NUM]) {
       if (c_in == in[l - 1] && c_in == in[l + 1] && c_in == in[l + 2] && c_in == in[l + 3]) {
         int rpt_count = l + 4;
         while (rpt_count < len && in[rpt_count] == c_in)
@@ -446,7 +431,7 @@ int unishox2_compress_lines(const char *in, int len, char *out, const byte usx_h
       }
     }
 
-    if (l <= len - 36 && usx_hcode_lens[USX_NUM]) {
+    if (l <= (len - 36) && usx_hcode_lens[USX_NUM]) {
       if (in[l + 8] == '-' && in[l + 13] == '-' && in[l + 18] == '-' && in[l + 23] == '-') {
         int is_uid_upper = 0;
         int uid_pos = l;
@@ -477,7 +462,7 @@ int unishox2_compress_lines(const char *in, int len, char *out, const byte usx_h
       }
     }
 
-    if (l < len - 5 && usx_hcode_lens[USX_NUM]) {
+    if (l < (len - 5) && usx_hcode_lens[USX_NUM]) {
       char hex_type = USX_NIB_NUM;
       int hex_len = 0;
       do {
@@ -674,26 +659,29 @@ int unishox2_compress_lines(const char *in, int len, char *out, const byte usx_h
           }
         }
         ol = encodeUnicode(out, ol, uni, prev_uni);
-        printf("%d:%d:%d\n", l, utf8len, uni);
-        if (uni != 0x3002)
-          prev_uni = uni;
+        //printf("%d:%d:%d\n", l, utf8len, uni);
+        prev_uni = uni;
         l--;
       } else {
-        ol = append_nibble_escape(out, ol, state, usx_hcodes, usx_hcode_lens);
-        ol = append_bits(out, ol, 0xF8, 5);
-        int bin_count = 0;
-        for (int bi = l; bi < len; bi++) {
-          if (in[bi] > 31 && in[bi] != 0x7F)
+        int bin_count = 1;
+        for (int bi = l + 1; bi < len; bi++) {
+          char c_bi = in[bi];
+          //if (c_bi > 0x1F && c_bi != 0x7F)
+          //  break;
+          if (readUTF8(in, len, bi, &utf8len))
+            break;
+          if (bi < (len - 4) && c_bi == in[bi - 1] && c_bi == in[bi + 1] && c_bi == in[bi + 2] && c_bi == in[bi + 3])
             break;
           bin_count++;
         }
-        if (bin_count) {
-          //printf("Bin:%d:%x:%d\n", (unsigned char) c_in, (unsigned char) c_in, bin_count);
-          ol = encodeCount(out, ol, bin_count);
-          while (bin_count--)
-            ol = append_bits(out, ol, in[l++], 8);
-          l--;
-        }
+        //printf("Bin:%d:%d:%x:%d\n", l, (unsigned char) c_in, (unsigned char) c_in, bin_count);
+        ol = append_nibble_escape(out, ol, state, usx_hcodes, usx_hcode_lens);
+        ol = append_bits(out, ol, 0xF8, 5);
+        ol = encodeCount(out, ol, bin_count);
+        do {
+          ol = append_bits(out, ol, in[l++], 8);
+        } while (--bin_count);
+        l--;
       }
     }
   }
@@ -846,17 +834,17 @@ int32_t readUnicode(const char *in, int *bit_no_p, int len) {
 void writeUTF8(char *out, int *ol, int uni) {
   if (uni < (1 << 11)) {
     out[(*ol)++] = (0xC0 + (uni >> 6));
-    out[(*ol)++] = (0x80 + (uni & 63));
+    out[(*ol)++] = (0x80 + (uni & 0x3F));
   } else
   if (uni < (1 << 16)) {
     out[(*ol)++] = (0xE0 + (uni >> 12));
-    out[(*ol)++] = (0x80 + ((uni >> 6) & 63));
-    out[(*ol)++] = (0x80 + (uni & 63));
+    out[(*ol)++] = (0x80 + ((uni >> 6) & 0x3F));
+    out[(*ol)++] = (0x80 + (uni & 0x3F));
   } else {
     out[(*ol)++] = (0xF0 + (uni >> 18));
-    out[(*ol)++] = (0x80 + ((uni >> 12) & 63));
-    out[(*ol)++] = (0x80 + ((uni >> 6) & 63));
-    out[(*ol)++] = (0x80 + (uni & 63));
+    out[(*ol)++] = (0x80 + ((uni >> 12) & 0x3F));
+    out[(*ol)++] = (0x80 + ((uni >> 6) & 0x3F));
+    out[(*ol)++] = (0x80 + (uni & 0x3F));
   }
 }
 
@@ -907,7 +895,7 @@ int unishox2_decompress_lines(const char *in, int len, char *out, const byte usx
 
   init_coder();
   int ol = 0;
-  bit_no = 0;
+  bit_no = 1; // ignore the magic bit
   dstate = h = USX_ALPHA;
   is_all_upper = 0;
 
@@ -945,10 +933,7 @@ int unishox2_decompress_lines(const char *in, int len, char *out, const byte usx
             out[ol++] = ',';
             continue;
           case 3:
-            if (prev_uni > 0x3000)
-              writeUTF8(out, &ol, 0x3002);
-            else
-              out[ol++] = '.';
+            out[ol++] = '.';
             continue;
           case 4:
             out[ol++] = 10;
@@ -970,10 +955,11 @@ int unishox2_decompress_lines(const char *in, int len, char *out, const byte usx
       bit_no = orig_bit_no;
       break;
     }
-    if (v == 0) {
+    if (v == 0 && h != USX_SYM) {
       if (bit_no >= len)
         break;
-      h = readHCodeIdx(in, len, &bit_no, usx_hcodes, usx_hcode_lens);
+      if (h != USX_NUM || dstate != USX_DELTA)
+        h = readHCodeIdx(in, len, &bit_no, usx_hcodes, usx_hcode_lens);
       if (h == 99 || bit_no >= len) {
         bit_no = orig_bit_no;
         break;
@@ -1016,7 +1002,8 @@ int unishox2_decompress_lines(const char *in, int len, char *out, const byte usx
         //printf("BitNo: %d\n", bit_no);
         continue;
       } else {
-        v = readVCodeIdx(in, len, &bit_no);
+        if (h != USX_NUM || dstate != USX_DELTA)
+          v = readVCodeIdx(in, len, &bit_no);
         if (v == 99) {
           bit_no = orig_bit_no;
           break;
@@ -1053,6 +1040,8 @@ int unishox2_decompress_lines(const char *in, int len, char *out, const byte usx
               bit_no += 4;
             } while (--nibble_count);
           }
+          if (dstate == USX_DELTA)
+            h = USX_DELTA;
           continue;
         }
       }
@@ -1093,6 +1082,8 @@ int unishox2_decompress_lines(const char *in, int len, char *out, const byte usx
           ol += strlen(usx_freq_seq[v]);
         } else
           break; // Terminator
+        if (dstate == USX_DELTA)
+          h = USX_DELTA;
         continue;
       }
     }
@@ -1110,5 +1101,5 @@ int unishox2_decompress(const char *in, int len, char *out, const byte usx_hcode
 }
 
 int unishox2_decompress_simple(const char *in, int len, char *out) {
-  return unishox2_decompress(in, len, out, USX_HCODES_DFLT, USX_HCODE_LENS_DFLT, USX_FREQ_SEQ_DFLT, USX_TEMPLATES);
+  return unishox2_decompress(in, len, out, USX_PSET_DFLT);
 }
