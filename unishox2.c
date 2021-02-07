@@ -382,8 +382,6 @@ int append_nibble_escape(char *out, int ol, byte state, const byte usx_hcodes[],
 
 int unishox2_compress_lines(const char *in, int len, char *out, const byte usx_hcodes[], const byte usx_hcode_lens[], const char *usx_freq_seq[], const char *usx_templates[], struct us_lnk_lst *prev_lines) {
 
-  char *ptr;
-  byte bits;
   byte state;
 
   int l, ll, ol;
@@ -399,7 +397,6 @@ int unishox2_compress_lines(const char *in, int len, char *out, const byte usx_h
   ol = append_bits(out, ol, 0x80, 1); // magic bit
   for (l=0; l<len; l++) {
 
-    c_in = in[l];
     if (usx_hcode_lens[USX_DICT] && l < (len - NICE_LEN + 1)) {
       if (prev_lines) {
         l = matchLine(in, len, l, out, &ol, prev_lines, &state, usx_hcodes, usx_hcode_lens);
@@ -789,9 +786,9 @@ int getStepCodeIdx(const char *in, int len, int *bit_no_p, int limit) {
 }
 
 // TODO: Check length
-int32_t getNumFromBits(const char *in, int bit_no, int count) {
+int32_t getNumFromBits(const char *in, int len, int bit_no, int count) {
    int32_t ret = 0;
-   while (count--) {
+   while (count-- && bit_no < len) {
      ret += (readBit(in, bit_no) ? 1 << count : 0);
      bit_no++;
    }
@@ -804,7 +801,7 @@ int readCount(const char *in, int *bit_no_p, int len) {
     return -1;
   if (*bit_no_p + count_bit_lens[idx] - 1 >= len)
     return -1;
-  int count = getNumFromBits(in, *bit_no_p, count_bit_lens[idx]) + (idx ? count_adder[idx - 1] : 0);
+  int count = getNumFromBits(in, len, *bit_no_p, count_bit_lens[idx]) + (idx ? count_adder[idx - 1] : 0);
   (*bit_no_p) += count_bit_lens[idx];
   return count;
 }
@@ -818,11 +815,11 @@ int32_t readUnicode(const char *in, int *bit_no_p, int len) {
     return 0x7FFFFF00 + idx;
   }
   if (idx >= 0) {
-    int sign = readBit(in, *bit_no_p);
+    int sign = (*bit_no_p < len ? readBit(in, *bit_no_p) : 0);
     (*bit_no_p)++;
     if (*bit_no_p + uni_bit_len[idx] - 1 >= len)
       return 0x7FFFFF00 + 99;
-    int32_t count = getNumFromBits(in, *bit_no_p, uni_bit_len[idx]);
+    int32_t count = getNumFromBits(in, len, *bit_no_p, uni_bit_len[idx]);
     count += uni_adder[idx];
     (*bit_no_p) += uni_bit_len[idx];
     //printf("Sign: %d, Val:%d", sign, count);
@@ -919,6 +916,10 @@ int unishox2_decompress_lines(const char *in, int len, char *out, const byte usx
             continue;
           case 1:
             h = readHCodeIdx(in, len, &bit_no, usx_hcodes, usx_hcode_lens);
+            if (h == 99) {
+              bit_no = len;
+              continue;
+            }
             if (h == USX_DELTA || h == USX_ALPHA) {
               dstate = h;
               continue;
@@ -958,11 +959,12 @@ int unishox2_decompress_lines(const char *in, int len, char *out, const byte usx
     if (v == 0 && h != USX_SYM) {
       if (bit_no >= len)
         break;
-      if (h != USX_NUM || dstate != USX_DELTA)
+      if (h != USX_NUM || dstate != USX_DELTA) {
         h = readHCodeIdx(in, len, &bit_no, usx_hcodes, usx_hcode_lens);
-      if (h == 99 || bit_no >= len) {
-        bit_no = orig_bit_no;
-        break;
+        if (h == 99 || bit_no >= len) {
+          bit_no = orig_bit_no;
+          break;
+        }
       }
       if (h == USX_ALPHA) {
          if (dstate == USX_ALPHA) {
@@ -1012,12 +1014,15 @@ int unishox2_decompress_lines(const char *in, int len, char *out, const byte usx
           int idx = getStepCodeIdx(in, len, &bit_no, 5);
           if (idx == 0) {
             idx = getStepCodeIdx(in, len, &bit_no, 4);
-            int rem = strlen(usx_templates[idx]) - readCount(in, &bit_no, len);
+            int rem = readCount(in, &bit_no, len);
+            if (rem < 0)
+              break;
+            rem = strlen(usx_templates[idx]) - rem;
             for (int j = 0; j < rem; j++) {
               char c_t = usx_templates[idx][j];
               if (c_t == 'f' || c_t == 'r' || c_t == 't' || c_t == 'o' || c_t == 'F') {
                   char nibble_len = (c_t == 'f' || c_t == 'F' ? 4 : (c_t == 'r' ? 3 : (c_t == 't' ? 2 : 1)));
-                  out[ol++] = getHexChar(getNumFromBits(in, bit_no, nibble_len),
+                  out[ol++] = getHexChar(getNumFromBits(in, len, bit_no, nibble_len),
                       c_t == 'f' ? USX_NIB_HEX_LOWER : USX_NIB_HEX_UPPER);
                   bit_no += nibble_len;
               } else
@@ -1026,14 +1031,23 @@ int unishox2_decompress_lines(const char *in, int len, char *out, const byte usx
           } else
           if (idx == 5) {
             int bin_count = readCount(in, &bit_no, len);
+            if (bin_count < 0)
+              break;
             do {
-              out[ol++] = getNumFromBits(in, bit_no, 8);
+              out[ol++] = getNumFromBits(in, len, bit_no, 8);
               bit_no += 8;
             } while (--bin_count);
           } else {
-            int nibble_count = (idx == 2 || idx == 4 ? 32 : readCount(in, &bit_no, len));
+            int nibble_count = 0;
+            if (idx == 2 || idx == 4)
+              nibble_count = 32;
+            else {
+              nibble_count = readCount(in, &bit_no, len);
+              if (nibble_count < 0)
+                break;
+            }
             do {
-              int nibble = (int) getNumFromBits(in, bit_no, 4);
+              int nibble = (int) getNumFromBits(in, len, bit_no, 4);
               out[ol++] = getHexChar(nibble, idx);
               if ((idx == 2 || idx == 4) && (nibble_count == 25 || nibble_count == 21 || nibble_count == 17 || nibble_count == 13))
                 out[ol++] = '-';
@@ -1050,7 +1064,6 @@ int unishox2_decompress_lines(const char *in, int len, char *out, const byte usx
       h = dstate = USX_DELTA; // continuous delta coding
       continue;
     }
-    // TODO: Binary    out[ol++] = readCount(in, &bit_no, len);
     if (h < 3 && v < 28)
       c = usx_sets[h][v];
     if (c >= 'a' && c <= 'z') {

@@ -20,6 +20,9 @@ unishox_0_1_0
 !korean.txt
 !japanese.txt
 !hindi.txt
+!spanish.txt
+!emoji.txt
+!french.txt
 *.aux
 *.log
 *.out
