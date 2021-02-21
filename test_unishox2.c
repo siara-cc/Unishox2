@@ -175,7 +175,7 @@ void print_compressed(char *in, int len) {
   byte bit;
   printf("Compressed bytes in decimal:\n");
   for (l=0; l<len; l++) {
-    printf("%d, ", in[l]);
+    printf("%u, ", (unsigned char) in[l]);
   }
   printf("\n\nCompressed bytes in binary:\n");
   for (l=0; l<len*8; l++) {
@@ -419,6 +419,9 @@ if (argv >= 2 && strcmp(args[1], "-t") == 0) {
     // Symbols
     if (!test_ushx_cd("~!@#$%^&*()_+=-`;'\\|\":,./?><", preset)) return 1;
     if (!test_ushx_cd("if (!test_ushx_cd(\"H1e2l3l4o5 w6O7R8L9D\", preset)) return 1;", preset)) return 1;
+    if (!test_ushx_cd("Hello\tWorld\tHow\tare\tyou?", preset)) return 1;
+    if (!test_ushx_cd("Hello~World~How~are~you?", preset)) return 1;
+    if (!test_ushx_cd("Hello\rWorld\rHow\rare\ryou?", preset)) return 1;
 
     // Repeat
     if (!test_ushx_cd("-----------------///////////////", preset)) return 1;
@@ -506,6 +509,7 @@ if (argv >= 2 && strcmp(args[1], "-t") == 0) {
     if (!test_ushx_cd("自助者天助 - Those who help themselves, God will help.", preset)) return 1;
     if (!test_ushx_cd("早起的鸟儿有虫吃 - Early bird gets the worm.", preset)) return 1;
     if (!test_ushx_cd("{\"menu\": {\n  \"id\": \"file\",\n  \"value\": \"File\",\n  \"popup\": {\n    \"menuitem\": [\n      {\"value\": \"New\", \"onclick\": \"CreateNewDoc()\"},\n      {\"value\": \"Open\", \"onclick\": \"OpenDoc()\"},\n      {\"value\": \"Close\", \"onclick\": \"CloseDoc()\"}\n    ]\n  }\n}}", preset)) return 1;
+    if (!test_ushx_cd("{\"menu\": {\r\n  \"id\": \"file\",\r\n  \"value\": \"File\",\r\n  \"popup\": {\r\n    \"menuitem\": [\r\n      {\"value\": \"New\", \"onclick\": \"CreateNewDoc()\"},\r\n      {\"value\": \"Open\", \"onclick\": \"OpenDoc()\"},\r\n      {\"value\": \"Close\", \"onclick\": \"CloseDoc()\"}\r\n    ]\r\n  }\r\n}}", preset)) return 1;
 
     if (!test_ushx_cd("符号\"δ\"表", preset)) return 1;
     if (!test_ushx_cd("学者地”[3]。学者", preset)) return 1;
@@ -613,7 +617,10 @@ if (argv >= 2 && strcmp(args[1], "-t") == 0) {
 
     // Emoji
     if (!test_ushx_cd("🤣🤣🤣🤣🤣🤣🤣🤣🤣🤣🤣", preset)) return 1;
+    if (!test_ushx_cd("😀😃😄😁😆😅🤣😂🙂🙃😉😊😇🥰😍🤩😘😗😚😙😋😛😜🤪😝🤑🤗🤭🤫🤔🤐🤨😐😑😶😏😒🙄😬🤥😌😔😪🤤😴😷🤒🤕🤢", preset)) return 1;
 
+    // Binary
+    if (!test_ushx_cd("Hello\x80\x83\xAE\xBC\xBD\xBE", preset)) return 1;
 
 } else
 if (argv == 2 || (argv == 3 && atoi(args[2]) > 0)) {

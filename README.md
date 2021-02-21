@@ -35,8 +35,8 @@ For testing the compiled program, use:
 # API
 
 ```C
-int unishox1_compress_simple(const char *in, int len, char *out);
-int unishox1_decompress_simple(const char *in, int len, char *out);
+int unishox2_compress_simple(const char *in, int len, char *out);
+int unishox2_decompress_simple(const char *in, int len, char *out);
 ```
 
 # Usage
@@ -54,7 +54,7 @@ To compress and decompress a file, use:
 ./test_unishox2 -d <compressed_file> <decompressed_file>
 ```
 
-Unishox does not give good ratios compressing files for compressing binary files.
+Unishox does not give good ratios compressing files or compressing binary files.
 
 # Character Set
 

@@ -65,7 +65,6 @@ const int UTF8_PREFIX[] = {0xC0, 0xE0, 0xF0};
 #define CR_CODE ((1 << 5) + 22)
 #define TAB_CODE  ((1 << 5) + 14)
 #define NUM_SPC_CODE ((2 << 5) + 17)
-#define NUM_SW_CODE ((2 << 5) + 0)
 
 #define UNI_STATE_SPL_CODE 0xF8
 #define UNI_STATE_SPL_CODE_LEN 5
@@ -85,7 +84,7 @@ void init_coder() {
   for (int i = 0; i < 3; i++) {
     for (int j = 0; j < 28; j++) {
       byte c = usx_sets[i][j];
-      if (c != 0 && c != 32) {
+      if (c != 0 && c > 32) {
         usx_code_94[c - USX_OFFSET_94] = (i << 5) + j;
         if (c >= 'a' && c <= 'z')
           usx_code_94[c - USX_OFFSET_94 - ('a' - 'A')] = (i << 5) + j;
