@@ -429,23 +429,25 @@ int unishox2_compress_lines(const char *in, int len, char *out, const byte usx_h
 
     if (l <= (len - 36) && usx_hcode_lens[USX_NUM]) {
       if (in[l + 8] == '-' && in[l + 13] == '-' && in[l + 18] == '-' && in[l + 23] == '-') {
-        int is_uid_upper = 0;
+        char hex_type = USX_NIB_NUM;
         int uid_pos = l;
         for (; uid_pos < l + 36; uid_pos++) {
           char c_uid = in[uid_pos];
           if (c_uid == '-')
             continue;
-          c_uid = getNibbleType(c_uid);
-          if (c_uid < USX_NIB_NOT) {
-            if (c_uid == USX_NIB_HEX_UPPER)
-              is_uid_upper = 1;
-            continue;
+          char nib_type = getNibbleType(c_uid);
+          if (nib_type == USX_NIB_NOT)
+            break;
+          if (nib_type != USX_NIB_NUM) {
+            if (hex_type != USX_NIB_NUM && hex_type != nib_type)
+              break;
+            hex_type = nib_type;
           }
-          break;
         }
         if (uid_pos == l + 36) {
           ol = append_nibble_escape(out, ol, state, usx_hcodes, usx_hcode_lens);
-          ol = append_bits(out, ol, (is_uid_upper ? 0xF0 : 0xC0), (is_uid_upper ? 5 : 3));
+          ol = append_bits(out, ol, (hex_type == USX_NIB_HEX_LOWER ? 0xC0 : 0xF0),
+                 (hex_type == USX_NIB_HEX_LOWER ? 3 : 5));
           for (uid_pos = l; uid_pos < l + 36; uid_pos++) {
             char c_uid = in[uid_pos];
             if (c_uid != '-')
@@ -466,7 +468,7 @@ int unishox2_compress_lines(const char *in, int len, char *out, const byte usx_h
         if (nib_type == USX_NIB_NOT)
           break;
         if (nib_type != USX_NIB_NUM) {
-          if (hex_type != nib_type)
+          if (hex_type != USX_NIB_NUM && hex_type != nib_type)
             break;
           hex_type = nib_type;
         }
@@ -595,10 +597,10 @@ int unishox2_compress_lines(const char *in, int len, char *out, const byte usx_h
           is_all_upper = 1;
         }
       }
-      if (state == USX_DELTA && (c_in == ' ' || c_in == '.' || c_in == ',' || c_in == '\n')) {
-        byte spl_code = (c_in == ',' ? 0xC0 : (c_in == '.' ? 0xE0 : (c_in == ' ' ? 0 : (c_in == 13 ? 0xF0 : 0xFF))));
+      if (state == USX_DELTA && (c_in == ' ' || c_in == '.' || c_in == ',')) {
+        byte spl_code = (c_in == ',' ? 0xC0 : (c_in == '.' ? 0xE0 : (c_in == ' ' ? 0 : 0xFF)));
         if (spl_code != 0xFF) {
-          byte spl_code_len = (c_in == ',' ? 3 : (c_in == '.' ? 4 : (c_in == ' ' ? 1 : (c_in == 13 ? 4 : 4))));
+          byte spl_code_len = (c_in == ',' ? 3 : (c_in == '.' ? 4 : (c_in == ' ' ? 1 : 4)));
           ol = append_bits(out, ol, UNI_STATE_SPL_CODE, UNI_STATE_SPL_CODE_LEN);
           ol = append_bits(out, ol, spl_code, spl_code_len);
           continue;
@@ -608,10 +610,6 @@ int unishox2_compress_lines(const char *in, int len, char *out, const byte usx_h
       if (is_all_upper && is_upper)
         c_in += 32;
       if (c_in == 0) {
-        if (state == USX_DELTA) {
-            ol = append_bits(out, ol, UNI_STATE_SPL_CODE, UNI_STATE_SPL_CODE_LEN);
-            ol = append_bits(out, ol, 0, 1);
-        } else
         if (state == USX_NUM)
           ol = append_bits(out, ol, usx_vcodes[NUM_SPC_CODE & 0x1F], usx_vcode_lens[NUM_SPC_CODE & 0x1F]);
         else
@@ -626,7 +624,11 @@ int unishox2_compress_lines(const char *in, int len, char *out, const byte usx_h
       l++;
     } else
     if (c_in == 10) {
-      ol = append_code(out, ol, LF_CODE, &state, usx_hcodes, usx_hcode_lens);
+      if (state == USX_DELTA) {
+        ol = append_bits(out, ol, UNI_STATE_SPL_CODE, UNI_STATE_SPL_CODE_LEN);
+        ol = append_bits(out, ol, 0xF0, 4);
+      } else
+        ol = append_code(out, ol, LF_CODE, &state, usx_hcodes, usx_hcode_lens);
     } else
     if (c_in == 13) {
       ol = append_code(out, ol, CR_CODE, &state, usx_hcodes, usx_hcode_lens);

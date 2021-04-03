@@ -429,10 +429,14 @@ if (argv >= 2 && strcmp(args[1], "-t") == 0) {
 
     // Nibbles
     if (!test_ushx_cd("fa01b51e-7ecc-4e3e-be7b-918a4c2c891c", preset)) return 1;
+    if (!test_ushx_cd("Fa01b51e-7ecc-4e3e-be7b-918a4c2c891c", preset)) return 1;
     if (!test_ushx_cd("fa01b51e-7ecc-4e3e-be7b-9182c891c", preset)) return 1;
     if (!test_ushx_cd("760FBCA3-272E-4F1A-BF88-8472DF6BD994", preset)) return 1;
+    if (!test_ushx_cd("760FBCA3-272E-4F1A-BF88-8472DF6Bd994", preset)) return 1;
+    if (!test_ushx_cd("760FBCA3-272E-4F1A-BF88-8472DF6Bg994", preset)) return 1;
     if (!test_ushx_cd("FBCA3-272E-4F1A-BF88-8472DF6BD994", preset)) return 1;
     if (!test_ushx_cd("Hello 1 5347a688-d8bf-445d-86d1-b470f95b007fHello World", preset)) return 1;
+    if (!test_ushx_cd("01234567890123", preset)) return 1;
 
     // Templates
     if (!test_ushx_cd("2020-12-31", preset)) return 1;
@@ -508,8 +512,10 @@ if (argv >= 2 && strcmp(args[1], "-t") == 0) {
     if (!test_ushx_cd("一失足成千古恨，再回头已百年身 - A single slip may cause lasting sorrow.", preset)) return 1;
     if (!test_ushx_cd("自助者天助 - Those who help themselves, God will help.", preset)) return 1;
     if (!test_ushx_cd("早起的鸟儿有虫吃 - Early bird gets the worm.", preset)) return 1;
+    if (!test_ushx_cd("This is first line,\r\nThis is second line", preset)) return 1;
     if (!test_ushx_cd("{\"menu\": {\n  \"id\": \"file\",\n  \"value\": \"File\",\n  \"popup\": {\n    \"menuitem\": [\n      {\"value\": \"New\", \"onclick\": \"CreateNewDoc()\"},\n      {\"value\": \"Open\", \"onclick\": \"OpenDoc()\"},\n      {\"value\": \"Close\", \"onclick\": \"CloseDoc()\"}\n    ]\n  }\n}}", preset)) return 1;
-    if (!test_ushx_cd("{\"menu\": {\r\n  \"id\": \"file\",\r\n  \"value\": \"File\",\r\n  \"popup\": {\r\n    \"menuitem\": [\r\n      {\"value\": \"New\", \"onclick\": \"CreateNewDoc()\"},\r\n      {\"value\": \"Open\", \"onclick\": \"OpenDoc()\"},\r\n      {\"value\": \"Close\", \"onclick\": \"CloseDoc()\"}\r\n    ]\r\n  }\r\n}}", preset)) return 1;
+    if (!test_ushx_cd("{\"menu\": {\r\n  \"id\": \"file\",\r\n  \"value\": \"File\",\r\n  \"popup\": {\r\n    \"menuitem\": [\r\n      {\"value\": \"New\", \"onclick\": \"CreateNewDoc()\"},\r\n      {\"value\": \"Open\", \"onclick\": \"OpenDoc()\"},\r\n      {\"value\":\"Close\", \"onclick\": \"CloseDoc()\"}\r\n    ]\r\n  }\r\n}}", preset)) return 1;
+    if (!test_ushx_cd("https://siara.cc", preset)) return 1;
 
     if (!test_ushx_cd("符号\"δ\"表", preset)) return 1;
     if (!test_ushx_cd("学者地”[3]。学者", preset)) return 1;
@@ -669,11 +675,12 @@ if (argv == 2 || (argv == 3 && atoi(args[2]) > 0)) {
    printf("         8    Favor Umlaut\n");
    printf("         9    No dictionary\n");
    printf("         10   No Unicode\n");
-   printf("         11   Favor URLs\n");
-   printf("         12   Favor JSON\n");
-   printf("         13   Favor JSON (No Unicode)\n");
-   printf("         14   Favor XML\n");
-   printf("         15   Favor HTML\n");
+   printf("         11   No Unicode, favour English text\n");
+   printf("         12   Favor URLs\n");
+   printf("         13   Favor JSON\n");
+   printf("         14   Favor JSON (No Unicode)\n");
+   printf("         15   Favor XML\n");
+   printf("         16   Favor HTML\n");
    return 1;
 }
 
