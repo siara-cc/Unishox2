@@ -54,7 +54,7 @@ To compress and decompress a file, use:
 ./test_unishox2 -d <compressed_file> <decompressed_file>
 ```
 
-Unishox does not give good ratios compressing files or compressing binary files.
+Unishox does not give good ratios compressing large files or compressing binary files.
 
 # Character Set
 
@@ -67,6 +67,10 @@ Unishox supports the entire Unicode character set.  As of now it supports UTF-8 
 - [Sqlite3 Library for ESP32](https://github.com/siara-cc/esp32_arduino_sqlite3_lib)
 - [Sqlite3 Library for ESP8266](https://github.com/siara-cc/esp_arduino_sqlite3_lib)
 - [Port of this library to Python and C++ by Stephan Hadinger for Tasmota](https://github.com/arendst/Tasmota/tree/development/lib/Unishox-1.0-shadinger)
+
+# Credits
+
+- Thanks to [Jonathan Greenblatt](https://github.com/leafgarden) for his port of Unishox2 (merged under Arduino folder) that works on Particle Photon
 
 # Issues
 
