@@ -15,6 +15,7 @@
  *
  * @author Arundale Ramanathan
  *
+ * Port for Particle (particle.io) / Aruino - Jonathan Greenblatt
  */
 
 #include <stdlib.h>

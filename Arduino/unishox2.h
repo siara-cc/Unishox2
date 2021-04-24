@@ -14,6 +14,8 @@
  * limitations under the License.
  *
  * @author Arundale Ramanathan
+ * 
+ * Port for Particle (particle.io) / Aruino - Jonathan Greenblatt
  *
  */
 #ifndef unishox2
