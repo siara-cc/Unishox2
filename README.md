@@ -67,6 +67,7 @@ Unishox supports the entire Unicode character set.  As of now it supports UTF-8 
 - [Sqlite3 Library for ESP32](https://github.com/siara-cc/esp32_arduino_sqlite3_lib)
 - [Sqlite3 Library for ESP8266](https://github.com/siara-cc/esp_arduino_sqlite3_lib)
 - [Port of this library to Python and C++ by Stephan Hadinger for Tasmota](https://github.com/arendst/Tasmota/tree/development/lib/Unishox-1.0-shadinger)
+- [Python bindings for Unishox2](https://github.com/tweedge/unishox2-py3)
 
 # Credits
 
