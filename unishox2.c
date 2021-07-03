@@ -379,6 +379,20 @@ int append_nibble_escape(char *out, int ol, byte state, const byte usx_hcodes[],
   return ol;
 }
 
+int min_of(char c, int i) {
+  return c > i ? i : c;
+}
+
+void append_final_bits(char *out, int ol, const byte bits[], const int bit_lens[]) {
+  char remain_bits = 8 - (ol % 8);
+  for (int i = 0; i < 4; i++) {
+    if (bit_lens[i] && remain_bits > 0) {
+      ol = append_bits(out, ol, bits[i], min_of(remain_bits, bit_lens[i]));
+      remain_bits -= bit_lens[i];
+    }
+  }
+}
+
 int unishox2_compress_lines(const char *in, int len, char *out, const byte usx_hcodes[], const byte usx_hcode_lens[], const char *usx_freq_seq[], const char *usx_templates[], struct us_lnk_lst *prev_lines) {
 
   byte state;
@@ -685,9 +699,10 @@ int unishox2_compress_lines(const char *in, int len, char *out, const byte usx_h
   }
   int ret = ol/8+(ol%8?1:0);
   if (ol % 8) {
-    if (state == USX_DELTA)
-      ol = append_bits(out, ol, UNI_STATE_SPL_CODE, UNI_STATE_SPL_CODE_LEN);
-    ol = append_code(out, ol, TERM_CODE, &state, usx_hcodes, usx_hcode_lens);
+    append_final_bits(out, ol, (byte[]) {UNI_STATE_SPL_CODE,
+      state == USX_DELTA ? UNI_STATE_SW_CODE : SW_CODE, usx_hcodes[USX_NUM],
+      usx_vcodes[TERM_CODE & 0x1F]}, (int[]) {state == USX_DELTA ? UNI_STATE_SPL_CODE_LEN : 0, 
+      state == USX_DELTA ? UNI_STATE_SW_CODE_LEN : SW_CODE_LEN, usx_hcode_lens[USX_NUM], 8});
   }
   //printf("\n%ld\n", ol);
   return ret;
