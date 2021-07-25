@@ -54,3 +54,8 @@ test_unishox
 test_unishox1
 test_unishox2
 delta_only
+*.fdb_latexmk
+*.dvi
+*.fls
+*.xdv
+

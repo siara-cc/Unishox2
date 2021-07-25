@@ -1,4 +1,8 @@
+% !TEX encoding = UTF-8 Unicode
 \documentclass[]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
 
 \usepackage{multirow}
 \usepackage{makecell}
@@ -26,7 +30,7 @@ Also shown is how this technique can guarantee compression for any language sent
 
 \section{Summary}
 
-\char"00E7 Compression of Short Unicode Strings of arbitrary lengths have not been addressed sufficiently by lossless entropy encoding methods so far.  Although it appears inconsequential, space occupied by such strings become significant in memory constrained environments such as Arduino Uno and ESP8266 and when attempting storage of such independent strings in a database. While block compression is available for databases, retrieval efficiency could be greatly improved if the strings are individually compressed.
+Compression of Short Unicode Strings of arbitrary lengths have not been addressed sufficiently by lossless entropy encoding methods so far.  Although it appears inconsequential, space occupied by such strings become significant in memory constrained environments such as Arduino Uno and ESP8266 and when attempting storage of such independent strings in a database. While block compression is available for databases, retrieval efficiency could be greatly improved if the strings are individually compressed.
 
 \section{Basic Definitions}
 
@@ -36,7 +40,7 @@ One of the main types of entropy coding is about creating and assigning a unique
 
 According to Shannon's source coding theorem, the optimal code length for a symbol is $-log_bP$, where b is the number of symbols used to make output codes and P is the probability of the input symbol \cite{2}. Therefore, the most common symbols use the shortest codes.
 
-The most popular and most used method (even today) for forming optimal prefix-free discrete codes is Huffman coding \cite{3}.
+The most popular and most used method for forming optimal prefix-free discrete codes is Huffman coding \cite{3}.
 
 A \emph{Dictionary coder}, also sometimes known as a substitution coder, is a class of lossless data compression algorithms which operate by searching for matches between the text to be compressed and a set of strings contained in a data structure (called the 'dictionary') maintained by the encoder. When the encoder finds such a match, it substitutes a reference to the string's position in the data structure.
 
@@ -70,8 +74,6 @@ We propose a single model that presently is fixed because of the advantages it o
 
 For compressing Unicode symbols, we use Delta encoding because usually the difference between subsequent symbols is quite less.
 
-We also propose use Delta coding for binary symbols (i.e symbols betewen ASCII 0 and 31 ad symbols between ASCII 128 and 255). However not much compression is expected out of this and in many cases, the input size is expanded.  This document does not discuss about encoding binary symbols and is not implemented either.
-
 Unlike smaz and shoco, we assume no \emph{a priori} knowledge about the input text.  However we rely on \emph{a posteriori} knowledge about the research carried out on the language and common patterns of sentence formation and come out with pre-assigned codes for each letter.
 
 \section{Model}
@@ -86,32 +88,32 @@ With these two sets of codes, we form several sets of letters as shown in the ta
 
 \begin{center}
 	\begin{tabular}{ | l | c | c | c | c | c | c | } \hline
-		\textbf{hcode $\rightarrow$} & \textbf{00} & \textbf{01} & \textbf{111} & \textbf{10} & \textbf{110} \\ \hline
+		\textbf{hcode $\rightarrow$} & \textbf{00} & \textbf{01} & \textbf{10} & \textbf{110} & \textbf{111} \\ \hline
 		\multirow{2}{*}{\textbf{$\downarrow$ vcode}} & \textbf{Set 1}& \textbf{Set 2} & \textbf{Set 3} & \textbf{Set 4} & \textbf{Set 5} \\
 		 & \textbf{Alpha} & \textbf{Sym} & \textbf{Num} & \textbf{Dictionary} & \textbf{Delta} \\ \hline
 		\textbf{00} & switch & \textquotedblleft & switch &
 			\multirow{27}{*}
-				{\makecell{$\textless$length$\textgreater$\\$\textless$distance$\textgreater$}} & 
+				{\makecell{$<$length$>$\\$<$distance$>$}} & 
 			\multirow{27}{*}
-				{\makecell{$\textless$code$\textgreater$\\
-					$\textless$sign$\textgreater$\\$\textless$delta$\textgreater$}}
+				{\makecell{$<$code$>$\\
+					$<$sign$>$\\$<$delta$>$}}
 			 \\ \cline{1-4}
 		\textbf{010} & sp & \{ & , & & \\ \cline{1-4}
 		\textbf{011} & e / E & \} & . & & \\ \cline{1-4}
-		\textbf{1000} & t / T & \_ & / & & \\ \cline{1-4}
-		\textbf{1001} & a / A & $\textless$ & ( & & \\ \cline{1-4}
-		\textbf{1010} & o / O & $\textgreater$ & ) & & \\ \cline{1-4}
-		\textbf{1011} & i / I & : & - & & \\ \cline{1-4}
-		\textbf{1100} & n / N & lf & 1 & & \\ \cline{1-4}
-		\textbf{11010} & s / S & crlf & 0 & & \\ \cline{1-4}
-		\textbf{11011} & r / R & [ & 9 & & \\ \cline{1-4}
-		\textbf{111000} & l / L & ] & 2 & & \\ \cline{1-4}
-		\textbf{111001} & c / C & \textbackslash & 3 & & \\ \cline{1-4}
-		\textbf{111010} & d / D & ; & 4 & & \\ \cline{1-4}
-		\textbf{1110110} & h / H & ' & ; & & \\ \cline{1-4}
-		\textbf{1110111} & u / U & tab & 6 & & \\ \cline{1-4}
-		\textbf{1111000} & p / P & @ & 7 & & \\ \cline{1-4}
-		\textbf{1111001} & m / M & * & 8 & & \\ \cline{1-4}
+		\textbf{1000} & t / T & \_ & 0 & & \\ \cline{1-4}
+		\textbf{1001} & a / A & $<$ & 1 & & \\ \cline{1-4}
+		\textbf{1010} & o / O & $>$ & 9 & & \\ \cline{1-4}
+		\textbf{1011} & i / I & : & 2 & & \\ \cline{1-4}
+		\textbf{1100} & n / N & lf & 5 & & \\ \cline{1-4}
+		\textbf{11010} & s / S & crlf & - & & \\ \cline{1-4}
+		\textbf{11011} & r / R & [ & / & & \\ \cline{1-4}
+		\textbf{111000} & l / L & ] & 3 & & \\ \cline{1-4}
+		\textbf{111001} & c / C & \textbackslash & 4 & & \\ \cline{1-4}
+		\textbf{111010} & d / D & ; & 6 & & \\ \cline{1-4}
+		\textbf{1110110} & h / H & ' & 7 & & \\ \cline{1-4}
+		\textbf{1110111} & u / U & tab & 8 & & \\ \cline{1-4}
+		\textbf{1111000} & p / P & @ & ( & & \\ \cline{1-4}
+		\textbf{1111001} & m / M & * & ) & & \\ \cline{1-4}
 		\textbf{1111010} & b / B & \& & sp & & \\ \cline{1-4}
 		\textbf{11110110} & g / G & ? & = & & \\ \cline{1-4}
 		\textbf{11110111} & w / W & ! & + & & \\ \cline{1-4}
@@ -142,9 +144,9 @@ With these two sets of codes, we form several sets of letters as shown in the ta
 
 \subsection{Numbers and related symbols}
 \begin{itemize}
-	\item[$\bullet$] Symbols in Set 2 are encoded by first switching to the set by using 00 followed by 10.  So the symbol " is encoded as 000000.
-	\item[$\bullet$] Numbers in Set 3 are encoded by first switching to the set by using 00 followed by 111.  So the symbol 9 is encoded as 0011111011.
-	\item[$\bullet$] For Set 3, whenever is switch is made from Set 1 to any number (0 to 9), it makes Set 3 active. So subsequent numbers symbols in Set 3 can be encoded without the switch symbol, as in 111001 for 3, 111010 for 4 and so on.
+	\item[$\bullet$] Symbols in Set 2 are encoded by first switching to the set by using 00 followed by 01.  So the symbol " is encoded as 00 01 00.
+	\item[$\bullet$] Numbers in Set 3 are encoded by first switching to the set by using 00 followed by 10.  So the symbol 9 is encoded as 00 10 1010.
+	\item[$\bullet$] For Set 3, whenever is switch is made from Set 1 to any number (0 to 9), it makes Set 3 active. So subsequent numbers symbols in Set 3 can be encoded without the switch symbol, as in 111000 for 3, 111001 for 4 and so on.
 	\item[$\bullet$] To return to Set 1 in this case, the code 0000 is used.
 	\item[$\bullet$] However, when other symbols in Set 3 are encoded from Set 1, Set 3 is not made active.
 \end{itemize}
@@ -152,13 +154,15 @@ With these two sets of codes, we form several sets of letters as shown in the ta
 \subsection{Sticky sets}
 \begin{itemize}
 	\item[$\bullet$] When switching to Set 3 for encoding numbers (0-9), it becomes active and is said to be sticky till Set 1 is made active using the symbol 0000.
+	\item[$\bullet$] Encoding Upper case symbols become sticky when switching using 0000 0000.
+	\item[$\bullet$] Encoding Unicode symbols become sticky when switching using 0000 010, as seen in a subsequent section.
 	\item[$\bullet$] However, no other set is sticky. Set 1 is default. Set 3 automatically becomes sticky when any numeral is encoded and Upper case letters can be made sticky by using 00000000.
 	\item[$\bullet$] Symbols in Set 2 are never sticky. Once encoded the previous sticky set becomes active.
 \end{itemize}
 
 \subsection{Special symbols}
 \begin{itemize}
-	\item[$\bullet$] term in Set 3 indicates termination of encoding.  This is used if length of the encoded string is not stored.
+	\item[$\bullet$] term in Set 3 indicates termination of encoding.  This is used if length of the encoded string is not available.  In case the length of encoded string is available, term symbol need not be encoded and encoding can stop with the last symbol encoded.  However, the first part of the term symbol needs to be encoded in the last byte after the bits for the last symbol.  Further if Unicode set is sticky and active, first it needs to be exited using the exit sequence 11111 00 and then the term symbol should be encoded.
 	\item[$\bullet$] rpt in Set 3 indicates that the symbol last encoded is to be repeated specified number of times.
 	\item[$\bullet$] CRLF in Set 2 is encoded using a single code. It will be expanded as two bytes CR LF.  If only LF is used, such as in Unix like systems, a separate code is used in Set 2.  Also, in the rare case that only CR appears, another code is provided in Set 2.
 \end{itemize}
@@ -172,43 +176,41 @@ With these two sets of codes, we form several sets of letters as shown in the ta
 
 \subsection{Repeating sections}
 \begin{itemize}
-	\item[$\bullet$] If a section repeats, the switch code (00) and another horizontal code (10) is used followed by two fields as described next.
+	\item[$\bullet$] If a section repeats, the switch code (00) and another horizontal code (110) is used followed by two fields as described next.
   	\item[$\bullet$] The first field indicates the length of the section that repeats.
 	\item[$\bullet$] The second field indicates the distance of the repeating section.  The distance is counted from the current position.
-	\item[$\bullet$] The third field is coded only if several sets of texts are encoded.  It is a number indicating the set that the section belongs to.  If only one set of text is encoded, then this field is not included. 
+	\item[$\bullet$] The optional third field is coded only if an array of text is encoded.  It is a number indicating the set that the section belongs to.  If only one set of text is encoded, then this field is not included. 
 	\item[$\bullet$] The first, second and third fields are encoded as explained in the following section "Encoding counts".
 \end{itemize}
 
 \subsection{Encoding Counts}
 \begin{itemize}
-	\item[$\bullet$] For encoding counts such as length and distance, six codes are used: 0, 10, 110, 1110, 11110, 11111, each code indicating how many bits will follow to indicate count.
+	\item[$\bullet$] For encoding counts such as length and distance, six codes are used: 0, 10, 110, 1110, 1111, each code indicating how many bits will follow to indicate count.
 	\item[$\bullet$] If code is 0, 2 bits would follow, that is, count is between 0 and 3.
-	\item[$\bullet$] If code is 10, 5 bits would follow, that is, count is between 4 and 35.
-	\item[$\bullet$] If code is 110, 7 bits would follow, that is, count is between 36 and 163.
-	\item[$\bullet$] If code is 1110, 9 bits would follow, that is, count is between 164 and 675.
-	\item[$\bullet$] If code is 11110, 12 bits would follow, that is, count is between 676 and 4771.
-	\item[$\bullet$] If code is 11111, 16 bits would follow, that is, count is between 4772 and 70307.
+	\item[$\bullet$] If code is 10, 4 bits would follow, that is, count is between 4 and 19.
+	\item[$\bullet$] If code is 110, 7 bits would follow, that is, count is between 20 and 147.
+	\item[$\bullet$] If code is 1110, 11 bits would follow, that is, count is between 148 and 2195.
+	\item[$\bullet$] If code is 1111, 16 bits would follow, that is, count is between 2196 and 67732.
 	\item[$\bullet$] This is shown in tabular form below
 	\item[] \begin{tabular}{ | l | l | l |} \hline
-	﻿\textbf{Code} & ﻿\textbf{Range} & ﻿\textbf{Number of bits} \\ \hline
+	\textbf{Code} & \textbf{Range} & \textbf{Number of bits} \\ \hline
 	0 & 0 to 3 & 2 \\ \hline
-	10 & 4 to 35 & 5 \\ \hline
-	110 & 36 to 163 & 7 \\ \hline
-	1110 & 164 to 675 & 9 \\ \hline
-	11110 & 676 to 4771 & 12 \\ \hline
-	11111 & 4772 to 70307 & 16 \\ \hline
+	10 & 4 to 19 & 5 \\ \hline
+	110 & 20 to 147 & 7 \\ \hline
+	1110 & 148 to 2195 & 11 \\ \hline
+	1111 & 2196 to 70307 & 16 \\ \hline
 \end{tabular}
 \end{itemize}
 
 \subsection{Encoding Unicode characters}
 \begin{itemize}
-	\item[$\bullet$] The switch code 00 followed by 110 is used as prefix to indicate that a Unicode character is being encoded.
+	\item[$\bullet$] The switch code 00 followed by 111 is used as prefix to indicate that a Unicode character is being encoded.
 	\item[$\bullet$] First, the unicode number is decoded from the input source depending on how it was encoded, such as UTF-8 or UTF-16 or Wide Character set.
 	\item[$\bullet$] For the first unicode character, the number decoded is re-coded as a number as shown in section Encoding Counts to the output as it is.
 	\item[$\bullet$] For subsequent unicode characters, only the difference between the previous character is re-coded to the output.  Thus, here, delta coding is used.
-	\item[$\bullet$] After the code 00 110, another set of prefix-free codes are used, according to the following table, depending on the size (in bits) of the difference.
+	\item[$\bullet$] After the code 00 111, another set of prefix-free codes are used, according to the following table, depending on the size (in bits) of the difference.
 	\item[] \begin{tabular}{ | l | l | l |} \hline
-		﻿\textbf{Code} & ﻿\textbf{Range} & ﻿\textbf{Number of bits} \\ \hline
+		\textbf{Code} & \textbf{Range} & \textbf{Number of bits} \\ \hline
 		0 & 0 to 63 & 6 \\ \hline
 		10 & 64 to 4159 & 12 \\ \hline
 		110 & 4160 to 20543 & 14 \\ \hline
@@ -217,18 +219,18 @@ With these two sets of codes, we form several sets of letters as shown in the ta
 		11111 & Special code & - \\ \hline
 		\end{tabular}
 	\item[$\bullet$] The Special code is explained in the next section.
-	\item[$\bullet$] After 00 110, one of the above codes is used, followed by the sign bit.  The sign bit is a single bit.  1 indicates that the number following is negative and 0 indicates that the number following is positive.
+	\item[$\bullet$] After 00 111, one of the above codes is used, followed by the sign bit.  The sign bit is a single bit.  1 indicates that the number following is negative and 0 indicates that the number following is positive.
 	\item[$\bullet$] After the sign bit, the unicode value (or difference) is encoded as a number.  The number of bits used depends on its size, as shown in the above table.
 	\item[$\bullet$] After encoding the unicode number, the state returns to Set 1, or whichever set was active earlier, unless continuous unicode encoding was started.  This is explained in the next section.
 \end{itemize}
 
 \subsection{Encoding continuous Unicode characters}
 \begin{itemize}
-	\item[$\bullet$] Since the prefix 00 110 may become an overhead when several Unicode are to be encoded contigously, a continuous unicode encoding code is used (0000010).
-	\item[$\bullet$] After 0000010 is encoded, unicode characters are encoded continously using delta encoding, until a non-unicode character is encountered.  When this happens, state is returned to Set 1 using the Special code 11111 00 in the table shown in previous section is used.
+	\item[$\bullet$] Since the prefix 00 110 may become an overhead when several Unicode are to be encoded contigously, a continuous unicode encoding code is used (0000 010).
+	\item[$\bullet$] After 0000 010 is encoded, unicode characters are encoded continously using delta encoding, until a non-unicode character is encountered.  When this happens, state is returned to Set 1 using the Special code 11111 00 in the table shown in previous section is used.
 	\item[$\bullet$] The Special codes are used only when Unicode characters are coded continuously, to indicate special characters and situations occuring in-between. What follows the Special code 11111 is indicated using the table below:
 	\item[] \begin{tabular}{ | l | l |} \hline
-	﻿\textbf{Code} & ﻿\textbf{Character/Situation} \\ \hline
+	\textbf{Code} & \textbf{Character/Situation} \\ \hline
 	0 & Space character \\ \hline
 	10 & Switch \\ \hline
 	110 & Comma (,) \\ \hline
@@ -239,25 +241,71 @@ With these two sets of codes, we form several sets of letters as shown in the ta
 	\item[$\bullet$] Other symbols in Set 2 or Set 3 can also be encoded within continuous Delta encoding mode using the Switch Code in the above table.
 \end{itemize}
 
+\subsection{Multi way access for Set 2}
+\begin{itemize}
+	\item[$\bullet$] Set 2 can be accessed regardless of which set is active, such as Set 1, Set 3, Continuous delta coding or even when continuous Upper case is active.  This is because the symbols occur commonly in both Set 1 and 3 and Unicode symbol sequences.
+	\item[$\bullet$] For the same reason, the space symbol appears both in Set 1 and Set 3.
+\end{itemize}
+
 \subsection{Encoding punctuations}
 \begin{itemize}
 	\item[$\bullet$] Some languages, such as Japanese and Chinese use their own punctuation characters.  For example full-stop is indicated using U+3002 which is represented visually as a small circle.
-	\item[$\bullet$] So when encountering a Japanese full-stop, the special code for full-stop is used, only in this case, the decoder is expected to decode it as U+3002 instead of '.'.  In general, if the prior unicode character is greater than U+3000, then the special full-stop is decoded.
-	\item[$\bullet$] There are other types of full-stops used in other languages.  For example, Hindi uses a kind of pipe symbol to indicate full-stop.  However, to avoid confusion, this is left to delta coding, since it does not make much difference in compression ratio.
+	\item[$\bullet$] Encoding such special full-stops were supported in Unishox 1 for better compression.  However since this was leading to confusion and ambiguity, any special treatment for such punctuations are excluded in Unishox2 and this is left to delta coding. It also does not make much difference in compression ratio.
 \end{itemize}
 
-\subsection{Encoding other binary symbols}
+\subsection{Common templates}
 \begin{itemize}
-	\item[$\bullet$]Binary symbols are not expected for encoding text, so it is out of scope of this exercise.
-	\item[$\bullet$] However, for encoding other binary symbols ranging from ASCII 0 to 31 and ASCII 128 to 255, the prefix code 001000000 is used.
-	\item[$\bullet$] It is followed by the ASCII value of the symbol, encoded using the method described in section "Encoding counts" in this document.
-	\item[$\bullet$] This method actually expands the original size and is provided for the rare cases where such binary symbols appear.
-\end{itemize}
-
-\subsection{Multi way access for Set 2}
-\begin{itemize}
-	\item[$\bullet$] Set 2 can be accessed regardless of which set is active, such as Set 1, Set 3, Continuous delta coding or even when continuous Upper case is active.  This is because the symbols occur commonly in both Set 1 and 2.  So it is necessary to have minimum length codes for these.
-	\item[$\bullet$] For the same reason, the space symbol appears both in Set 1 and Set 3.
+	\item[$\bullet$] Some special templates are known to occur frequently and are encoded using 00 10 00 followed the codes mentioned in the table below.
+	\item[] 
+		\begin{tabular}{ | l | l |} \hline
+		\textbf{Code} & \textbf{Situation} \\ \hline
+		0 & Template for date, time and phone numbers \\ \hline
+		10 & Hex nibbles lower case \\ \hline
+		110 & Hex GUID lower case \\ \hline
+		1110 & Hex nibbles upper case \\ \hline
+		11110 & Hex GUID upper case \\ \hline
+		11111 & Binary (ASCII 0-31, 128-255) \\ \hline
+		\end{tabular}
+	\item[$\bullet$] The code 0 indicates that one of the codes for Date, Time or Phone number follows, which is encoded according to the following table:
+	\item[] 
+		\begin{tabular}{ | l | l | l |} \hline
+		\textbf{Code} & \textbf{Description} & \textbf{Template} \\ \hline
+		0 & Standard ISO timestamp & tfff-of-tfTtf:rf:rf.fffZ \\ \hline
+		10 & Date only & tfff-of-tf \\ \hline
+		110 & US Phone number & (fff) fff-ffff \\ \hline
+		1110 & Time only & tf:rf:rf \\ \hline
+		1111 & Reserved \\ \hline
+		\end{tabular}
+	\item[]Partial matches of the template can also be encoded using this.  For example, the string "2021-07-15T20:00:00" can be compressed using above template by specifying how many characters of the template are unused the end. In this case 5 characters are unused.
+	\item[]The encoding sequence would be: 00 10 00 0 <template code> <number of unused letters> <filled template>.  The method described in "Encoding counts" section is used to encode <number of unused letters>.
+	\item[]In the template, following are the codes used and the size occupied in bits. Since fewer bits are sufficient to represent a number, it results in lot of savings.
+	\item[]\begin{tabular}{ | l | l | l |} \hline
+			\textbf{Letter} & \textbf{Bits} & \textbf{Range} \\ \hline
+			o & 1 & 0 to 1 \\ \hline
+			t & 2 & 0 to 3 \\ \hline
+			r & 3 & 0 to 7 \\ \hline
+			f & 4 & 0 to F \\ \hline
+		\end{tabular}
+	\item[]The ISO timestamp which is 24 bytes in length compresses to only 9 bytes.
+	\item[]For example, "2021-07-15T16:37:35" would be encoded as 00 10 00 0 0 10 0001 10 0000 0010 0001 0 0111 01 0101 01 0110 011 0111 011 0101.  The codes are explained in the table below:
+	\item[]\begin{tabular}{ | l | l |} \hline
+		\textbf{Code} & \textbf{Description} \\ \hline
+		00 10 00 & Code for common templates \\ \hline
+		0 & Code for string template \\ \hline
+		0 & Template used (tfff-of-tfTtf:rf:rf.fffZ) \\ \hline
+		10 0001 & Encode count 5 unused at the end \\ \hline
+		10 0000 0010 0001 & 2021 \\ \hline
+		0 0111 & 07 \\ \hline
+		01 0101 & 15 \\ \hline
+		01 0110 & 16 \\ \hline
+		011 0111 & 37 \\ \hline
+		011 0101 & 35 \\ \hline
+		\end{tabular}
+	\item[$\bullet$]The codes 10 and 1110 are used to encode a sequence of lower and upper Hex nibbles respectively.  10 or 1110 is followed by the count of nibbles encoded as explained in the "Encoding counts" section.  After this, each nibble is encoded using 4 bits each.
+	\item[$\bullet$]The code 110 and 11110 are used to encode lower and upper GUIDs respectively.  110 or 11110 is followed by each nibble of the GUID excluding the hyphens.
+	\item[$\bullet$] Finally the code 11111 is used for encoding binary symbols ranging from ASCII 0 to 31 and ASCII 128 to 255. The prefix code 00 10 00 11111 is used, followed by the number of such binary symbols encoded as explained in "Encoding counts" section. After this each byte is encoded with 8 bits per character.
+	\item[$\bullet$] Encoding binary symbols this way is not efficient and is only available to cover the entire character set.
+	\item[$\bullet$] The implementation actually tries to optimize encoding binary sequences by trying to identify UTF-8 sequences within binary sequences in order to get a better compression ratio. 
 \end{itemize}
 
 \subsection{Compression of frequently occuring sequences}
@@ -267,11 +315,12 @@ With these two sets of codes, we form several sets of letters as shown in the ta
 \end{itemize}
 \begin{tabular}{ | l | l |} \hline
 	﻿\textbf{Type of text} & ﻿\textbf{Frequently occuring sequences} \\ \hline
-	Default (favours all types) & [\": \"], [\": ], [$\textless$/], [=\"], [\":\"], [://] \\ \hline
+	Default (favours all types) & [\textquotedblleft: \textquotedblleft], [\textquotedblleft: ], [$<$/], [=\textquotedblleft], [\textquotedblleft:\textquotedblleft], [://] \\ \hline
 	English sentences & [ the ], [ and ], [tion], [ with], [ing], [ment] \\ \hline
-	JSON & [\": \"], [\": ], [\",], [\}\}\}], [\":\"], [\}\}] \\ \hline
-	HTML & [$\textless$/], [=\"], [div], [href], [class], [$\textless$p$\textgreater$] \\ \hline
-	XML & [$\textless$/], [=\"], ["$\textgreater$ ], [$\textless$?xml version=\"1.0\"], [xmlns:], [://] \\ \hline
+	URL & [https://], [www.], [.com], [http://], [.org], [.net] \\ \hline
+	JSON & [\textquotedblleft: \textquotedblleft], [\textquotedblleft: ], [\textquotedblleft,], [\}\}\}], [\textquotedblleft:\textquotedblleft], [\}\}] \\ \hline
+	HTML & [$<$/], [=\textquotedblleft], [div], [href], [class], [$<$p$>$] \\ \hline
+	XML & [$<$/], [=\textquotedblleft], ["$>$ ], [$<$?xml version=\textquotedblleft1.0\textquotedblright], [xmlns:], [://] \\ \hline
 \end{tabular}
 
 \subsection{Redefinition of Horizontal codes and Presets}
@@ -283,23 +332,23 @@ With these two sets of codes, we form several sets of letters as shown in the ta
 \end{itemize}
 \begin{tabular}{ | l | l | l |} \hline
 	﻿\textbf{Preset} & ﻿\textbf{Codes} & \textbf{Frequent Sequences} \\ \hline
-	0 Default (favours all types) & 00, 111, 01, 10, 110 & Default \\ \hline
+	0 Default (favours all types) & 00, 01, 10, 110, 111 & Default \\ \hline
 	1 Alpha only & None * & English sentences \\ \hline
-	2 Alpha \& Numeric only & 0, 10, 11, x, x & English sentences \\ \hline
-	3 Alpha, Num \& Sym only & 0, x, x, x, 1 & Default \\ \hline
-	4 Alpha, Num \& Sym only (Text) & 0, x, x, x, 1 & English sentences \\ \hline
+	2 Alpha \& Numeric only & 0, x, 1, x, x & English sentences \\ \hline
+	3 Alpha, Num \& Sym only & 0, 10, 11, x, x & Default \\ \hline
+	4 Alpha, Num \& Sym only (Text) & 0, 10, 11, x, x & English sentences \\ \hline
 	5 Favor Alpha & 0, 100, 101, 110, 111 & English sentences \\ \hline
-	6 Favor Numeric & 00, 01, 10, 110, 111 & Default \\ \hline
-	7 Favor Numeric & 100, 0, 101, 110, 111 & Default \\ \hline
+	6 Favor Dictionary & 00, 01, 110, 10, 111 & Default \\ \hline
+	7 Favor Symbols & 100, 0, 101, 110, 111 & Default \\ \hline
 	8 Favor Umlaut & 100, 101, 110, 111, 0 & Default \\ \hline
 	9 No Dictionary & 00, 01, 10, x, 11 & Default \\ \hline
 	10 No Unicode & 00, 01, 10, 11, x & Default \\ \hline
 	11 No Unicode (Text) & 00, 01, 10, 11, x & English sentences \\ \hline
-	12 Favor URL & 00, 111, 01, 10, 110 & URL \\ \hline
-	13 Favor JSON & 00, 111, 01, 10, 110 & JSON \\ \hline
+	12 Favor URL & 00, 01, 10, 110, 111 & URL \\ \hline
+	13 Favor JSON & 00, 01, 10, 110, 111 & JSON \\ \hline
 	14 Favor JSON No Unicode & 00, 01, 10, 11, x & JSON \\ \hline
-	15 Favor XML & 00, 111, 01, 10, 110 & XML \\ \hline
-	16 Favor HTML & 00, 111, 01, 10, 110 & HTML \\ \hline
+	15 Favor XML & 00, 01, 10, 110, 111 & XML \\ \hline
+	16 Favor HTML & 00, 01, 10, 110, 111 & HTML \\ \hline
 \end{tabular}
 
 However, the default horizontal codes work fine for most cases.
@@ -311,11 +360,23 @@ According to the above Rules and Frequency table, a reference implementation has
 Further, Unishox has been used in several open source projects shown below:
 
 \begin{itemize}
-	\item[$\bullet$] Unishox Compression Library for Arduino Progmem - https://github.com/siara-cc/Unishox\_Arduino\_Progmem\_lib
-	\item[$\bullet$] Sqlite3 User Defined Function for Unishox as loadable extension - https://github.com/siara-cc/Unishox 2\_Sqlite\_UDF
-	\item[$\bullet$] Sqlite3 Library for ESP32 - https://github.com/siara-cc/esp32\_arduino\_sqlite3\_lib
-	\item[$\bullet$] Sqlite3 Library for ESP8266 - https://github.com/siara-cc/esp\_arduino\_sqlite3\_lib
-	\item[$\bullet$] Sqlite3 Library for ESP-IDF - https://github.com/siara-cc/esp32-idf-sqlite3
+	\item[$\bullet$] Unishox Compression Library for Arduino Progmem \newline https://github.com/siara-cc/Unishox\_Arduino\_Progmem\_lib
+	\item[$\bullet$] Sqlite3 User Defined Function for Unishox as loadable extension \newline https://github.com/siara-cc/Unishox 2\_Sqlite\_UDF
+	\item[$\bullet$] Sqlite3 Library for ESP32 \newline https://github.com/siara-cc/esp32\_arduino\_sqlite3\_lib
+	\item[$\bullet$] Sqlite3 Library for ESP8266 \newline https://github.com/siara-cc/esp\_arduino\_sqlite3\_lib
+	\item[$\bullet$] Sqlite3 Library for ESP-IDF \newline https://github.com/siara-cc/esp32-idf-sqlite3
+\end{itemize}
+
+\section{Applications}
+
+\begin{itemize}
+	\item[$\bullet$] Compression for low memory devices such as Arduino and ESP8266
+	\item[$\bullet$] Sending messages over Websockets
+	\item[$\bullet$] Compression of Chat application text exchange including Emojis
+	\item[$\bullet$] Storing compressed text in databases
+	\item[$\bullet$] Faster retrieval speed when used as join keys
+	\item[$\bullet$] Bandwidth cost saving for messages transferred to and from Cloud infrastructure
+	\item[$\bullet$] Storage cost reduction for Cloud databases
 \end{itemize}
 
 \section{Performance Comparison}
@@ -324,12 +385,12 @@ The compression performance of all three techniques - Smaz, shoco and Unishox we
 
 \begin{center}
 \begin{tabular}{ | p{0.5\textwidth} | p{0.1\textwidth} | p{0.1\textwidth} | p{0.1\textwidth} | p{0.1\textwidth} |} \hline
-﻿\textbf{String} & ﻿\textbf{Length} & ﻿\textbf{Smaz} & ﻿\textbf{shoco} & ﻿\textbf{Unishox} \\ \hline
+\textbf{String} & \textbf{Length} & \textbf{Smaz} & \textbf{shoco} & \textbf{Unishox} \\ \hline
 Hello World & 11 & 10 & 8 & 8 \\ \hline
 The quick brown fox jumps over the lazy dog & 43 & 30 & 34 & 30 \\ \hline
 I would have NEVER said that & 28 & 20 & 20 & 19 \\ \hline
 In (1970-89), \$25.9 billion; OPEC bilateral aid [1979-89], \$213 million & 67 & 65 & 52 & 50 \\ \hline
-	﻿\end{tabular}
+	\end{tabular}
 \end{center}
 
 Further - world95.txt - the text file obtained from \emph{The Project Gutenberg Etext of the 1995 CIA World Factbook} was compressed using the three techniques and following are the results:
@@ -344,6 +405,37 @@ After Compression using Unishox (1024 block size): 1,689,289 bytes
 
 After Compression using Unishox (65536 block size): 1,128,302 bytes
 
+The quote by Kahlil Gibran "Beauty is not in the face. Beauty is a light in the heart." was translated to several languages using Google Translate and the following table shows the savings in bytes for each language.  Although some attempt was made by reverse translation to check accuracy, all translations may not be considered correct by natives.
+
+More examples can be found in the presentation https://github.com/siara-cc/Unishox/blob/master/demo/Banner2.ppt?raw=true
+
+\begin{center}
+	\begin{tabular}{ | p{0.2\textwidth} | p{0.4\textwidth} | p{0.1\textwidth} | p{0.1\textwidth} | p{0.1\textwidth} |} \hline
+
+		\textbf {Language} & \textbf{Quote by Khalil Gibran} & \textbf{Before} & \textbf{After} & \textbf{Savings} \\ \hline
+		English & Beauty is not in the face. Beauty is a light in the heart. & 58 & 29 & 50 \% \\ \hline
+		Spanish & La belleza no está en la cara. La belleza es una luz en el corazón. & 69 & 38 & 45 \% \\ \hline
+		French & La beauté est pas dans le visage. La beauté est la lumière dans le coeur. & 76 & 39 & 49 \% \\ \hline
+		Portugese & A beleza não está na cara. A beleza é a luz no coração. & 60 & 36 & 40 \% \\ \hline
+		Dutch & Schoonheid is niet in het gezicht. Schoonheid is een licht in het hart. & 71 & 35 & 51 \% \\ \hline
+		German & Schönheit ist nicht im Gesicht. Schönheit ist ein Licht im Herzen. & 68 & 35 & 49 \% \\ \hline
+		Italian & La bellezza non è in faccia. La bellezza è la luce nel cuore. & 63 & 35 & 44 \% \\ \hline
+		Swedish & Skönhet är inte i ansiktet. Skönhet är ett ljus i hjärtat. & 63 & 34 & 46 \% \\ \hline
+		Romanian & Frumusețea nu este în față. Frumusețea este o lumină în inimă. & 70 & 44 & 37 \% \\ \hline
+		Turkish & Güzellik yüzünde değil. Güzellik, kalbin içindeki bir ışıktır. & 72 & 48 & 33 \% \\ \hline
+		Polish & Piękno nie jest na twarzy. Piękno jest światłem w sercu. & 60 & 38 & 37 \% \\ \hline
+		Afrikaans & Skoonheid is nie in die gesig nie. Skoonheid is 'n lig in die hart. & 67 & 33 & 51 \% \\ \hline
+		Swahili & Beauty si katika uso. Uzuri ni nuru moyoni. & 43 & 29 & 33 \% \\ \hline
+		Zulu & Ubuhle abukho ebusweni. Ubuhle bungukukhanya enhliziyweni. & 58 & 39 & 33 \% \\ \hline
+		Somali & Beauty ma aha in wajiga. Beauty waa iftiin ah ee wadnaha. & 57 & 34 & 40 \% \\ \hline
+		Azerbaijani & Gözəllik üzdə deyil. Gözəllik qəlbdə bir işıqdır. & 60 & 44 & 27 \% \\ \hline
+		Uzbek & Go'zallik yuzida emas. Go'zallik - qalbdagi nur. & 48 & 31 & 35 \% \\ \hline
+		Kurdish & Bedewî ne di rû de ye. Bedewî di dil de ronahiyek e. & 55 & 32 & 42 \% \\ \hline
+		Malay & Kecantikan bukan di muka. Kecantikan adalah cahaya di dalam hati. & 65 & 38 & 42 \% \\ \hline
+	\end{tabular}
+\end{center}
+
+		
 As for memory requirements, shoco requires over 2k bytes, smaz requires over 1k. But Unishox requires only around $300$ bytes for compressor and decompressor together, ideal for using it with even Arduino Uno.
 
 \section{Proving guaranteed compression}
@@ -390,7 +482,7 @@ We propose to improve Unishox 2 by making it available in more languages than ju
 
 	\bibitem{1} David MacKay. {\em Information Theory, Inference, and Learning Algorithms}, Cambridge University Press, 2003.
 
-	\bibitem{2} Shannon, Claude E. (July 1948). {\em"A Mathematical Theory of Communication"}, Bell System Technical Journal. 27
+	\bibitem{2} Shannon, Claude E. (July 1948). {\em A Mathematical Theory of Communication}, Bell System Technical Journal. 27
  
 	\bibitem{3} D. A. Huffman, {\em“A method for the construction of minimum-redundancy codes“}, Proc. IRE, vol. 40, pp. 1098-1101,1952.
  
@@ -400,7 +492,7 @@ We propose to improve Unishox 2 by making it available in more languages than ju
  
 	\bibitem{6} M. Burrows and D. Wheeler. A Block-Sorting Lossless Data Compression Algorithm. Research Report 124, Digital Equipment Corporation, Palo Alto, CA, USA, May 1994.
 
-	\bibitem{7} {\em "Statistical Distributions of English Text"}. data-compression.com. Archived from the original on 2017-09-18.
+	\bibitem{7} {\em Statistical Distributions of English Text}. data-compression.com. Archived from the original on 2017-09-18.
 
  	\bibitem{8} What is the frequency of the letters of the alphabet in English?, Oxford Dictionary. Oxford University Press. Retrieved 29 December 2012.
 
@@ -409,6 +501,8 @@ We propose to improve Unishox 2 by making it available in more languages than ju
  	\bibitem{10} Salvatore Sanfilippo, {\em SMAZ - compression for very small strings}, https://github.com/antirez/smaz, February 2012.
 
  	\bibitem{11} Christian Schramm, {\em shoco: a fast compressor for short strings}, https://github.com/Ed-von-Schleck/shoco, December 2015.
+
+	\bibitem{12} Arundale Ramanathan, {\em Unishox - Guaranteed Compression of Short Unicode Strings using Entropy, Dictionary and Delta encoding techniques}, https://github.com/siara-cc/Unishox/blob/master/Unishox\_Article\_1.pdf?raw=true, August 2019.
 
 \end{thebibliography}
 

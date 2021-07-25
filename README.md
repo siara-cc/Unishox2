@@ -12,7 +12,7 @@ Note: The present byte-code version is 2 and it replaces Unishox 1.  Unishox 1 i
 - Faster retrieval speed when used as join keys
 - Bandwidth and storage cost reduction for Cloud
 
-![Promo video](Banner1.png?raw=true)
+![Promo video](demo/Banner1.png?raw=true)
 
 # How it works
 
