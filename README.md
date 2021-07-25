@@ -16,7 +16,13 @@ Note: The present byte-code version is 2 and it replaces Unishox 1.  Unishox 1 i
 
 # How it works
 
-Unishox is an hybrid encoder (entropy, dictionary and delta coding).  It works by assigning fixed prefix-free codes for each letter in the above Character Set (entropy coding).  It also encodes repeating letter sets separately (dictionary coding).  For Unicode characters, delta coding is used. More information is available in [this article](Unishox_Article_2.pdf?raw=true).
+Unishox is an hybrid encoder (entropy, dictionary and delta coding).  It works by assigning fixed prefix-free codes for each letter in the above Character Set (entropy coding).  It also encodes repeating letter sets separately (dictionary coding).  For Unicode characters, delta coding is used.
+
+The model used for arriving at the prefix-free code is shown below:
+
+![Promo video](demo/model.png?raw=true)
+
+The complete specification can be found in this article: [Unishox 2 - Guaranteed Configurable Compression for Short Strings using Entropy, Dictionary and Delta encoding techniques](Unishox_Article_2.pdf?raw=true).
 
 # Compiling
 
