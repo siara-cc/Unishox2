@@ -72,12 +72,14 @@ Unishox supports the entire Unicode character set.  As of now it supports UTF-8 
 - [Sqlite3 User Defined Function as loadable extension](https://github.com/siara-cc/Unishox_Sqlite_UDF)
 - [Sqlite3 Library for ESP32](https://github.com/siara-cc/esp32_arduino_sqlite3_lib)
 - [Sqlite3 Library for ESP8266](https://github.com/siara-cc/esp_arduino_sqlite3_lib)
-- [Port of this library to Python and C++ by Stephan Hadinger for Tasmota](https://github.com/arendst/Tasmota/tree/development/lib/Unishox-1.0-shadinger)
+- [Port of Unishox 1 to Python and C++ by Stephan Hadinger for Tasmota](https://github.com/arendst/Tasmota/tree/development/tools/unishox)
 - [Python bindings for Unishox2](https://github.com/tweedge/unishox2-py3)
 
 # Credits
 
 - Thanks to [Jonathan Greenblatt](https://github.com/leafgarden) for his port of Unishox2 (merged under Arduino folder) that works on Particle Photon
+- Thanks to [Chris Partridge](https://github.com/tweedge) for his [port of Unishox2 to CPython](https://github.com/tweedge/unishox2-py3) and his [comprehensive tests](https://github.com/tweedge/unishox2-py3#integration-tests) using [Hypothesis](https://hypothesis.readthedocs.io/en/latest) and [extensive performance tests](https://github.com/tweedge/unishox2-py3#performance).
+- Thanks to [Stephan Hadinger](https://github.com/s-hadinger) for his port of Unishox1 to Python for Tasmota
 
 # Issues
 
