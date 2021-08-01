@@ -58,4 +58,6 @@ delta_only
 *.dvi
 *.fls
 *.xdv
+*.csu
+*.bcu
 

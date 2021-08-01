@@ -1,8 +1,7 @@
 % !TEX encoding = UTF-8 Unicode
 \documentclass[]{article}
 
-\usepackage[T1]{fontenc}
-\usepackage[utf8]{inputenc}
+\usepackage{fontspec}
 
 \usepackage{multirow}
 \usepackage{makecell}
@@ -10,12 +9,12 @@
 \pagestyle{fancy}
 \fancyhead{}
 \fancyfoot{}
-\fancyhead[C]{Data Compression techniques $\bullet$ Information Science $\bullet$ Unishox 2 - Guaranteed Compression of Short Unicode Strings}
-\fancyfoot[L]{ Licensed under CC 4.0 Int'l Attribution License \copyright  2019 Siara Logics (cc)}
+\fancyhead[C]{Data Compression techniques $\bullet$ Information Science $\bullet$ Unishox - A hybrid encoder for Short Unicode Strings}
+\fancyfoot[L]{ Licensed under CC 4.0 Int'l Attribution License \copyright 2019-21 Siara Logics (cc)}
 \fancyfoot[R]{\thepage}
 
 %opening
-\title{Unishox 2 - Guaranteed Configurable Compression for Short Strings using Entropy, Dictionary and Delta encoding techniques}
+\title{Unishox - A hybrid encoder for Short Unicode Strings}
 \author{Arundale Ramanathan}
 
 \begin{document}
@@ -23,14 +22,13 @@
 \maketitle
 
 \begin{abstract}
-Unishox 2 is a hybrid encoding technique replacing Unishox 1, with which short unicode strings could be compressed using context aware pre-mapped codes and delta coding resulting in surprisingly good ratios.
+Unishox is a hybrid encoding technique with which short unicode strings could be compressed using context aware pre-mapped codes and delta coding resulting in surprisingly good ratios.
 
-Also shown is how this technique can guarantee compression for any language sentence of minimum 3 words.
 \end{abstract}
 
 \section{Summary}
 
-Compression of Short Unicode Strings of arbitrary lengths have not been addressed sufficiently by lossless entropy encoding methods so far.  Although it appears inconsequential, space occupied by such strings become significant in memory constrained environments such as Arduino Uno and ESP8266 and when attempting storage of such independent strings in a database. While block compression is available for databases, retrieval efficiency could be greatly improved if the strings are individually compressed.
+Compression of Short Unicode Strings of arbitrary lengths have not been addressed sufficiently by lossless entropy encoding methods so far.  Although it appears inconsequential, space occupied by such strings become significant in memory constrained environments such as Arduino Uno and ESP8266 and when attempting storage of such independent strings in a database.
 
 \section{Basic Definitions}
 
@@ -40,41 +38,56 @@ One of the main types of entropy coding is about creating and assigning a unique
 
 According to Shannon's source coding theorem, the optimal code length for a symbol is $-log_bP$, where b is the number of symbols used to make output codes and P is the probability of the input symbol \cite{2}. Therefore, the most common symbols use the shortest codes.
 
-The most popular and most used method for forming optimal prefix-free discrete codes is Huffman coding \cite{3}.
+The most popular method for forming optimal prefix-free discrete codes is Huffman coding \cite{3}.
 
-A \emph{Dictionary coder}, also sometimes known as a substitution coder, is a class of lossless data compression algorithms which operate by searching for matches between the text to be compressed and a set of strings contained in a data structure (called the 'dictionary') maintained by the encoder. When the encoder finds such a match, it substitutes a reference to the string's position in the data structure.
+A \emph{Dictionary coder}, also sometimes known as a substitution coder, is a class of lossless data compression algorithms which operate by searching for matches between the text to be compressed and a set of strings contained in a data structure (called the \lq{dictionary}\rq) maintained by the encoder. When the encoder finds such a match, it substitutes a reference to the string's position in the data structure.
 
 The LZ77 family of encoders use the dictionary encoding technique for compressing data. \cite{4}
 
-\emph{Delta coding} is a technique applied where encoding the difference between the previously encoded symbol or set of symbols is smaller compared to encoding the symbol or the set again.  The duffernce is determined by using the set minus operator or subtraction of values. \cite{5}
+\emph{Delta coding} is a technique applied where encoding the difference between the previously encoded symbol or set of symbols is smaller compared to encoding the symbol or the set again.  The differnce is determined by using the set minus operator or subtraction of values. \cite{5}
 
 In contrast to these encoding methods, there are various other approaches to lossless coding including Run Length Encoding (RLE) and Burrows-Wheeler coding \cite{6}.
 
-\section{Existing techniques - Smaz and shoco}
+\section{Existing techniques}
 
 While technologies such as GZip, Deflate, Zip, LZMA are available for file compression, they do not provide optimal compression for short strings.  Eventhough these methods compress far more than what we are proposing, these methods often expand the original source for short strings because the symbol-code mapping also needs to be attached to aid decompression.
 
-To our knowledge, only two other competing technologies exist - Smaz and shoco.
+For compressing Unicode sequences, three other technologies are available: SCSU \cite{10} and BOCU \cite{11} and FAST \cite{12}.  Further, a survey of compression algorithms available was published by Doug Ewell in 2004 \cite{13}.
 
-Smaz is a simple compression library suitable for compressing very short strings \cite{10}. It was developed by Salvatore Sanfilippo and is released under the BSD license.
+The Standard Compression Scheme for Unicode (SCSU) is defined in Unicode Technical Standard \#6 and is based on a technique originally developed by Reuters. The basic premise of SCSU is to define dynamically positioned windows into the Unicode code space, so that characters belonging to small scripts (such as the Greek alphabet or Indic abugidas) can be
+encoded in a single byte, representing an index into the active window. These windows are preset to blocks expected to be in common use (e.g. Cyrillic), so the encoder doesn’t have to define them in these cases. There are also static windows that cannot be adjusted. \cite{10} \cite{13}
 
-Shoco is a C library to compress short strings \cite{11}. It was developed by Christian Schramm and is released under the MIT license.
+The Binary Ordered Compression for Unicode (BOCU) concept was developed in 2001 by Mark Davis and Markus Scherer for the ICU project. The main premise of BOCU-1 is to encode each Unicode character as the difference from the previous character, and to represent small differences in fewer bytes than large differences. By encoding differences, BOCU-1 achieves the same compression for all small alphabetic scripts, regardless of the block they reside in. \cite{11} \cite{13}
 
-While both are lossless encoding methods, Smaz is dictionary based and Shoco classifies as an entropy coder \cite{11}.
+It is to be noted that SCSU is a Unicode Technical Standard (UTS\#6) and BOCU is published as a Unicode Technical Note (UTN\#6), although both have the same number assigned (6).
 
-In addition to providing a default frequency table as model, shoco provides an option to re-define the frequency table based on training text \cite{11}.
+Fast Compression Algorithm For Unicode Text (FAST) is a compression algorithm developed based on Lempel Ziv algorithm \cite{4}.  Essentially it achieves faster compression by finding repeating unicode sequences instead of repeating bytes.  There are other assumptions and variations made to LZ technique in addition to this. \cite{12}
+
+Other technologies available are Smaz and shoco, which are not developed with Unicode in mind.
+
+Smaz is a simple compression library suitable for compressing very short strings \cite{14}. It was developed by Salvatore Sanfilippo and is released under the BSD license.
+
+Shoco is a C library to compress short strings \cite{15}. It was developed by Christian Schramm and is released under the MIT license.
+
+While both are lossless encoding methods, Smaz is dictionary based and Shoco classifies as an entropy coder \cite{15}.
+
+In addition to providing a default frequency table as model, shoco provides an option to re-define the frequency table based on training text \cite{15}.
 
 \section{This research}
 
 We propose a hybrid encoding method which relies on the three encoding techniques \emph{viz.} Entropy encoding, Dictionary coding and Delta encoding methods for compression.
 
-Unlike shoco, we propose a fixed frequency table generated based on the characterestics of English language letter frequency.  We re-use the research carried out by Oxford University \cite{7} and other sources \cite{7} \cite{9} and come out with a unique method that takes advantage of the conventions of the language.
+While existing techniques focus on either Unicode character sequences or only English characters, Unishox uses multiple techhniques to achieve the best compression ratio all round.
 
-We propose a single model that presently is fixed because of the advantages it offers over the training models of shoco. The disadvantage with the training model, although it may appear to offer more compression, is that it does not consider the patterns that usually appear during text formation. We can actually see that this performs better than pre-trained model of shoco (See performance section).
+For Unicode we use Delta encoding because usually the difference between subsequent symbols is quite less while encoding text of a particular language.  SCSU is slightly better with switching windows, but overall it was found that plain Delta coding works well considering that usually there is only one language text to be compressed and some languages span a lot of windows.
 
-For compressing Unicode symbols, we use Delta encoding because usually the difference between subsequent symbols is quite less.
+SCSU and BOCU do have special features for Unicode that Unishox does not address such as dynamic windows, binary order maintenance, XML suitability and MIME friendliness. Unishox uses plain delta encoding to achieve the best compression.
 
-Unlike smaz and shoco, we assume no \emph{a priori} knowledge about the input text.  However we rely on \emph{a posteriori} knowledge about the research carried out on the language and common patterns of sentence formation and come out with pre-assigned codes for each letter.
+For Latin characters, unlike shoco, we use a fixed frequency table generated based on the characterestics of English language letter frequency.  We re-use the research carried out by Oxford University \cite{7} and other sources \cite{7} \cite{9} and come out with a unique method that takes advantage of the conventions of the language.
+
+We use a single model that is fixed because of the advantages it offers over the training models of shoco. The disadvantage with the training model, although it may appear to offer more compression, is that it does not consider the patterns that usually appear during text formation. We can actually see that this performs better than pre-trained model of shoco (See performance section).
+
+Unlike smaz and shoco, we assume no \emph{a priori} knowledge about the input text.  However we rely on knowledge from the research carried out on the language and common patterns of sentence formation and come out with pre-assigned codes for each letter.
 
 \section{Model}
 
@@ -138,8 +151,8 @@ With these two sets of codes, we form several sets of letters as shown in the ta
 
 \subsection{Upper case symbols}
 \begin{itemize}
-	\item[$\bullet$] For encoding uppercase letters, the switch symbol is used followed by 00 and the code against the symbol itself.  For example, E is encoded as 0000011.
-	\item[$\bullet$] If uppercase letters appear continuously, then the encoder may decide to switch to upper case using the prefix 0000 0000.  After that, the same codes for lower case are used to indicate upper case letters until the code sequence 0000 is used again to return to lower case.
+	\item[$\bullet$] For encoding uppercase letters, the switch symbol is used followed by 00 and the code against the symbol itself.  For example, E is encoded as 00 00 011.
+	\item[$\bullet$] If uppercase letters appear continuously, then the encoder may decide to switch to upper case using the prefix 00 00 00 00.  After that, the same codes for lower case are used to indicate upper case letters until the code sequence 00 00 is used again to return to lower case.
 \end{itemize}
 
 \subsection{Numbers and related symbols}
@@ -179,7 +192,7 @@ With these two sets of codes, we form several sets of letters as shown in the ta
 	\item[$\bullet$] If a section repeats, the switch code (00) and another horizontal code (110) is used followed by two fields as described next.
   	\item[$\bullet$] The first field indicates the length of the section that repeats.
 	\item[$\bullet$] The second field indicates the distance of the repeating section.  The distance is counted from the current position.
-	\item[$\bullet$] The optional third field is coded only if an array of text is encoded.  It is a number indicating the set that the section belongs to.  If only one set of text is encoded, then this field is not included. 
+	\item[$\bullet$] The optional third field is coded only if an array of text is encoded.  It is a number indicating the index of the array that the section belongs.  If only one text is encoded, then this field is not included. 
 	\item[$\bullet$] The first, second and third fields are encoded as explained in the following section "Encoding counts".
 \end{itemize}
 
@@ -250,7 +263,7 @@ With these two sets of codes, we form several sets of letters as shown in the ta
 \subsection{Encoding punctuations}
 \begin{itemize}
 	\item[$\bullet$] Some languages, such as Japanese and Chinese use their own punctuation characters.  For example full-stop is indicated using U+3002 which is represented visually as a small circle.
-	\item[$\bullet$] Encoding such special full-stops were supported in Unishox 1 for better compression.  However since this was leading to confusion and ambiguity, any special treatment for such punctuations are excluded in Unishox2 and this is left to delta coding. It also does not make much difference in compression ratio.
+	\item[$\bullet$] Encoding such special full-stops were supported in the earlier version of Unishox for better compression.  However since this was leading to confusion and ambiguity, any special treatment for such punctuations are excluded in the present version of Unishox (2) and this is left to delta coding. It also does not make much difference in compression ratio.
 \end{itemize}
 
 \subsection{Common templates}
@@ -286,7 +299,7 @@ With these two sets of codes, we form several sets of letters as shown in the ta
 			r & 3 & 0 to 7 \\ \hline
 			f & 4 & 0 to F \\ \hline
 		\end{tabular}
-	\item[]The ISO timestamp which is 24 bytes in length compresses to only 9 bytes.
+	\item[]Using this method, the ISO timestamp which is 24 bytes in length compresses to only 9 bytes.
 	\item[]For example, "2021-07-15T16:37:35" would be encoded as 00 10 00 0 0 10 0001 10 0000 0010 0001 0 0111 01 0101 01 0110 011 0111 011 0101.  The codes are explained in the table below:
 	\item[]\begin{tabular}{ | l | l |} \hline
 		\textbf{Code} & \textbf{Description} \\ \hline
@@ -310,7 +323,7 @@ With these two sets of codes, we form several sets of letters as shown in the ta
 
 \subsection{Compression of frequently occuring sequences}
 \begin{itemize}
-	\item[$\bullet$] Provision for six frequently occuring text sequences is available with Unishox 2.
+	\item[$\bullet$] Provision for six frequently occuring text sequences is available with Unishox.
 	\item[$\bullet$] Depending on the type of text being encoded following sequences have been identified.
 \end{itemize}
 \begin{tabular}{ | l | l |} \hline
@@ -353,20 +366,6 @@ With these two sets of codes, we form several sets of letters as shown in the ta
 
 However, the default horizontal codes work fine for most cases.
 
-\section{Implementation}
-
-According to the above Rules and Frequency table, a reference implementation has been developed and made available at https://github.com/siara-cc/Unishox as unishox2.c.  This is released under Apache License 2.0.
-
-Further, Unishox has been used in several open source projects shown below:
-
-\begin{itemize}
-	\item[$\bullet$] Unishox Compression Library for Arduino Progmem \newline https://github.com/siara-cc/Unishox\_Arduino\_Progmem\_lib
-	\item[$\bullet$] Sqlite3 User Defined Function for Unishox as loadable extension \newline https://github.com/siara-cc/Unishox 2\_Sqlite\_UDF
-	\item[$\bullet$] Sqlite3 Library for ESP32 \newline https://github.com/siara-cc/esp32\_arduino\_sqlite3\_lib
-	\item[$\bullet$] Sqlite3 Library for ESP8266 \newline https://github.com/siara-cc/esp\_arduino\_sqlite3\_lib
-	\item[$\bullet$] Sqlite3 Library for ESP-IDF \newline https://github.com/siara-cc/esp32-idf-sqlite3
-\end{itemize}
-
 \section{Applications}
 
 \begin{itemize}
@@ -377,21 +376,80 @@ Further, Unishox has been used in several open source projects shown below:
 	\item[$\bullet$] Faster retrieval speed when used as join keys
 	\item[$\bullet$] Bandwidth cost saving for messages transferred to and from Cloud infrastructure
 	\item[$\bullet$] Storage cost reduction for Cloud databases
+	\item[$\bullet$] Some people even use it for obfuscation
+\end{itemize}
+
+\section{Implementation}
+
+According to the above Rules and Frequency table, an implementation has been developed licensed under Apache License 2.0.
+
+Unishox has been hosted on Github and used in several open source projects shown below:
+
+\begin{itemize}
+	\item[$\bullet$] Unishox \newline https://github.com/siara-cc/Unishox
+	\item[$\bullet$] Unishox for Javascript \newline https://github.com/siara-cc/Unishox\_JS
+	\item[$\bullet$] Python bindings for Unishox \newline https://github.com/tweedge/unishox2-py3
+	\item[$\bullet$] Unishox 1 ported to Python for Tasmota \newline https://github.com/arendst/Tasmota/tree/development/tools/unishox
+	\item[$\bullet$] Unishox Compression Library for Arduino Progmem \newline https://github.com/siara-cc/Unishox\_Arduino\_Progmem\_lib
+	\item[$\bullet$] Sqlite3 User Defined Function for Unishox as loadable extension \newline https://github.com/siara-cc/Unishox\_Sqlite\_UDF
+	\item[$\bullet$] Sqlite3 Library for ESP32 \newline https://github.com/siara-cc/esp32\_arduino\_sqlite3\_lib
+	\item[$\bullet$] Sqlite3 Library for ESP8266 \newline https://github.com/siara-cc/esp\_arduino\_sqlite3\_lib
+	\item[$\bullet$] Sqlite3 Library for ESP-IDF \newline https://github.com/siara-cc/esp32-idf-sqlite3
 \end{itemize}
 
 \section{Performance Comparison}
 
-The compression performance of all three techniques - Smaz, shoco and Unishox were compared for different types of strings and results are tabulated below:
+The performance of Unishox was compared with the various implementations already available for short strings and shown in subsequent sections.
 
-\begin{center}
-\begin{tabular}{ | p{0.5\textwidth} | p{0.1\textwidth} | p{0.1\textwidth} | p{0.1\textwidth} | p{0.1\textwidth} |} \hline
-\textbf{String} & \textbf{Length} & \textbf{Smaz} & \textbf{shoco} & \textbf{Unishox} \\ \hline
-Hello World & 11 & 10 & 8 & 8 \\ \hline
-The quick brown fox jumps over the lazy dog & 43 & 30 & 34 & 30 \\ \hline
-I would have NEVER said that & 28 & 20 & 20 & 19 \\ \hline
-In (1970-89), \$25.9 billion; OPEC bilateral aid [1979-89], \$213 million & 67 & 65 & 52 & 50 \\ \hline
-	\end{tabular}
-\end{center}
+\subsection{Comparison with Unicode compression techniques}
+
+\begin{tabular}{ | p{0.5\textwidth} | r | r | r | r |} \hline
+	\multirow{2}{*}{\textbf{Language and Text}} & \multirow{2}{*}{\textbf{Size}} & \multicolumn{3}{c|}{\textbf{Compressed size}} \\ \cline{3-5}
+	& & \textbf{Unishox} & \textbf{SCSU} & \textbf{BOCU} \\ \hline
+	{\fontspec{Arial Unicode MS} English:Beauty is not in the face. Beauty is a light in the heart.} & 58 & 30 & 58 & 58 \\ \hline
+	{\fontspec{Arial Unicode MS} Chinese:美是不是在脸上。 美是心中的亮光。} & 49 & 36 & 36 & 37 \\ \hline
+	{\fontspec{Arial Unicode MS} Spanish:La belleza no está en la cara. La belleza es una luz en el corazón. } & 69 & 38 & 67 & 71 \\ \hline
+	{\fontspec{Arial Unicode MS} Hindi: सुंदरता चेहरे में नहीं है। सौंदर्य हृदय में प्रकाश है।} & 144 & 53 & 55 & 55 \\ \hline
+	{\fontspec{Arial Unicode MS} Bengali:সৌন্দর্য মুখে নেই। সৌন্দর্য হৃদয় একটি আলো।} & 117 & 41 & 48 & 47 \\ \hline
+	{\fontspec{Arial Unicode MS} Portugese:A beleza não está na cara. A beleza é a luz no coração.} & 60 & 36 & 55 & 63 \\ \hline
+	{\fontspec{Arial Unicode MS} Russian:Красота не в лицо. Красота - это свет в сердце.} & 82 & 44 & 48 & 53 \\ \hline
+	{\fontspec{Arial Unicode MS} Japanese:美は顔にありません。 美は心の中の光です。} & 61 & 39 & 37 & 45 \\ \hline
+	{\fontspec{Arial Unicode MS} Punjabi:ਸੁੰਦਰਤਾ ਚਿਹਰੇ ਵਿੱਚ ਨਹੀਂ ਹੈ. ਸੁੰਦਰਤਾ ਦੇ ਦਿਲ ਵਿਚ ਚਾਨਣ ਹੈ.} & 141 & 51 & 57 & 59 \\ \hline
+	{\fontspec{Arial Unicode MS} Marathi:सौंदर्य चेहरा नाही. सौंदर्य हे हृदयातील एक प्रकाश आहे.} & 142 & 52 & 55 & 58 \\ \hline
+	{\fontspec{Arial Unicode MS} Telugu:అందం ముఖంలో లేదు. అందం హృదయంలో ఒక కాంతి.} & 104 & 39 & 42 & 44 \\ \hline
+	{\fontspec{Arial Unicode MS} Turkish:Güzellik yüzünde değil. Güzellik, kalbin içindeki bir ışıktır.} & 72 & 49 & 64 & 78 \\ \hline
+	{\fontspec{Arial Unicode MS} Korean: 아름다움은 얼굴에 없습니다。 아름다움은 마음의 빛입니다。} & 82 & 45 & 61 & 60 \\ \hline
+	{\fontspec{Arial Unicode MS} French:La beauté est pas dans le visage. La beauté est la lumière dans le coeur.} & 76 & 39 & 73 & 79 \\ \hline
+	{\fontspec{Arial Unicode MS} German:Schönheit ist nicht im Gesicht. Schönheit ist ein Licht im Herzen.} & 68 & 36 & 66 & 70 \\ \hline
+	{\fontspec{Arial Unicode MS} Vietnamese:Vẻ đẹp không nằm trong khuôn mặt. Vẻ đẹp là ánh sáng trong tim.} & 82 & 59 & 72 & 83 \\ \hline
+	{\fontspec{Arial Unicode MS} Tamil: அழகு முகத்தில் இல்லை. அழகு என்பது இதயத்தின் ஒளி.} & 128 & 49 & 50 & 52 \\ \hline
+\end{tabular}
+* All sizes are in bytes.
+
+The above table compares the compression performance between SCSU, BOCU and Unishox for languages that are spoken by over 75 million people (according to Wikipedia).
+
+Disclaimer: Natives may not consider all translations to be accurate as they were translated online, although some attempt was made to check accuracy by reverse translation.
+
+\subsection{Comparison with non-Unicode compression techniques}
+
+\begin{tabular}{ | p{0.5\textwidth} | r | r | r | r |} \hline
+\textbf{String} & \textbf{Size} & \textbf{Unishox} & \textbf{Smaz} & \textbf{Shoco} \\ \hline
+Beauty is not in the face. Beauty is a light in the heart. & 58 & 30 & 31 & 46 \\ \hline
+The quick brown fox jumps over the lazy dog. & 44 & 31 & 31 & 38 \\ \hline
+WRITING ENTIRELY IN BLOCK CAPITALS IS SHOUTING, and it’s rude & 63 & 49 & 72 & 63 \\ \hline
+Grawlix is a string of typographical symbols (such as \%@\$\&*!) coined in the 1960s & 82 & 60 & 58 & 63 \\ \hline
+Rose is a rose is a rose is a rose. & 35 & 12 & 20 & 25 \\ \hline
+Gravitational Constant (G): 6.67300 x 10\^{}-11 m\^{}3 kg\^{}-1 s\^{}-2 & 59 & 50 & 65 & 51 \\ \hline
+039f7094-83e4-4d7f-aa38-8844c67bd82d & 36 & 18 & 53 & 36 \\ \hline
+2021-07-15T16:37:35.897Z & 24 & 9 & 32 & 24 \\ \hline
+(760) 756-7568 & 14 & 7 & 20 & 14 \\ \hline
+This is a loooooooooooooooooooooong string & 42 & 15 & 32 & 25 \\ \hline
+\end{tabular}
+* All sizes are in bytes.
+
+The above table compares the compression performance of Smaz, shoco and Unishox for different types of strings.
+
+\subsection{Comparison of file compression}
 
 Further - world95.txt - the text file obtained from \emph{The Project Gutenberg Etext of the 1995 CIA World Factbook} was compressed using the three techniques and following are the results:
 
@@ -405,78 +463,27 @@ After Compression using Unishox (1024 block size): 1,689,289 bytes
 
 After Compression using Unishox (65536 block size): 1,128,302 bytes
 
-The quote by Kahlil Gibran "Beauty is not in the face. Beauty is a light in the heart." was translated to several languages using Google Translate and the following table shows the savings in bytes for each language.  Although some attempt was made by reverse translation to check accuracy, all translations may not be considered correct by natives.
+\subsection{Memory requirements}
 
-More examples can be found in the presentation https://github.com/siara-cc/Unishox/blob/master/demo/Banner2.ppt?raw=true
+As for operating memory required, Shoco requires over 2k bytes, smaz requires over 1k. But Unishox requires only around $300$ bytes for compressor and decompressor together, ideal for using it with even Arduino Uno.
 
-\begin{center}
-	\begin{tabular}{ | p{0.2\textwidth} | p{0.4\textwidth} | p{0.1\textwidth} | p{0.1\textwidth} | p{0.1\textwidth} |} \hline
+\subsection{Speed}
 
-		\textbf {Language} & \textbf{Quote by Khalil Gibran} & \textbf{Before} & \textbf{After} & \textbf{Savings} \\ \hline
-		English & Beauty is not in the face. Beauty is a light in the heart. & 58 & 29 & 50 \% \\ \hline
-		Spanish & La belleza no está en la cara. La belleza es una luz en el corazón. & 69 & 38 & 45 \% \\ \hline
-		French & La beauté est pas dans le visage. La beauté est la lumière dans le coeur. & 76 & 39 & 49 \% \\ \hline
-		Portugese & A beleza não está na cara. A beleza é a luz no coração. & 60 & 36 & 40 \% \\ \hline
-		Dutch & Schoonheid is niet in het gezicht. Schoonheid is een licht in het hart. & 71 & 35 & 51 \% \\ \hline
-		German & Schönheit ist nicht im Gesicht. Schönheit ist ein Licht im Herzen. & 68 & 35 & 49 \% \\ \hline
-		Italian & La bellezza non è in faccia. La bellezza è la luce nel cuore. & 63 & 35 & 44 \% \\ \hline
-		Swedish & Skönhet är inte i ansiktet. Skönhet är ett ljus i hjärtat. & 63 & 34 & 46 \% \\ \hline
-		Romanian & Frumusețea nu este în față. Frumusețea este o lumină în inimă. & 70 & 44 & 37 \% \\ \hline
-		Turkish & Güzellik yüzünde değil. Güzellik, kalbin içindeki bir ışıktır. & 72 & 48 & 33 \% \\ \hline
-		Polish & Piękno nie jest na twarzy. Piękno jest światłem w sercu. & 60 & 38 & 37 \% \\ \hline
-		Afrikaans & Skoonheid is nie in die gesig nie. Skoonheid is 'n lig in die hart. & 67 & 33 & 51 \% \\ \hline
-		Swahili & Beauty si katika uso. Uzuri ni nuru moyoni. & 43 & 29 & 33 \% \\ \hline
-		Zulu & Ubuhle abukho ebusweni. Ubuhle bungukukhanya enhliziyweni. & 58 & 39 & 33 \% \\ \hline
-		Somali & Beauty ma aha in wajiga. Beauty waa iftiin ah ee wadnaha. & 57 & 34 & 40 \% \\ \hline
-		Azerbaijani & Gözəllik üzdə deyil. Gözəllik qəlbdə bir işıqdır. & 60 & 44 & 27 \% \\ \hline
-		Uzbek & Go'zallik yuzida emas. Go'zallik - qalbdagi nur. & 48 & 31 & 35 \% \\ \hline
-		Kurdish & Bedewî ne di rû de ye. Bedewî di dil de ronahiyek e. & 55 & 32 & 42 \% \\ \hline
-		Malay & Kecantikan bukan di muka. Kecantikan adalah cahaya di dalam hati. & 65 & 38 & 42 \% \\ \hline
-	\end{tabular}
-\end{center}
-
-		
-As for memory requirements, shoco requires over 2k bytes, smaz requires over 1k. But Unishox requires only around $300$ bytes for compressor and decompressor together, ideal for using it with even Arduino Uno.
-
-\section{Proving guaranteed compression}
-
-Guaranteed compression means that the length of compressed text will never exceed the length of the source text.
-
-While it is not possible to prove it for any text, we can prove this for most real life scenarios good enough for using it without fear of expansion of original length.
-
-At first we make the following assumptions for a given sentence in English language:
-\begin{itemize}
-	\item[$\bullet$] The sentence will start with a capital letter.
-	\item[$\bullet$] The sentence will end in period (.).
-	\item[$\bullet$] The sentence will have at least 3 words.
-	\item[$\bullet$] Special characters other than a-z, A-Z and space will not be more than 2 or 3.
-	\item[$\bullet$] Terminator symbol is not needed. That is, length of compressed string in bits will be separately maintained.
-\end{itemize}
-
-With the above assumptions, we try to prove guaranteed compression as follows:
-
-\begin{itemize}
-	\item[$\bullet$] Since the sentence will have atleast two spaces, it saves 5 + 5 = 10 bits.
-	\item[$\bullet$] Since any English word will have a vowel and the average length of code in our frequency table is 4, it will save another 12 bits, unless the vowel 'u' appears in all three words, which is not likely in real life.
-\end{itemize}
-
-So, with a saving of atleast 22 bits, we can say it is more than sufficient to offset for any symbol being used, such as Uppercase letter or Special character, provided such letters do not exceed 4, since \emph{the maximum length of any code in our frequency table is only 13}.  So if there are 4 such exceeding codes, it will occupy at most $(13 - 8) * 4 = 20$ bits.
-
-This assumption is towards defining a safe limit and since there will be more savings because of the known general frequency of letters, we can safely assume this guarantee.
-
-For Unicode text, the codes in section "Encoding Unicode characters" have been selected in such a way that the prefix-code overhead is offset by delta coding and the fact that UTF-8 encoding has more redundant code overhead.
+Unishox is found to be the slowest of all since it uses several techniques to achieve the best compression.  However this should not be too much of an issue in most cases when a single string or few strings are handled at a time.
 
 \section{Conclusion}
 
-As can be seen from the performance numbers, Unishox performs better than available techniques.  It can also be seen that it performs better for a variety of texts, especially those having a mixture of numbers and special characters.
+As can be seen from the performance numbers, Unishox performs better than available techniques.  It can also be seen that it provides optimal compression for text, numbers and special characters in different languages all round.
+
+It is especially useful in memory constrained environments such as embedded devices and sending text messages over websockets to implement Chat bots and applications.
 
 \section{Further work}
 
-We propose to improve Unishox 2 by making it available in more languages than just C, such as Javascript, Python, Java, C\#.Net.
+We propose to make Unishox available in more languages than just C, Javascript and Python, such as Java and C\#.Net.
 
 \section{About the Author}
 
-\emph{Arundale Ramanathan} has over 20 years of experience working in the IT industry.  He has worked alternatively in large Corporates, MNCs and Startups, including Viewlocity Asia Pacific Pte. Ltd., IBC Systems Pte. Ltd. and Polaris Software Lab Ltd. He has founded Siara Logics (cc) and Siara Logics (in) and publishing his open source work at https://github.com/siara-cc and https://github.com/siara-in. He has a masters degree in Computer Science from Anna University.  He can be reached at arun@siara.cc.
+\emph{Arundale Ramanathan} has over 20 years of experience working in the IT industry.  He has worked alternatively in large Corporates, MNCs and Startups, including Viewlocity Asia Pacific Pte. Ltd., IBC Systems Pte. Ltd. and Polaris Software Lab Ltd. He publishes free and open source work at https://github.com/siara-cc. He has a masters degree in Computer Science from Anna University, Chennai, India.  He can be reached at arun@siara.cc.
 
 \begin{thebibliography}{1}
 
@@ -498,11 +505,17 @@ We propose to improve Unishox 2 by making it available in more languages than ju
 
 	\bibitem{9} Wikipedia, {\em Letter frequency}, https://en.wikipedia.org/wiki/Letter\_frequency, updated December 2018.
 
- 	\bibitem{10} Salvatore Sanfilippo, {\em SMAZ - compression for very small strings}, https://github.com/antirez/smaz, February 2012.
+	\bibitem{10} Misha et al., {\em A Standard Compression Scheme For Unicode - UTR \#6}, https://www.unicode.org/reports/tr6/tr6-4.html, May 2005.
 
- 	\bibitem{11} Christian Schramm, {\em shoco: a fast compressor for short strings}, https://github.com/Ed-von-Schleck/shoco, December 2015.
+	\bibitem{11} Scherer, Markus W. and Davis, Mark., {\em BOCU-1: MIME-Compatible Unicode Compression}, Unicode Technical Note \#6, version 1 (August 2002). Available online at http://www.unicode.org/notes/tn6/. 
 
-	\bibitem{12} Arundale Ramanathan, {\em Unishox - Guaranteed Compression of Short Unicode Strings using Entropy, Dictionary and Delta encoding techniques}, https://github.com/siara-cc/Unishox/blob/master/Unishox\_Article\_1.pdf?raw=true, August 2019.
+	\bibitem{12} Pavel Studený, Ondřej Holeček, Opera Software ASA, Mark., {\em Fast Compression Algorithm For Unicode Text}, Unicode Technical Note \#31, version 2 (January 2008). Available online at http://www.unicode.org/notes/tn31/.
+
+	\bibitem{13} Doug Ewell, {\em A survey of Unicode compression}, Unicode Technical Note \#14, version 1 (January 2004). Available online at http://www.unicode.org/notes/tn14/.
+
+ 	\bibitem{14} Salvatore Sanfilippo, {\em SMAZ - compression for very small strings}, https://github.com/antirez/smaz, February 2012.
+
+ 	\bibitem{15} Christian Schramm, {\em shoco: a fast compressor for short strings}, https://github.com/Ed-von-Schleck/shoco, December 2015.
 
 \end{thebibliography}
 
