@@ -3,6 +3,7 @@
 
 \usepackage{fontspec}
 
+\usepackage{hyperref}
 \usepackage{multirow}
 \usepackage{makecell}
 \usepackage{fancyhdr}
@@ -28,7 +29,9 @@ Unishox is a hybrid encoding technique with which short unicode strings could be
 
 \section{Summary}
 
-Compression of Short Unicode Strings of arbitrary lengths have not been addressed sufficiently by lossless entropy encoding methods so far.  Although it appears inconsequential, space occupied by such strings become significant in memory constrained environments such as Arduino Uno and ESP8266 and when attempting storage of such independent strings in a database.
+This article discusses a hybrid encoding method for compressing Short Unicode Strings of arbitrary lengths including Latin/English text and printable special characters. This has not been sufficiently addressed by lossless entropy encoding methods so far.
+
+Although it appears inconsequential, space occupied by such strings become significant in memory constrained environments such as Arduino Uno and ESP8266. Text exchange in Chat applications is another area where cost savings could be seen using such compression. It is also possible to achieve savings in bandwidth and storage cost by storing and retrieving independent strings in Cloud databases.
 
 \section{Basic Definitions}
 
@@ -44,15 +47,15 @@ A \emph{Dictionary coder}, also sometimes known as a substitution coder, is a cl
 
 The LZ77 family of encoders use the dictionary encoding technique for compressing data. \cite{4}
 
-\emph{Delta coding} is a technique applied where encoding the difference between the previously encoded symbol or set of symbols is smaller compared to encoding the symbol or the set again.  The differnce is determined by using the set minus operator or subtraction of values. \cite{5}
+\emph{Delta coding} is a technique applied where encoding the difference between the previously encoded symbol or set of symbols is smaller compared to encoding the symbol or the set again. The differnce is determined by using the set minus operator or subtraction of values. \cite{5}
 
 In contrast to these encoding methods, there are various other approaches to lossless coding including Run Length Encoding (RLE) and Burrows-Wheeler coding \cite{6}.
 
 \section{Existing techniques}
 
-While technologies such as GZip, Deflate, Zip, LZMA are available for file compression, they do not provide optimal compression for short strings.  Eventhough these methods compress far more than what we are proposing, these methods often expand the original source for short strings because the symbol-code mapping also needs to be attached to aid decompression.
+While technologies such as GZip, Deflate, Zip, LZMA are available for file compression, they do not provide optimal compression for short strings. Eventhough these methods compress far more than what is proposed in this article, they often expand the original source for short strings because the symbol-code mapping also needs to be attached to aid decompression.
 
-For compressing Unicode sequences, three other technologies are available: SCSU \cite{10} and BOCU \cite{11} and FAST \cite{12}.  Further, a survey of compression algorithms available was published by Doug Ewell in 2004 \cite{13}.
+For compressing Unicode sequences, three other technologies are available: SCSU \cite{10} and BOCU \cite{11} and FAST \cite{12}. A survey of these compression algorithms was published by Doug Ewell in 2004 \cite{13}.
 
 The Standard Compression Scheme for Unicode (SCSU) is defined in Unicode Technical Standard \#6 and is based on a technique originally developed by Reuters. The basic premise of SCSU is to define dynamically positioned windows into the Unicode code space, so that characters belonging to small scripts (such as the Greek alphabet or Indic abugidas) can be
 encoded in a single byte, representing an index into the active window. These windows are preset to blocks expected to be in common use (e.g. Cyrillic), so the encoder doesn’t have to define them in these cases. There are also static windows that cannot be adjusted. \cite{10} \cite{13}
@@ -61,7 +64,7 @@ The Binary Ordered Compression for Unicode (BOCU) concept was developed in 2001 
 
 It is to be noted that SCSU is a Unicode Technical Standard (UTS\#6) and BOCU is published as a Unicode Technical Note (UTN\#6), although both have the same number assigned (6).
 
-Fast Compression Algorithm For Unicode Text (FAST) is a compression algorithm developed based on Lempel Ziv algorithm \cite{4}.  Essentially it achieves faster compression by finding repeating unicode sequences instead of repeating bytes.  There are other assumptions and variations made to LZ technique in addition to this. \cite{12}
+Fast Compression Algorithm For Unicode Text (FAST) is a compression algorithm developed based on Lempel Ziv algorithm \cite{4}. Essentially it achieves faster compression by finding repeating unicode sequences instead of repeating bytes. There are other assumptions and variations made to LZ technique in addition to this. \cite{12}
 
 Other technologies available are Smaz and shoco, which are not developed with Unicode in mind.
 
@@ -75,29 +78,29 @@ In addition to providing a default frequency table as model, shoco provides an o
 
 \section{This research}
 
-We propose a hybrid encoding method which relies on the three encoding techniques \emph{viz.} Entropy encoding, Dictionary coding and Delta encoding methods for compression.
+A hybrid encoding method is proposed relying on the three encoding techniques \emph{viz.} Entropy encoding, Dictionary coding and Delta encoding methods for optimal compression.
 
 While existing techniques focus on either Unicode character sequences or only English characters, Unishox uses multiple techhniques to achieve the best compression ratio all round.
 
-For Unicode we use Delta encoding because usually the difference between subsequent symbols is quite less while encoding text of a particular language.  SCSU is slightly better with switching windows, but overall it was found that plain Delta coding works well considering that usually there is only one language text to be compressed and some languages span a lot of windows.
+For Unicode, Delta encoding is proposed because usually the difference between subsequent symbols is quite less while encoding text of a particular language. SCSU is slightly better with switching windows, but overall it was found that plain Delta coding works well considering that usually there is only one language text to be compressed and some languages span a lot of windows.
 
 SCSU and BOCU do have special features for Unicode that Unishox does not address such as dynamic windows, binary order maintenance, XML suitability and MIME friendliness. Unishox uses plain delta encoding to achieve the best compression.
 
-For Latin characters, unlike shoco, we use a fixed frequency table generated based on the characterestics of English language letter frequency.  We re-use the research carried out by Oxford University \cite{7} and other sources \cite{7} \cite{9} and come out with a unique method that takes advantage of the conventions of the language.
+For English letters, unlike shoco, a fixed frequency table is proposed, generated based on the characterestics of English language letter frequency. The research carried out by Oxford University \cite{7} and other sources \cite{7} \cite{9} have been used to arrive at a unique method that takes advantage of the conventions of the language.
 
-We use a single model that is fixed because of the advantages it offers over the training models of shoco. The disadvantage with the training model, although it may appear to offer more compression, is that it does not consider the patterns that usually appear during text formation. We can actually see that this performs better than pre-trained model of shoco (See performance section).
+A single fixed model is used because of the advantages it offers over the training models of shoco. The disadvantage with the training model, although it may appear to offer more compression, is that it does not consider the patterns that usually appear during text formation. It can be seen that this performs better than pre-trained model of shoco (See performance section).
 
-Unlike smaz and shoco, we assume no \emph{a priori} knowledge about the input text.  However we rely on knowledge from the research carried out on the language and common patterns of sentence formation and come out with pre-assigned codes for each letter.
+Unlike smaz and shoco, no \emph{a priori} knowledge about the input text is assumed. However knowledge from the research carried out on the language and common patterns of sentence formation have been used to come out with pre-assigned codes for each letter.
 
 \section{Model}
 
-In the ASCII chart, we have 95 printable letters starting from 32 through 126.  For the purpose of arriving at fixed codes for each of these letters, we use two sets of prefix-free codes.
+In the ASCII chart, we have 95 printable letters starting from 32 through 126. For the purpose of arriving at fixed codes for each of these letters, two sets of prefix-free codes are used.
 
-The first set consists of 27 codes, which are: 00, 010, 011, 1000, 1001, 1010, 1011, 1100, 11010, 11011, 111000, 111001, 111010, 1110110, 1110111, 1111000, 1111001, 1111010, 11110110, 11110111, 11111000, 11111001, 11111010, 11111011, 11111100, 11111101, 11111110, 11111111.  We call these as vertical codes (vcodes).
+The first set consists of 27 codes, which are: 00, 010, 011, 1000, 1001, 1010, 1011, 1100, 11010, 11011, 111000, 111001, 111010, 1110110, 1110111, 1111000, 1111001, 1111010, 11110110, 11110111, 11111000, 11111001, 11111010, 11111011, 11111100, 11111101, 11111110, 11111111. These are called vertical codes (vcodes).
 
-The second set consists of 5 codes, which by default will be 00, 01, 10, 110, 111.  We call these horizontal codes (hcodes).  These 5 codes can be configured according to the composition of text that needs to be compressed.
+The second set consists of 5 codes, which by default will be 00, 01, 10, 110, 111. These are called horizontal codes (hcodes). These 5 codes can be configured according to the composition of text that needs to be compressed.
 
-With these two sets of codes, we form several sets of letters as shown in the table below and use some rules based on how patterns appear in short strings.
+With these two sets of codes, several sets of letters are formed as shown in the table below and some rules are formed based on how patterns appear in short strings.
 
 \begin{center}
 	\begin{tabular}{ | l | c | c | c | c | c | c | } \hline
@@ -146,19 +149,19 @@ With these two sets of codes, we form several sets of letters as shown in the ta
 \subsection{Basic rules}
 \begin{itemize}
 	\item[$\bullet$] It can be seen that the more frequent symbols are assigned smaller codes.
-	\item[$\bullet$] Set 1 is always active when beginning compression.  So the letter \emph{e} has the code 011, \emph{t} 1010 and so on.
+	\item[$\bullet$] Set 1 is always active when beginning compression. So the letter \emph{e} has the code 011, \emph{t} 1010 and so on.
 \end{itemize}
 
 \subsection{Upper case symbols}
 \begin{itemize}
-	\item[$\bullet$] For encoding uppercase letters, the switch symbol is used followed by 00 and the code against the symbol itself.  For example, E is encoded as 00 00 011.
-	\item[$\bullet$] If uppercase letters appear continuously, then the encoder may decide to switch to upper case using the prefix 00 00 00 00.  After that, the same codes for lower case are used to indicate upper case letters until the code sequence 00 00 is used again to return to lower case.
+	\item[$\bullet$] For encoding uppercase letters, the switch symbol is used followed by 00 and the code against the symbol itself. For example, E is encoded as 00 00 011.
+	\item[$\bullet$] If uppercase letters appear continuously, then the encoder may decide to switch to upper case using the prefix 00 00 00 00. After that, the same codes for lower case are used to indicate upper case letters until the code sequence 00 00 is used again to return to lower case.
 \end{itemize}
 
 \subsection{Numbers and related symbols}
 \begin{itemize}
-	\item[$\bullet$] Symbols in Set 2 are encoded by first switching to the set by using 00 followed by 01.  So the symbol " is encoded as 00 01 00.
-	\item[$\bullet$] Numbers in Set 3 are encoded by first switching to the set by using 00 followed by 10.  So the symbol 9 is encoded as 00 10 1010.
+	\item[$\bullet$] Symbols in Set 2 are encoded by first switching to the set by using 00 followed by 01. So the symbol " is encoded as 00 01 00.
+	\item[$\bullet$] Numbers in Set 3 are encoded by first switching to the set by using 00 followed by 10. So the symbol 9 is encoded as 00 10 1010.
 	\item[$\bullet$] For Set 3, whenever is switch is made from Set 1 to any number (0 to 9), it makes Set 3 active. So subsequent numbers symbols in Set 3 can be encoded without the switch symbol, as in 111000 for 3, 111001 for 4 and so on.
 	\item[$\bullet$] To return to Set 1 in this case, the code 0000 is used.
 	\item[$\bullet$] However, when other symbols in Set 3 are encoded from Set 1, Set 3 is not made active.
@@ -175,15 +178,15 @@ With these two sets of codes, we form several sets of letters as shown in the ta
 
 \subsection{Special symbols}
 \begin{itemize}
-	\item[$\bullet$] term in Set 3 indicates termination of encoding.  This is used if length of the encoded string is not available.  In case the length of encoded string is available, term symbol need not be encoded and encoding can stop with the last symbol encoded.  However, the first part of the term symbol needs to be encoded in the last byte after the bits for the last symbol.  Further if Unicode set is sticky and active, first it needs to be exited using the exit sequence 11111 00 and then the term symbol should be encoded.
+	\item[$\bullet$] term in Set 3 indicates termination of encoding. This is used if length of the encoded string is not available. In case the length of encoded string is available, term symbol need not be encoded and encoding can stop with the last symbol encoded. However, the first part of the term symbol needs to be encoded in the last byte after the bits for the last symbol. Further if Unicode set is sticky and active, first it needs to be exited using the exit sequence 11111 00 and then the term symbol should be encoded.
 	\item[$\bullet$] rpt in Set 3 indicates that the symbol last encoded is to be repeated specified number of times.
-	\item[$\bullet$] CRLF in Set 2 is encoded using a single code. It will be expanded as two bytes CR LF.  If only LF is used, such as in Unix like systems, a separate code is used in Set 2.  Also, in the rare case that only CR appears, another code is provided in Set 2.
+	\item[$\bullet$] CRLF in Set 2 is encoded using a single code. It will be expanded as two bytes CR LF. If only LF is used, such as in Unix like systems, a separate code is used in Set 2. Also, in the rare case that only CR appears, another code is provided in Set 2.
 \end{itemize}
 
 \subsection{Repeating letters}
 \begin{itemize}
-	\item[$\bullet$] If any letter repeats more than 3 times, we use a special code (rpt) shown in Set 3 of the model.
-	\item[$\bullet$] The encoder first codes the letter using the above codes.  Then the rpt code is used followed by the number of times the letter repeats.
+	\item[$\bullet$] If any letter repeats more than 3 times, a special code (rpt) is used as shown in Set 3 of the model.
+	\item[$\bullet$] The encoder first codes the letter using the above codes. Then the rpt code is used followed by the number of times the letter repeats.
 	\item[$\bullet$] The number of times the letter repeats is coded using a special bit sequence as explained in section "Encoding counts" that follows.
 \end{itemize}
 
@@ -191,8 +194,8 @@ With these two sets of codes, we form several sets of letters as shown in the ta
 \begin{itemize}
 	\item[$\bullet$] If a section repeats, the switch code (00) and another horizontal code (110) is used followed by two fields as described next.
   	\item[$\bullet$] The first field indicates the length of the section that repeats.
-	\item[$\bullet$] The second field indicates the distance of the repeating section.  The distance is counted from the current position.
-	\item[$\bullet$] The optional third field is coded only if an array of text is encoded.  It is a number indicating the index of the array that the section belongs.  If only one text is encoded, then this field is not included. 
+	\item[$\bullet$] The second field indicates the distance of the repeating section. The distance is counted from the current position.
+	\item[$\bullet$] The optional third field is coded only if an array of text is encoded. It is a number indicating the index of the array that the section belongs. If only one text is encoded, then this field is not included. 
 	\item[$\bullet$] The first, second and third fields are encoded as explained in the following section "Encoding counts".
 \end{itemize}
 
@@ -218,10 +221,8 @@ With these two sets of codes, we form several sets of letters as shown in the ta
 \subsection{Encoding Unicode characters}
 \begin{itemize}
 	\item[$\bullet$] The switch code 00 followed by 111 is used as prefix to indicate that a Unicode character is being encoded.
-	\item[$\bullet$] First, the unicode number is decoded from the input source depending on how it was encoded, such as UTF-8 or UTF-16 or Wide Character set.
-	\item[$\bullet$] For the first unicode character, the number decoded is re-coded as a number as shown in section Encoding Counts to the output as it is.
-	\item[$\bullet$] For subsequent unicode characters, only the difference between the previous character is re-coded to the output.  Thus, here, delta coding is used.
-	\item[$\bullet$] After the code 00 111, another set of prefix-free codes are used, according to the following table, depending on the size (in bits) of the difference.
+	\item[$\bullet$] First, the unicode number is decoded from the input source depending on how it was encoded, such as UTF-8 or UTF-16.
+	\item[$\bullet$] For the first unicode character, the number decoded is re-coded to the output as it is, using 00 111 followed by a code as shown in the table below followed by a sign bit 0 (positive), followed by given number of bits shown in the table, depending on the range that the code belongs.
 	\item[] \begin{tabular}{ | l | l | l |} \hline
 		\textbf{Code} & \textbf{Range} & \textbf{Number of bits} \\ \hline
 		0 & 0 to 63 & 6 \\ \hline
@@ -232,15 +233,16 @@ With these two sets of codes, we form several sets of letters as shown in the ta
 		11111 & Special code & - \\ \hline
 		\end{tabular}
 	\item[$\bullet$] The Special code is explained in the next section.
-	\item[$\bullet$] After 00 111, one of the above codes is used, followed by the sign bit.  The sign bit is a single bit.  1 indicates that the number following is negative and 0 indicates that the number following is positive.
-	\item[$\bullet$] After the sign bit, the unicode value (or difference) is encoded as a number.  The number of bits used depends on its size, as shown in the above table.
-	\item[$\bullet$] After encoding the unicode number, the state returns to Set 1, or whichever set was active earlier, unless continuous unicode encoding was started.  This is explained in the next section.
+	\item[$\bullet$] For subsequent unicode characters, only the difference between the previous character is re-coded to the output, using sign bit as 1 if the difference is negative. Thus, here, delta coding is used.
+	\item[$\bullet$] After 00 111, one of the above codes is used, followed by the sign bit. The sign bit is a single bit. 1 indicates that the number following is negative and 0 indicates that the number following is positive.
+	\item[$\bullet$] After the sign bit, the unicode value (or difference) is encoded as a number. The number of bits used depends on the range, as shown in the above table.
+	\item[$\bullet$] After encoding the unicode number, the state returns to Set 1, or whichever set was active earlier, unless continuous unicode encoding was started. This is explained in the next section.
 \end{itemize}
 
 \subsection{Encoding continuous Unicode characters}
 \begin{itemize}
 	\item[$\bullet$] Since the prefix 00 110 may become an overhead when several Unicode are to be encoded contigously, a continuous unicode encoding code is used (0000 010).
-	\item[$\bullet$] After 0000 010 is encoded, unicode characters are encoded continously using delta encoding, until a non-unicode character is encountered.  When this happens, state is returned to Set 1 using the Special code 11111 00 in the table shown in previous section is used.
+	\item[$\bullet$] After 0000 010 is encoded, unicode characters are encoded continously using delta encoding, until an English character is encountered. When this happens, state is returned to Set 1 using the Special code 11111 00 in the table shown in previous section is used.
 	\item[$\bullet$] The Special codes are used only when Unicode characters are coded continuously, to indicate special characters and situations occuring in-between. What follows the Special code 11111 is indicated using the table below:
 	\item[] \begin{tabular}{ | l | l |} \hline
 	\textbf{Code} & \textbf{Character/Situation} \\ \hline
@@ -256,14 +258,14 @@ With these two sets of codes, we form several sets of letters as shown in the ta
 
 \subsection{Multi way access for Set 2}
 \begin{itemize}
-	\item[$\bullet$] Set 2 can be accessed regardless of which set is active, such as Set 1, Set 3, Continuous delta coding or even when continuous Upper case is active.  This is because the symbols occur commonly in both Set 1 and 3 and Unicode symbol sequences.
+	\item[$\bullet$] Set 2 can be accessed regardless of which set is active, such as Set 1, Set 3, Continuous delta coding or even when continuous Upper case is active. This is because the symbols occur commonly in both Set 1 and 3 and Unicode symbol sequences.
 	\item[$\bullet$] For the same reason, the space symbol appears both in Set 1 and Set 3.
 \end{itemize}
 
 \subsection{Encoding punctuations}
 \begin{itemize}
-	\item[$\bullet$] Some languages, such as Japanese and Chinese use their own punctuation characters.  For example full-stop is indicated using U+3002 which is represented visually as a small circle.
-	\item[$\bullet$] Encoding such special full-stops were supported in the earlier version of Unishox for better compression.  However since this was leading to confusion and ambiguity, any special treatment for such punctuations are excluded in the present version of Unishox (2) and this is left to delta coding. It also does not make much difference in compression ratio.
+	\item[$\bullet$] Some languages, such as Japanese and Chinese use their own punctuation characters. For example full-stop is indicated using U+3002 which is represented visually as a small circle.
+	\item[$\bullet$] Encoding such special full-stops were supported in the earlier version of Unishox for better compression. However since this was leading to confusion and ambiguity, any special treatment for such punctuations are excluded in the present version of Unishox (2) and this is left to delta coding. It also does not make much difference in compression ratio.
 \end{itemize}
 
 \subsection{Common templates}
@@ -289,8 +291,8 @@ With these two sets of codes, we form several sets of letters as shown in the ta
 		1110 & Time only & tf:rf:rf \\ \hline
 		1111 & Reserved \\ \hline
 		\end{tabular}
-	\item[]Partial matches of the template can also be encoded using this.  For example, the string "2021-07-15T20:00:00" can be compressed using above template by specifying how many characters of the template are unused the end. In this case 5 characters are unused.
-	\item[]The encoding sequence would be: 00 10 00 0 <template code> <number of unused letters> <filled template>.  The method described in "Encoding counts" section is used to encode <number of unused letters>.
+	\item[]Partial matches of the template can also be encoded using this. For example, the string "2021-07-15T20:00:00" can be compressed using above template by specifying how many characters of the template are unused the end. In this case 5 characters are unused.
+	\item[]The encoding sequence would be: 00 10 00 0 <template code> <number of unused letters> <filled template>. The method described in "Encoding counts" section is used to encode <number of unused letters>.
 	\item[]In the template, following are the codes used and the size occupied in bits. Since fewer bits are sufficient to represent a number, it results in lot of savings.
 	\item[]\begin{tabular}{ | l | l | l |} \hline
 			\textbf{Letter} & \textbf{Bits} & \textbf{Range} \\ \hline
@@ -300,7 +302,7 @@ With these two sets of codes, we form several sets of letters as shown in the ta
 			f & 4 & 0 to F \\ \hline
 		\end{tabular}
 	\item[]Using this method, the ISO timestamp which is 24 bytes in length compresses to only 9 bytes.
-	\item[]For example, "2021-07-15T16:37:35" would be encoded as 00 10 00 0 0 10 0001 10 0000 0010 0001 0 0111 01 0101 01 0110 011 0111 011 0101.  The codes are explained in the table below:
+	\item[]For example, "2021-07-15T16:37:35" would be encoded as 00 10 00 0 0 10 0001 10 0000 0010 0001 0 0111 01 0101 01 0110 011 0111 011 0101. The codes are explained in the table below:
 	\item[]\begin{tabular}{ | l | l |} \hline
 		\textbf{Code} & \textbf{Description} \\ \hline
 		00 10 00 & Code for common templates \\ \hline
@@ -314,8 +316,8 @@ With these two sets of codes, we form several sets of letters as shown in the ta
 		011 0111 & 37 \\ \hline
 		011 0101 & 35 \\ \hline
 		\end{tabular}
-	\item[$\bullet$]The codes 10 and 1110 are used to encode a sequence of lower and upper Hex nibbles respectively.  10 or 1110 is followed by the count of nibbles encoded as explained in the "Encoding counts" section.  After this, each nibble is encoded using 4 bits each.
-	\item[$\bullet$]The code 110 and 11110 are used to encode lower and upper GUIDs respectively.  110 or 11110 is followed by each nibble of the GUID excluding the hyphens.
+	\item[$\bullet$]The codes 10 and 1110 are used to encode a sequence of lower and upper Hex nibbles respectively. 10 or 1110 is followed by the count of nibbles encoded as explained in the "Encoding counts" section. After this, each nibble is encoded using 4 bits each.
+	\item[$\bullet$]The code 110 and 11110 are used to encode lower and upper GUIDs respectively. 110 or 11110 is followed by each nibble of the GUID excluding the hyphens.
 	\item[$\bullet$] Finally the code 11111 is used for encoding binary symbols ranging from ASCII 0 to 31 and ASCII 128 to 255. The prefix code 00 10 00 11111 is used, followed by the number of such binary symbols encoded as explained in "Encoding counts" section. After this each byte is encoded with 8 bits per character.
 	\item[$\bullet$] Encoding binary symbols this way is not efficient and is only available to cover the entire character set.
 	\item[$\bullet$] The implementation actually tries to optimize encoding binary sequences by trying to identify UTF-8 sequences within binary sequences in order to get a better compression ratio. 
@@ -340,7 +342,7 @@ With these two sets of codes, we form several sets of letters as shown in the ta
 \begin{itemize}
 	\item[$\bullet$] The horizontal codes can be redefined to get better compression ratio, depending on composition of the text to be encoded.
 	\item[$\bullet$] Several "preset" codes have been identified for achieving better compression ratios for different compositions as below (Codes are for Alpha, Sym, Num, Dict, Delta):
-	\item[$\bullet$] For preset 1 (Alpha only) there are no horizontal code required.  For encoding upper case symbols, just the switch code followed by the letter code is sufficient.  Further continuous upper case can be accomplished by using two switch codes.
+	\item[$\bullet$] For preset 1 (Alpha only) there are no horizontal code required. For encoding upper case symbols, just the switch code followed by the letter code is sufficient. Further continuous upper case can be accomplished by using two switch codes.
 	\item[$\bullet$] The codes marked x in the table are the sets that are not expected in the text.
 \end{itemize}
 \begin{tabular}{ | l | l | l |} \hline
@@ -469,21 +471,21 @@ As for operating memory required, Shoco requires over 2k bytes, smaz requires ov
 
 \subsection{Speed}
 
-Unishox is found to be the slowest of all since it uses several techniques to achieve the best compression.  However this should not be too much of an issue in most cases when a single string or few strings are handled at a time.
+Unishox was found to be the slowest of all since employs several to achieve the best compression. However this should not be too much of an issue in most cases when a single string or few strings are handled at a time.
 
 \section{Conclusion}
 
-As can be seen from the performance numbers, Unishox performs better than available techniques.  It can also be seen that it provides optimal compression for text, numbers and special characters in different languages all round.
+As can be seen from the performance numbers, Unishox performs better than available techniques. It can also be seen that it provides optimal compression for text, numbers and special characters in different languages all round.
 
 It is especially useful in memory constrained environments such as embedded devices and sending text messages over websockets to implement Chat bots and applications.
 
 \section{Further work}
 
-We propose to make Unishox available in more languages than just C, Javascript and Python, such as Java and C\#.Net.
+It is proposed to make Unishox available in more languages than just C, Javascript and Python, such as Java and C\#.Net. It is also proposed to make it available for more platforms.
 
 \section{About the Author}
 
-\emph{Arundale Ramanathan} has over 20 years of experience working in the IT industry.  He has worked alternatively in large Corporates, MNCs and Startups, including Viewlocity Asia Pacific Pte. Ltd., IBC Systems Pte. Ltd. and Polaris Software Lab Ltd. He publishes free and open source work at https://github.com/siara-cc. He has a masters degree in Computer Science from Anna University, Chennai, India.  He can be reached at arun@siara.cc.
+\emph{Arundale Ramanathan} has over 20 years of experience working in the IT industry. He has worked alternatively in large Corporates, MNCs and Startups, including Viewlocity Asia Pacific Pte. Ltd., IBC Systems Pte. Ltd. and Polaris Software Lab Ltd. He publishes free and open source work at https://github.com/siara-cc. He has a masters degree in Computer Science from Anna University, Chennai, India. He can be reached at arun@siara.cc.
 
 \begin{thebibliography}{1}
 
