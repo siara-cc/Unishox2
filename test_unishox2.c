@@ -341,7 +341,7 @@ if (argv >= 4 && (strcmp(args[1], "-g") == 0 ||
             printf("%.2f %s\n", perc, cbuf);
             tot_len += len;
             ctot += clen;
-            char short_buf[strlen(args[3]) + 100];
+            char* short_buf = malloc(strlen(args[3]) + 100);
             snprintf(short_buf, sizeof(short_buf), "const byte %s_%d[] PROGMEM = {", args[3], line_ctr++);
             fputs(short_buf, wfp);
             int len_len = encode_unsigned_varint((byte *) short_buf, clen);
@@ -359,6 +359,7 @@ if (argv >= 4 && (strcmp(args[1], "-g") == 0 ||
             }
             strcpy(short_buf, "};\n");
             fputs(short_buf, wfp);
+            free(short_buf);
         }
         if (len > max_len)
           max_len = len;
@@ -372,7 +373,7 @@ if (argv >= 4 && (strcmp(args[1], "-g") == 0 ||
    perc *= 100;
    printf("\nBytes (Compressed/Original=Savings%%): %ld/%ld=", ctot, tot_len);
    printf("%.2f%%\n", perc);
-   char short_buf[strlen(args[3]) + 100];
+   char* short_buf = malloc(strlen(args[3]) + 100);
    snprintf(short_buf, sizeof(short_buf), "const byte * const %s[] PROGMEM = {", args[3]);
    fputs(short_buf, wfp);
    for (int i = 0; i < line_ctr; i++) {
@@ -390,6 +391,7 @@ if (argv >= 4 && (strcmp(args[1], "-g") == 0 ||
    snprintf(short_buf, sizeof(short_buf), "#define %s_max_len %d\n", args[3], max_len);
    fputs(short_buf, wfp);
    fputs("#endif\n", wfp);
+   free(short_buf);
 } else
 if (argv >= 2 && strcmp(args[1], "-t") == 0) {
 
