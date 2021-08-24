@@ -13,6 +13,7 @@ unishox++_0_1_0
 unishox_0_1_0
 .DS_Store
 *.txt
+!CMakeLists.txt
 !json?.txt
 !xml?.txt
 !chinese.txt
@@ -61,3 +62,5 @@ delta_only
 *.csu
 *.bcu
 
+# Traditional cmake building directories
+build*
