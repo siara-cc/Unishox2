@@ -201,7 +201,7 @@ With these two sets of codes, several sets of letters are formed as shown in the
 
 \subsection{Encoding Counts}
 \begin{itemize}
-	\item[$\bullet$] For encoding counts such as length and distance, six codes are used: 0, 10, 110, 1110, 1111, each code indicating how many bits will follow to indicate count.
+	\item[$\bullet$] For encoding counts such as length and distance, five codes are used: 0, 10, 110, 1110, 1111, each code indicating how many bits will follow to indicate count.
 	\item[$\bullet$] If code is 0, 2 bits would follow, that is, count is between 0 and 3.
 	\item[$\bullet$] If code is 10, 4 bits would follow, that is, count is between 4 and 19.
 	\item[$\bullet$] If code is 110, 7 bits would follow, that is, count is between 20 and 147.
@@ -214,7 +214,7 @@ With these two sets of codes, several sets of letters are formed as shown in the
 	10 & 4 to 19 & 5 \\ \hline
 	110 & 20 to 147 & 7 \\ \hline
 	1110 & 148 to 2195 & 11 \\ \hline
-	1111 & 2196 to 70307 & 16 \\ \hline
+	1111 & 2196 to 67732 & 16 \\ \hline
 \end{tabular}
 \end{itemize}
 
@@ -497,7 +497,7 @@ It is proposed to make Unishox available in more languages than just C, Javascri
  
  	\bibitem{4} J. Ziv and A. Lempel. A Universal Algorithm for Data Compression. IEEE Transactions on Information Theory, 23(3):337–343, May 1977.
  
-  	\bibitem{5} Wikipedia, {\em Delta Encoding}, https://en.wikipedia.org/wiki/Delta\_encoding, updated July 2019.
+  	\bibitem{5} Wikipedia, {\em Delta Encoding}, \href{https://en.wikipedia.org/wiki/Delta\_encoding}{Delta encoding at Wikipedia}, updated July 2019.
  
 	\bibitem{6} M. Burrows and D. Wheeler. A Block-Sorting Lossless Data Compression Algorithm. Research Report 124, Digital Equipment Corporation, Palo Alto, CA, USA, May 1994.
 
@@ -505,19 +505,19 @@ It is proposed to make Unishox available in more languages than just C, Javascri
 
  	\bibitem{8} What is the frequency of the letters of the alphabet in English?, Oxford Dictionary. Oxford University Press. Retrieved 29 December 2012.
 
-	\bibitem{9} Wikipedia, {\em Letter frequency}, https://en.wikipedia.org/wiki/Letter\_frequency, updated December 2018.
+	\bibitem{9} Wikipedia, {\em Letter frequency}, \href{https://en.wikipedia.org/wiki/Letter\_frequency}{Letter Frequency at Wikipedia}, updated December 2018.
 
-	\bibitem{10} Misha et al., {\em A Standard Compression Scheme For Unicode - UTR \#6}, https://www.unicode.org/reports/tr6/tr6-4.html, May 2005.
+	\bibitem{10} Misha et al., {\em A Standard Compression Scheme For Unicode - UTR \#6}, \href{https://www.unicode.org/reports/tr6/tr6-4.html}{TR\#6 at unicode.org}, May 2005.
 
-	\bibitem{11} Scherer, Markus W. and Davis, Mark., {\em BOCU-1: MIME-Compatible Unicode Compression}, Unicode Technical Note \#6, version 1 (August 2002). Available online at http://www.unicode.org/notes/tn6/. 
+	\bibitem{11} Scherer, Markus W. and Davis, Mark., {\em BOCU-1: MIME-Compatible Unicode Compression}, Unicode Technical Note \#6, version 1 (August 2002). Available online at \href{http://www.unicode.org/notes/tn6/}{TN\#6 at unicode.org}
 
-	\bibitem{12} Pavel Studený, Ondřej Holeček, Opera Software ASA, Mark., {\em Fast Compression Algorithm For Unicode Text}, Unicode Technical Note \#31, version 2 (January 2008). Available online at http://www.unicode.org/notes/tn31/.
+	\bibitem{12} Pavel Studený, Ondřej Holeček, Opera Software ASA, Mark., {\em Fast Compression Algorithm For Unicode Text}, Unicode Technical Note \#31, version 2 (January 2008). \href{http://www.unicode.org/notes/tn31}{TN\#31 at unicode.org}
 
-	\bibitem{13} Doug Ewell, {\em A survey of Unicode compression}, Unicode Technical Note \#14, version 1 (January 2004). Available online at http://www.unicode.org/notes/tn14/.
+	\bibitem{13} Doug Ewell, {\em A survey of Unicode compression}, Unicode Technical Note \#14, version 1 (January 2004). \href{http://www.unicode.org/notes/tn14/}{TN\#14 at unicode.org}.
 
- 	\bibitem{14} Salvatore Sanfilippo, {\em SMAZ - compression for very small strings}, https://github.com/antirez/smaz, February 2012.
+ 	\bibitem{14} Salvatore Sanfilippo, {\em SMAZ - compression for very small strings}, \href{https://github.com/antirez/smaz}{Smaz on Github}, February 2012.
 
- 	\bibitem{15} Christian Schramm, {\em shoco: a fast compressor for short strings}, https://github.com/Ed-von-Schleck/shoco, December 2015.
+ 	\bibitem{15} Christian Schramm, {\em shoco: a fast compressor for short strings}, \href{https://ed-von-schleck.github.io/shoco}{Shoco Homepage}, December 2015.
 
 \end{thebibliography}
 
