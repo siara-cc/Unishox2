@@ -1,8 +1,8 @@
-# Unishox - Guaranteed Compression for Unicode Short Strings
+# Unishox - A hybrid encoder for compressing Short Unicode Strings
 
-This is a C library for compressing short strings.  It was developed to individually compress and decompress small strings. In general compression utilities such as `zip`, `gzip` do not compress short strings well and often expand them. They also use lots of memory which makes them unusable in constrained environments like Arduino.
+In general compression utilities such as `zip`, `gzip` do not compress short strings well and often expand them. They also use lots of memory which makes them unusable in constrained environments like Arduino.  So Unishox algorithm was developed for individually compressing (and decompressing) short strings.
 
-Note: The present byte-code version is 2 and it replaces Unishox 1.  Unishox 1 is still available as unishox1.c, but it will have to be compiled manually if it is needed.
+Note: The present byte-code version is 2 and it replaces [Unishox 1](Unishox_Article_1.pdf?raw=true).  Unishox 1 is still available as unishox1.c, but it will have to be compiled manually if it is needed.
 
 # Applications
 
@@ -22,7 +22,7 @@ The model used for arriving at the prefix-free code is shown below:
 
 ![Promo video](demo/model.png?raw=true)
 
-The complete specification can be found in this article: [Unishox 2 - Guaranteed Configurable Compression for Short Strings using Entropy, Dictionary and Delta encoding techniques](Unishox_Article_2.pdf?raw=true).
+The complete specification can be found in this article: [A hybrid encoder for compressing Short Unicode Strings](Unishox_Article_2.pdf?raw=true).
 
 # Compiling
 
