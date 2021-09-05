@@ -160,13 +160,11 @@ uint64_t decode_unsigned_varint(const uint8_t *data, int *decoded_bytes) {
 void print_string_as_hex(char *in, int len) {
 
   int l;
-  byte bit;
   printf("String in hex:\n");
   for (l=0; l<len; l++) {
     printf("%x, ", (unsigned char) in[l]);
   }
   printf("\n");
-
 }
 
 void print_compressed(char *in, int len) {
@@ -208,11 +206,11 @@ int main(int argv, char *args[]) {
 
 char cbuf[4096];
 char dbuf[8192];
-long len, tot_len, clen, ctot, dlen, l;
+long len, tot_len, ctot;
+size_t clen, dlen;
 float perc;
 FILE *fp, *wfp;
 int bytes_read;
-char c_in;
 uint32_t tStart;
 
 tStart = getTimeVal();
@@ -350,7 +348,7 @@ if (argv >= 4 && (strcmp(args[1], "-g") == 0 ||
               snprintf(short_buf, 10, "%u, ", (byte) short_buf[i]);
               fputs(short_buf, wfp);
             }
-            for (int i = 0; i < clen; i++) {
+            for (size_t i = 0; i < clen; i++) {
               if (i) {
                 strcpy(short_buf, ", ");
                 fputs(short_buf, wfp);
