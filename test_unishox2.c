@@ -314,6 +314,7 @@ if (argv >= 4 && (strcmp(args[1], "-g") == 0 ||
    fputs("_UNISHOX2_COMPRESSED__\n", wfp);
    int line_ctr = 0;
    int max_len = 0;
+   const size_t short_buf_len = strlen(args[3]) + 100;
    while (fgets(cbuf, sizeof(cbuf), fp) != NULL) {
       // compress the line and look in previous lines
       // add to linked list
@@ -341,8 +342,8 @@ if (argv >= 4 && (strcmp(args[1], "-g") == 0 ||
             printf("%.2f %s\n", perc, cbuf);
             tot_len += len;
             ctot += clen;
-            char* short_buf = malloc(strlen(args[3]) + 100);
-            snprintf(short_buf, sizeof(short_buf), "const byte %s_%d[] PROGMEM = {", args[3], line_ctr++);
+            char* short_buf = malloc(short_buf_len);
+            snprintf(short_buf, short_buf_len, "const byte %s_%d[] PROGMEM = {", args[3], line_ctr++);
             fputs(short_buf, wfp);
             int len_len = encode_unsigned_varint((byte *) short_buf, clen);
             for (int i = 0; i < len_len; i++) {
@@ -373,8 +374,8 @@ if (argv >= 4 && (strcmp(args[1], "-g") == 0 ||
    perc *= 100;
    printf("\nBytes (Compressed/Original=Savings%%): %ld/%ld=", ctot, tot_len);
    printf("%.2f%%\n", perc);
-   char* short_buf = malloc(strlen(args[3]) + 100);
-   snprintf(short_buf, sizeof(short_buf), "const byte * const %s[] PROGMEM = {", args[3]);
+   char* short_buf = malloc(short_buf_len);
+   snprintf(short_buf, short_buf_len, "const byte * const %s[] PROGMEM = {", args[3]);
    fputs(short_buf, wfp);
    for (int i = 0; i < line_ctr; i++) {
      if (i) {
@@ -386,9 +387,9 @@ if (argv >= 4 && (strcmp(args[1], "-g") == 0 ||
    }
    strcpy(short_buf, "};\n");
    fputs(short_buf, wfp);
-   snprintf(short_buf, sizeof(short_buf), "#define %s_line_count %d\n", args[3], line_ctr);
+   snprintf(short_buf, short_buf_len, "#define %s_line_count %d\n", args[3], line_ctr);
    fputs(short_buf, wfp);
-   snprintf(short_buf, sizeof(short_buf), "#define %s_max_len %d\n", args[3], max_len);
+   snprintf(short_buf, short_buf_len, "#define %s_max_len %d\n", args[3], max_len);
    fputs(short_buf, wfp);
    fputs("#endif\n", wfp);
    free(short_buf);
