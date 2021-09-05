@@ -186,7 +186,6 @@ int encodeUnicode(char *out, int ol, int32_t code, int32_t prev_code) {
   //const byte codes[8] = {0x00, 0x42, 0x83, 0xA3, 0xC3, 0xE4, 0xF5, 0xFD};
   const byte codes[6] = {0x01, 0x82, 0xC3, 0xE4, 0xF5, 0xFD};
   int32_t till = 0;
-  int orig_ol = ol;
   int32_t diff = code - prev_code;
   if (diff < 0)
     diff = -diff;
@@ -214,8 +213,6 @@ int encodeUnicode(char *out, int ol, int32_t code, int32_t prev_code) {
           val <<= (8 - uni_bit_len[i]);
           ol = append_bits(out, ol, val & 0xFF, uni_bit_len[i]);
         }
-      //}
-      //printf("bits:%d\n", ol-orig_ol);
       return ol;
     }
   }
@@ -630,7 +627,7 @@ int unishox2_compress_lines(const char *in, int len, char *out, const byte usx_h
           ol = append_bits(out, ol, usx_vcodes[1], usx_vcode_lens[1]);
       } else {
         c_in--;
-        ol = append_code(out, ol, usx_code_94[c_in], &state, usx_hcodes, usx_hcode_lens);
+        ol = append_code(out, ol, usx_code_94[(int)c_in], &state, usx_hcodes, usx_hcode_lens);
       }
     } else
     if (c_in == 13 && c_next == 10) {
