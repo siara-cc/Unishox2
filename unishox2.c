@@ -300,7 +300,7 @@ int matchLine(const char *in, int len, int l, char *out, int *ol, struct us_lnk_
   int j = 0;
   do {
     int i, k;
-    int line_len = strlen(prev_lines->data);
+    int line_len = (int)strlen(prev_lines->data);
     int limit = (line_ctr == 0 ? l : line_len);
     for (; j < limit; j++) {
       for (i = l, k = j; k < line_len && i < len; k++, i++) {
@@ -503,7 +503,7 @@ int unishox2_compress_lines(const char *in, int len, char *out, const byte usx_h
       int i;
       for (i = 0; i < 5; i++) {
         if (usx_templates[i]) {
-          int rem = strlen(usx_templates[i]);
+          int rem = (int)strlen(usx_templates[i]);
           int j = 0;
           for (; j < rem && l + j < len; j++) {
             char c_t = usx_templates[i][j];
@@ -550,7 +550,7 @@ int unishox2_compress_lines(const char *in, int len, char *out, const byte usx_h
     if (usx_freq_seq != NULL) {
       int i;
       for (i = 0; i < 6; i++) {
-        int seq_len = strlen(usx_freq_seq[i]);
+        int seq_len = (int)strlen(usx_freq_seq[i]);
         if (len - seq_len >= 0 && l <= len - seq_len) {
           if (memcmp(usx_freq_seq[i], in + l, seq_len) == 0 && usx_hcode_lens[usx_freq_codes[i] >> 5]) {
             ol = append_code(out, ol, usx_freq_codes[i], &state, usx_hcodes, usx_hcode_lens);
@@ -1030,7 +1030,7 @@ int unishox2_decompress_lines(const char *in, int len, char *out, const byte usx
             int rem = readCount(in, &bit_no, len);
             if (rem < 0)
               break;
-            rem = strlen(usx_templates[idx]) - rem;
+            rem = (int)strlen(usx_templates[idx]) - rem;
             for (int j = 0; j < rem; j++) {
               char c_t = usx_templates[idx][j];
               if (c_t == 'f' || c_t == 'r' || c_t == 't' || c_t == 'o' || c_t == 'F') {
@@ -1101,11 +1101,11 @@ int unishox2_decompress_lines(const char *in, int len, char *out, const byte usx
         } else if (h == USX_SYM && v > 24) {
           v -= 25;
           memcpy(out + ol, usx_freq_seq[v], strlen(usx_freq_seq[v]));
-          ol += strlen(usx_freq_seq[v]);
+          ol += (int)strlen(usx_freq_seq[v]);
         } else if (h == USX_NUM && v > 22 && v < 26) {
           v -= (23 - 3);
           memcpy(out + ol, usx_freq_seq[v], strlen(usx_freq_seq[v]));
-          ol += strlen(usx_freq_seq[v]);
+          ol += (int)strlen(usx_freq_seq[v]);
         } else
           break; // Terminator
         if (dstate == USX_DELTA)
