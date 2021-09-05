@@ -1,16 +1,17 @@
+#include "unishox2.h"
+
 #ifdef _MSC_VER
 #include <windows.h>
 #else
 #include <sys/time.h>
 #endif
+
 #include <time.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <stdint.h>
-
-#include "unishox2.h"
 
 typedef unsigned char byte;
 
@@ -98,12 +99,11 @@ int test_ushx_cd(char *input, int preset) {
 
   char cbuf[200];
   char dbuf[250];
-  int len = strlen(input);
+  int len = (int)strlen(input);
   int clen = unishox2_compress_preset_lines(input, len, cbuf, preset, NULL);
   printf("\n\n");
   int dlen = unishox2_decompress_preset_lines(cbuf, clen, dbuf, preset, NULL);
   dbuf[dlen] = '\0';
-  float perc;
   if (dlen != len) {
     printf("Fail len: %d, %d:\n%s\n%s\n", len, dlen, input, dbuf);
     return 0;
@@ -112,7 +112,7 @@ int test_ushx_cd(char *input, int preset) {
     printf("Fail cmp:\n%s\n%s\n", input, dbuf);
     return 0;
   }
-  perc = (len - clen);
+  float perc = (float)(len - clen);
   perc /= len;
   perc *= 100;
   printf("%s: %d/%d=", input, clen, len);
@@ -206,9 +206,9 @@ int main(int argv, char *args[]) {
 
 char cbuf[4096];
 char dbuf[8192];
-long len, tot_len, ctot;
-size_t clen, dlen;
-float perc;
+long len, tot_len, clen, ctot=0;
+size_t dlen;
+float perc=0.F;
 FILE *fp, *wfp;
 int bytes_read;
 uint32_t tStart;
@@ -220,7 +220,6 @@ if (argv >= 4 && strcmp(args[1], "-c") == 0) {
    if (argv > 4)
      preset = atoi(args[4]);
    tot_len = 0;
-   ctot = 0;
    fp = fopen(args[2], "rb");
    if (fp == NULL) {
       perror(args[2]);
@@ -232,7 +231,7 @@ if (argv >= 4 && strcmp(args[1], "-c") == 0) {
       return 1;
    }
    do {
-     bytes_read = fread(cbuf, 1, sizeof(cbuf), fp);
+     bytes_read = (int)fread(cbuf, 1, sizeof(cbuf), fp);
      if (bytes_read > 0) {
         clen = unishox2_compress_preset_lines(cbuf, bytes_read, dbuf, preset, NULL);
         ctot += clen;
@@ -240,14 +239,14 @@ if (argv >= 4 && strcmp(args[1], "-c") == 0) {
         if (clen > 0) {
            fputc(clen >> 8, wfp);
            fputc(clen & 0xFF, wfp);
-           if (clen != fwrite(dbuf, 1, clen, wfp)) {
+           if (clen != (long)fwrite(dbuf, 1, clen, wfp)) {
               perror("fwrite");
               return 1;
            }
         }
      }
    } while (bytes_read > 0);
-   perc = (tot_len-ctot);
+   perc = (float)(tot_len-ctot);
    perc /= tot_len;
    perc *= 100;
    printf("\nBytes (Compressed/Original=Savings%%): %ld/%ld=", ctot, tot_len);
@@ -271,7 +270,7 @@ if (argv >= 4 && strcmp(args[1], "-d") == 0) {
      //memset(dbuf, 0, sizeof(dbuf));
      int len_to_read = fgetc(fp) << 8;
      len_to_read += fgetc(fp);
-     bytes_read = fread(dbuf, 1, len_to_read, fp);
+     bytes_read = (int)fread(dbuf, 1, len_to_read, fp);
      if (bytes_read > 0) {
         dlen = unishox2_decompress_preset_lines(dbuf, bytes_read, cbuf, preset, NULL);
         if (dlen > 0) {
@@ -317,7 +316,7 @@ if (argv >= 4 && (strcmp(args[1], "-g") == 0 ||
    while (fgets(cbuf, sizeof(cbuf), fp) != NULL) {
       // compress the line and look in previous lines
       // add to linked list
-      len = strlen(cbuf);
+      len = (long)strlen(cbuf);
       if (cbuf[len - 1] == '\n' || cbuf[len - 1] == '\r') {
          len--;
          cbuf[len] = 0;
@@ -333,7 +332,7 @@ if (argv >= 4 && (strcmp(args[1], "-g") == 0 ||
         cur_line->previous = ll;
         clen = unishox2_compress_preset_lines(cbuf, len, dbuf, preset, cur_line);
         if (clen > 0) {
-            perc = (len-clen);
+            perc = (float)(len-clen);
             perc /= len;
             perc *= 100;
             //print_compressed(dbuf, clen);
@@ -348,7 +347,7 @@ if (argv >= 4 && (strcmp(args[1], "-g") == 0 ||
               snprintf(short_buf, 10, "%u, ", (byte) short_buf[i]);
               fputs(short_buf, wfp);
             }
-            for (size_t i = 0; i < clen; i++) {
+            for (int i = 0; i < clen; i++) {
               if (i) {
                 strcpy(short_buf, ", ");
                 fputs(short_buf, wfp);
@@ -366,7 +365,7 @@ if (argv >= 4 && (strcmp(args[1], "-g") == 0 ||
         printf("\n%s\n", cbuf);
       }
    }
-   perc = (tot_len-ctot);
+   perc = (float)(tot_len-ctot);
    perc /= tot_len;
    perc *= 100;
    printf("\nBytes (Compressed/Original=Savings%%): %ld/%ld=", ctot, tot_len);
@@ -632,7 +631,7 @@ if (argv == 2 || (argv == 3 && atoi(args[2]) > 0)) {
    int preset = 0;
    if (argv >= 3)
      preset = atoi(args[2]);
-   len = strlen(args[1]);
+   len = (long)strlen(args[1]);
    printf("String: %s, Len:%ld\n", args[1], len);
    //print_string_as_hex(args[1], len);
    memset(cbuf, 0, sizeof(cbuf));
@@ -643,7 +642,7 @@ if (argv == 2 || (argv == 3 && atoi(args[2]) > 0)) {
    dbuf[dlen] = 0;
    printf("\nDecompressed: %s\n", dbuf);
    //print_compressed(dbuf, dlen);
-   perc = (len-ctot);
+   perc = (float)(len-ctot);
    perc /= len;
    perc *= 100;
    printf("\nBytes (Compressed/Original=Savings%%): %ld/%ld=", ctot, len);
