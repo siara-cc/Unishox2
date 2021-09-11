@@ -630,6 +630,8 @@ if (argv >= 2 && strcmp(args[1], "-t") == 0) {
     // Binary
     if (!test_ushx_cd("Hello\x80\x83\xAE\xBC\xBD\xBE", preset)) return 1;
 
+    return 0;
+
 } else
 if (argv == 2 || (argv == 3 && atoi(args[2]) > 0)) {
    int preset = 0;
