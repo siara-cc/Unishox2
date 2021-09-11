@@ -1,6 +1,6 @@
 # Unishox - A hybrid encoder for compressing Short Unicode Strings
 
-![build](https://github.com/github/docs/actions/workflows/main.yml/badge.svg)
+[![C/C++ CI](https://github.com/siara-cc/Unishox/actions/workflows/c-cpp.yml/badge.svg)](https://github.com/siara-cc/Unishox/actions/workflows/c-cpp.yml)
 
 In general compression utilities such as `zip`, `gzip` do not compress short strings well and often expand them. They also use lots of memory which makes them unusable in constrained environments like Arduino.  So Unishox algorithm was developed for individually compressing (and decompressing) short strings.
 
