@@ -16,6 +16,7 @@ jobs:
 
     - name: Configure Project
       run: |
+        cmake --version
         mkdir buildRelease && cd buildRelease
         cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=install ..
 
