@@ -13,7 +13,24 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: make
-      run: make
-    - name: test
-      run: ./test_unishox2 -t
+
+    - name: Configure Project
+      run: |
+        mkdir buildRelease && cd buildRelease
+        cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=install ..
+
+    - name: Compile project
+      run: |
+        cd buildRelease
+        cmake --build .
+
+    - name: Install library
+      run: |
+        cd buildRelease
+        cmake --build . --target install
+        tree install
+
+    - name: Test with CLI app
+      run: |
+        cd buildRelease
+        ./unishox_cli -t
