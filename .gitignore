@@ -13,6 +13,8 @@ unishox++_0_1_0
 unishox_0_1_0
 .DS_Store
 *.txt
+cmake_install.cmake
+CMakeFiles
 !CMakeLists.txt
 !json?.txt
 !xml?.txt
