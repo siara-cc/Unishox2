@@ -28,6 +28,10 @@ generate_export_header(unishox)
 # --------------------------------------------------------------------
 # Install rules for C library
 # --------------------------------------------------------------------
+# Use include/unishox to build libary code
+target_include_directories(unishox PUBLIC
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
 
 write_basic_package_version_file(unishoxConfigVersion.cmake COMPATIBILITY ExactVersion)
 

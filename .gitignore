@@ -66,3 +66,6 @@ delta_only
 
 # Traditional cmake building directories
 build*
+
+# QtCreator temporary files
+CMakeLists.txt.user
