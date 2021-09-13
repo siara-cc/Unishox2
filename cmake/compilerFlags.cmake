@@ -15,6 +15,7 @@ if (COMPILER_IS_GCC OR COMPILER_IS_CLANG)
     add_compile_options(-Werror)
     add_compile_options(-Wall -Wcast-align -Wpointer-arith -Wformat-security -Wmissing-format-attribute -W)
     add_compile_options(-Wno-error=format-nonliteral)
+    add_compile_options(-Wno-error=stringop-truncation)
 
     check_c_compiler_flag(-Wdeprecated-copy DEPRECATED_COPY)
     if ( DEPRECATED_COPY)
