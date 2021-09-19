@@ -73,6 +73,7 @@ const int UTF8_PREFIX[] = {0xC0, 0xE0, 0xF0};
 
 #define SW_CODE 0
 #define SW_CODE_LEN 2
+#define TERM_BYTE_PRESET_1 (byte)(SW_CODE | ((SW_CODE | ((SW_CODE | ((SW_CODE | ((SW_CODE | ((SW_CODE | ((SW_CODE | (SW_CODE >> SW_CODE_LEN)) >> SW_CODE_LEN)) >> SW_CODE_LEN)) >> SW_CODE_LEN)) >> SW_CODE_LEN)) >> SW_CODE_LEN) >> SW_CODE_LEN)))
 
 #define USX_OFFSET_94 33
 
@@ -376,21 +377,38 @@ int append_nibble_escape(char *out, int ol, byte state, const byte usx_hcodes[],
   return ol;
 }
 
-int min_of(char c, int i) {
-  return c > i ? i : c;
-}
+long append_final_bits(char *const out, const int ol, const byte state, const byte usx_hcodes[], const byte usx_hcode_lens[]) {
+  union { char buf[4]; long as_long; } terminator;
+  int tl = (ol - 1) % 8 + 1; // 8x+[0..7] -> [8, 1..7]
 
-void append_final_bits(char *out, int ol, const byte bits[], const int bit_lens[]) {
-  char remain_bits = 8 - (ol % 8);
-  for (int i = 0; i < 4; i++) {
-    if (bit_lens[i] && remain_bits > 0) {
-      ol = append_bits(out, ol, bits[i], min_of(remain_bits, bit_lens[i]));
-      remain_bits -= bit_lens[i];
+  terminator.as_long = 0;
+
+  if (usx_hcode_lens[USX_ALPHA]) {
+    if (USX_NUM != state) {
+      // for num state, append TERM_CODE directly
+      // for other state, switch to num first
+      tl = append_switch_code(terminator.buf, tl, state);
+      tl = append_bits(terminator.buf, tl, usx_hcodes[USX_NUM], usx_hcode_lens[USX_NUM]);
     }
+    tl = append_bits(terminator.buf, tl, usx_vcodes[TERM_CODE & 0x1F], usx_vcode_lens[TERM_CODE & 0x1F]);
+  } else {
+    // preset 1, terminate at 4 SW_CODE, i.e., 8 continuous 0 bits
+    tl = append_bits(terminator.buf, tl, TERM_BYTE_PRESET_1, 8);
   }
+
+  // fill byte with the last bit
+  tl = append_bits(terminator.buf, tl, terminator.buf[(tl-1)/8] << ((tl-1)&7), (8 - tl % 8) & 7);
+
+  if (ol%8) out[(ol-1) / 8] |= terminator.buf[0];
+  terminator.buf[0] = terminator.buf[1];
+  terminator.buf[1] = terminator.buf[2];
+  terminator.buf[2] = terminator.buf[3];
+  terminator.buf[3] = tl / 8 - 1; // terminator length
+
+  return terminator.as_long;
 }
 
-int unishox2_compress_lines(const char *in, int len, char *out, const byte usx_hcodes[], const byte usx_hcode_lens[], const char *usx_freq_seq[], const char *usx_templates[], struct us_lnk_lst *prev_lines) {
+int unishox2_compress_lines(const char *in, int len, char *out, const byte usx_hcodes[], const byte usx_hcode_lens[], const char *usx_freq_seq[], const char *usx_templates[], struct us_lnk_lst *prev_lines, long *term) {
 
   byte state;
 
@@ -694,35 +712,33 @@ int unishox2_compress_lines(const char *in, int len, char *out, const byte usx_h
       }
     }
   }
-  int ret = ol/8+(ol%8?1:0);
-  if (ol % 8) {
-    append_final_bits(out, ol, (byte[]) {UNI_STATE_SPL_CODE,
-      state == USX_DELTA ? UNI_STATE_SW_CODE : SW_CODE, usx_hcodes[USX_NUM],
-      usx_vcodes[TERM_CODE & 0x1F]}, (int[]) {state == USX_DELTA ? UNI_STATE_SPL_CODE_LEN : 0, 
-      state == USX_DELTA ? UNI_STATE_SW_CODE_LEN : SW_CODE_LEN, usx_hcode_lens[USX_NUM], 8});
+
+  {
+    // even if term == null, still need to fill the last parital byte
+    // with terminator code to avoid outputting extra contents after decompressing ol bits
+    const long terminator = append_final_bits(out, ol, state, usx_hcodes, usx_hcode_lens);
+    if (term) *term = terminator;
   }
-  //printf("\n%ld\n", ol);
-  return ret;
-
+  return (ol + 7) / 8;
 }
 
-int unishox2_compress(const char *in, int len, char *out, const byte usx_hcodes[], const byte usx_hcode_lens[], const char *usx_freq_seq[], const char *usx_templates[]) {
-  return unishox2_compress_lines(in, len, out, usx_hcodes, usx_hcode_lens, usx_freq_seq, usx_templates, NULL);
+int unishox2_compress(const char *in, int len, char *out, const byte usx_hcodes[], const byte usx_hcode_lens[], const char *usx_freq_seq[], const char *usx_templates[], long *term) {
+  return unishox2_compress_lines(in, len, out, usx_hcodes, usx_hcode_lens, usx_freq_seq, usx_templates, NULL, term);
 }
 
-int unishox2_compress_simple(const char *in, int len, char *out) {
-  return unishox2_compress_lines(in, len, out, USX_HCODES_DFLT, USX_HCODE_LENS_DFLT, USX_FREQ_SEQ_DFLT, USX_TEMPLATES, NULL);
+int unishox2_compress_simple(const char *in, int len, char *out, long *term) {
+  return unishox2_compress_lines(in, len, out, USX_HCODES_DFLT, USX_HCODE_LENS_DFLT, USX_FREQ_SEQ_DFLT, USX_TEMPLATES, NULL, term);
 }
 
 int readBit(const char *in, int bit_no) {
    return in[bit_no >> 3] & (0x80 >> (bit_no % 8));
 }
 
-int read8bitCode(const char *in, int len, int *bit_no_p) {
-  int bit_pos = *bit_no_p & 0x07;
-  int char_pos = *bit_no_p >> 3;
+int read8bitCode(const char *in, int len, int bit_no) {
+  int bit_pos = bit_no & 0x07;
+  int char_pos = bit_no >> 3;
   byte code = (((byte)in[char_pos]) << bit_pos);
-  if (((*bit_no_p) + bit_pos) < len) {
+  if (bit_no + bit_pos < len) {
     code |= ((byte)in[++char_pos]) >> (8 - bit_pos);
   } else
     code |= (0xFF >> (8 - bit_pos));
@@ -752,7 +768,7 @@ byte usx_vcode_lookup[36] = {
 
 int readVCodeIdx(const char *in, int len, int *bit_no_p) {
   if (*bit_no_p < len) {
-    byte code = read8bitCode(in, len, bit_no_p);
+    byte code = read8bitCode(in, len, *bit_no_p);
     int i = 0;
     do {
       if (code <= usx_vsections[i]) {
@@ -772,7 +788,7 @@ int readHCodeIdx(const char *in, int len, int *bit_no_p, const byte usx_hcodes[]
   if (!usx_hcode_lens[USX_ALPHA])
     return USX_ALPHA;
   if (*bit_no_p < len) {
-    byte code = read8bitCode(in, len, bit_no_p);
+    byte code = read8bitCode(in, len, *bit_no_p);
     for (int code_pos = 0; code_pos < 5; code_pos++) {
       if ((code & len_masks[usx_hcode_lens[code_pos] - 1]) == usx_hcodes[code_pos]) {
         *bit_no_p += usx_hcode_lens[code_pos];
@@ -981,6 +997,8 @@ int unishox2_decompress_lines(const char *in, int len, char *out, const byte usx
       }
       if (h == USX_ALPHA) {
          if (dstate == USX_ALPHA) {
+           if (!usx_hcode_lens[USX_ALPHA] && TERM_BYTE_PRESET_1 == read8bitCode(in, len, bit_no - SW_CODE_LEN))
+             break; // Terminator for preset 1
            if (is_all_upper) {
              is_upper = is_all_upper = 0;
              continue;
