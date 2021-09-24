@@ -28,6 +28,14 @@
 #  define UNISHOX_API_WITH_OUTPUT_LEN 0
 #endif
 
+#ifdef UNISHOX_MAGIC_BIT_LEN
+#  if UNISHOX_MAGIC_BIT_LEN < 0 || 8 <= UNISHOX_MAGIC_BIT_LEN
+#    error "UNISHOX_MAGIC_BIT_LEN need between [0, 7)"
+#  endif
+#else
+#  define UNISHOX_MAGIC_BIT_LEN 1
+#endif
+
 //enum {USX_ALPHA = 0, USX_SYM, USX_NUM, USX_DICT, USX_DELTA};
 
 #define USX_HCODES_DFLT (const unsigned char[]){0x00, 0x40, 0x80, 0xC0, 0xE0}
