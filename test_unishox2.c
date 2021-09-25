@@ -435,6 +435,24 @@ if (argv >= 2 && strcmp(args[1], "-t") == 0) {
    if (argv > 2)
      preset = atoi(args[2]);
 
+   // check template
+   {
+     char cbuf[128];
+     char dbuf[128];
+     char *hex = ":AAAAAA-bbbbbb";
+     const int len = strlen(hex);
+     const int clen = unishox2_compress_lines(hex, len, cbuf, USX_HCODES_DFLT, USX_HCODE_LENS_DFLT, USX_FREQ_SEQ_DFLT, (const char *[]){":FFFFFF", "-ffffff", 0, 0, 0} , NULL);
+     const int dlen = unishox2_decompress_lines(cbuf, clen, dbuf, USX_HCODES_DFLT, USX_HCODE_LENS_DFLT, USX_FREQ_SEQ_DFLT, (const char *[]){":FFFFFF", "-ffffff", 0, 0, 0} , NULL);
+     if (dlen != len) {
+       printf("Fail len (template): %d, %d:\n%s\n%s\n", len, dlen, hex, dbuf);
+       return 1;
+     }
+     if (strncmp(hex, dbuf, len)) {
+       printf("Fail cmp (template):\n%s\n%s\n", hex, dbuf);
+       return 0;
+     }
+   }
+
     // Basic
     if (!test_ushx_cd("Hello", preset)) return 1;
     if (!test_ushx_cd("Hello World", preset)) return 1;
