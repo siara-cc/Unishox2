@@ -907,7 +907,7 @@ int decodeRepeat(const char *in, int len, char *out, int ol, int *bit_no, struct
 char getHexChar(int nibble, int hex_type) {
   if (nibble >= 0 && nibble <= 9)
     return '0' + nibble;
-  else if (hex_type < 3)
+  else if (hex_type < USX_NIB_HEX_UPPER)
     return 'a' + nibble - 10;
   return 'A' + nibble - 10;
 }
@@ -1079,7 +1079,7 @@ int unishox2_decompress_lines(const char *in, int len, char *out, const byte usx
             }
             do {
               int nibble = (int) getNumFromBits(in, len, bit_no, 4);
-              out[ol++] = getHexChar(nibble, idx);
+              out[ol++] = getHexChar(nibble, idx < 3 ? USX_NIB_HEX_LOWER : USX_NIB_HEX_UPPER);
               if ((idx == 2 || idx == 4) && (nibble_count == 25 || nibble_count == 21 || nibble_count == 17 || nibble_count == 13))
                 out[ol++] = '-';
               bit_no += 4;
