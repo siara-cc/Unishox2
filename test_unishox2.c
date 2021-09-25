@@ -101,6 +101,10 @@ int test_ushx_cd(char *input, int preset) {
   char dbuf[251];
   int len = (int)strlen(input);
   int clen = unishox2_compress_preset_lines(input, len, cbuf, preset, NULL);
+  if (clen > (int)sizeof cbuf) {
+    printf("Compress Overflow\n");
+    return 0;
+  }
   printf("\n\n");
   int dlen = unishox2_decompress_preset_lines(cbuf, clen, dbuf, preset, NULL);
   if (dlen > (int)sizeof dbuf) {
@@ -109,6 +113,7 @@ int test_ushx_cd(char *input, int preset) {
   } else if (dlen < (int)sizeof dbuf)
     dbuf[dlen] = '\0';
   if (dlen != len) {
+    dbuf[sizeof dbuf - 1] = '\0';
     printf("Fail len: %d, %d:\n%s\n%s\n", len, dlen, input, dbuf);
     return 0;
   }
