@@ -718,11 +718,11 @@ int readBit(const char *in, int bit_no) {
    return in[bit_no >> 3] & (0x80 >> (bit_no % 8));
 }
 
-int read8bitCode(const char *in, int len, int *bit_no_p) {
-  int bit_pos = *bit_no_p & 0x07;
-  int char_pos = *bit_no_p >> 3;
+int read8bitCode(const char *in, int len, int bit_no) {
+  int bit_pos = bit_no & 0x07;
+  int char_pos = bit_no >> 3;
   byte code = (((byte)in[char_pos]) << bit_pos);
-  if (((*bit_no_p) + bit_pos) < len) {
+  if (bit_no + bit_pos < len) {
     code |= ((byte)in[++char_pos]) >> (8 - bit_pos);
   } else
     code |= (0xFF >> (8 - bit_pos));
@@ -752,7 +752,7 @@ byte usx_vcode_lookup[36] = {
 
 int readVCodeIdx(const char *in, int len, int *bit_no_p) {
   if (*bit_no_p < len) {
-    byte code = read8bitCode(in, len, bit_no_p);
+    byte code = read8bitCode(in, len, *bit_no_p);
     int i = 0;
     do {
       if (code <= usx_vsections[i]) {
@@ -772,7 +772,7 @@ int readHCodeIdx(const char *in, int len, int *bit_no_p, const byte usx_hcodes[]
   if (!usx_hcode_lens[USX_ALPHA])
     return USX_ALPHA;
   if (*bit_no_p < len) {
-    byte code = read8bitCode(in, len, bit_no_p);
+    byte code = read8bitCode(in, len, *bit_no_p);
     for (int code_pos = 0; code_pos < 5; code_pos++) {
       if ((code & len_masks[usx_hcode_lens[code_pos] - 1]) == usx_hcodes[code_pos]) {
         *bit_no_p += usx_hcode_lens[code_pos];

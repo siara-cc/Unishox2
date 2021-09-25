@@ -202,6 +202,21 @@ double timedifference(uint32_t t0, uint32_t t1) {
     return ret;
 }
 
+int presetForUnicode(int preset) {
+  switch (preset) {
+  case  1: return 0; // false
+  case  2: return 0; // false
+  case  3: return 0; // false
+  case  4: return 0; // false
+  case 10: return 0; // false
+  case 11: return 0; // false
+  case 14: return 0; // false
+  default: break;
+  }
+
+  return  1; // true
+}
+
 int main(int argv, char *args[]) {
 
 char cbuf[4096];
@@ -225,7 +240,7 @@ if (argv >= 4 && strcmp(args[1], "-c") == 0) {
       perror(args[2]);
       return 1;
    }
-   wfp = fopen(args[3], "wb+");
+   wfp = fopen(args[3], "wb");
    if (wfp == NULL) {
       perror(args[3]);
       return 1;
@@ -261,7 +276,7 @@ if (argv >= 4 && strcmp(args[1], "-d") == 0) {
       perror(args[2]);
       return 1;
    }
-   wfp = fopen(args[3], "wb+");
+   wfp = fopen(args[3], "wb");
    if (wfp == NULL) {
       perror(args[3]);
       return 1;
@@ -295,7 +310,7 @@ if (argv >= 4 && (strcmp(args[1], "-g") == 0 ||
       return 1;
    }
    sprintf(cbuf, "%s.h", args[3]);
-   wfp = fopen(cbuf, "w+");
+   wfp = fopen(cbuf, "w");
    if (wfp == NULL) {
       perror(args[3]);
       return 1;
@@ -395,6 +410,11 @@ if (argv >= 2 && strcmp(args[1], "-t") == 0) {
    if (argv > 2)
      preset = atoi(args[2]);
 
+   if (preset < 0 || 16 < preset) {
+     printf("invalid preset %d\n", preset);
+     return 1;
+   }
+
    // check template
    {
      char cbuf[128];
@@ -421,228 +441,228 @@ if (argv >= 2 && strcmp(args[1], "-t") == 0) {
     if (!test_ushx_cd("HELLO WORLD HELLO WORLD", preset)) return 1;
 
     // Numbers
-    if (!test_ushx_cd("Hello1", preset)) return 1;
-    if (!test_ushx_cd("Hello1 World2", preset)) return 1;
-    if (!test_ushx_cd("Hello123", preset)) return 1;
-    if (!test_ushx_cd("12345678", preset)) return 1;
-    if (!test_ushx_cd("12345678 12345678", preset)) return 1;
-    if (!test_ushx_cd("HELLO WORLD 1234 hello world12", preset)) return 1;
-    if (!test_ushx_cd("HELLO 234 WORLD", preset)) return 1;
-    if (!test_ushx_cd("9 HELLO, WORLD", preset)) return 1;
-    if (!test_ushx_cd("H1e2l3l4o5 w6O7R8L9D", preset)) return 1;
-    if (!test_ushx_cd("8+80=88", preset)) return 1;
+    if (preset != 1 && !test_ushx_cd("Hello1", preset)) return 1;
+    if (preset != 1 && !test_ushx_cd("Hello1 World2", preset)) return 1;
+    if (preset != 1 && !test_ushx_cd("Hello123", preset)) return 1;
+    if (preset != 1 && !test_ushx_cd("12345678", preset)) return 1;
+    if (preset != 1 && !test_ushx_cd("12345678 12345678", preset)) return 1;
+    if (preset != 1 && !test_ushx_cd("HELLO WORLD 1234 hello world12", preset)) return 1;
+    if (preset != 1 && !test_ushx_cd("HELLO 234 WORLD", preset)) return 1;
+    if (preset != 1 && !test_ushx_cd("9 HELLO, WORLD", preset)) return 1;
+    if (preset != 1 && !test_ushx_cd("H1e2l3l4o5 w6O7R8L9D", preset)) return 1;
+    if (preset != 1 && !test_ushx_cd("8+80=88", preset)) return 1;
 
     // Symbols
-    if (!test_ushx_cd("~!@#$%^&*()_+=-`;'\\|\":,./?><", preset)) return 1;
-    if (!test_ushx_cd("if (!test_ushx_cd(\"H1e2l3l4o5 w6O7R8L9D\", preset)) return 1;", preset)) return 1;
-    if (!test_ushx_cd("Hello\tWorld\tHow\tare\tyou?", preset)) return 1;
-    if (!test_ushx_cd("Hello~World~How~are~you?", preset)) return 1;
-    if (!test_ushx_cd("Hello\rWorld\rHow\rare\ryou?", preset)) return 1;
+    if (preset != 1 && preset != 2 && !test_ushx_cd("~!@#$%^&*()_+=-`;'\\|\":,./?><", preset)) return 1;
+    if (preset != 1 && preset != 2 && !test_ushx_cd("if (!test_ushx_cd(\"H1e2l3l4o5 w6O7R8L9D\", preset)) return 1;", preset)) return 1;
+    if (preset != 1 && preset != 2 && !test_ushx_cd("Hello\tWorld\tHow\tare\tyou?", preset)) return 1;
+    if (preset != 1 && preset != 2 && !test_ushx_cd("Hello~World~How~are~you?", preset)) return 1;
+    if (preset != 1 && preset != 2 && !test_ushx_cd("Hello\rWorld\rHow\rare\ryou?", preset)) return 1;
 
     // Repeat
-    if (!test_ushx_cd("-----------------///////////////", preset)) return 1;
-    if (!test_ushx_cd("-----------------Hello World1111111111112222222abcdef12345abcde1234_////////Hello World///////", preset)) return 1;
+    if (preset != 1 && !test_ushx_cd("-----------------///////////////", preset)) return 1;
+    if (preset != 1 && preset != 2 && !test_ushx_cd("-----------------Hello World1111111111112222222abcdef12345abcde1234_////////Hello World///////", preset)) return 1;
 
     // Nibbles
-    if (!test_ushx_cd("fa01b51e-7ecc-4e3e-be7b-918a4c2c891c", preset)) return 1;
-    if (!test_ushx_cd("Fa01b51e-7ecc-4e3e-be7b-918a4c2c891c", preset)) return 1;
-    if (!test_ushx_cd("fa01b51e-7ecc-4e3e-be7b-9182c891c", preset)) return 1;
-    if (!test_ushx_cd("760FBCA3-272E-4F1A-BF88-8472DF6BD994", preset)) return 1;
-    if (!test_ushx_cd("760FBCA3-272E-4F1A-BF88-8472DF6Bd994", preset)) return 1;
-    if (!test_ushx_cd("760FBCA3-272E-4F1A-BF88-8472DF6Bg994", preset)) return 1;
-    if (!test_ushx_cd("FBCA3-272E-4F1A-BF88-8472DF6BD994", preset)) return 1;
-    if (!test_ushx_cd("Hello 1 5347a688-d8bf-445d-86d1-b470f95b007fHello World", preset)) return 1;
-    if (!test_ushx_cd("01234567890123", preset)) return 1;
+    if (preset != 1 && !test_ushx_cd("fa01b51e-7ecc-4e3e-be7b-918a4c2c891c", preset)) return 1;
+    if (preset != 1 && !test_ushx_cd("Fa01b51e-7ecc-4e3e-be7b-918a4c2c891c", preset)) return 1;
+    if (preset != 1 && !test_ushx_cd("fa01b51e-7ecc-4e3e-be7b-9182c891c", preset)) return 1;
+    if (preset != 1 && !test_ushx_cd("760FBCA3-272E-4F1A-BF88-8472DF6BD994", preset)) return 1;
+    if (preset != 1 && !test_ushx_cd("760FBCA3-272E-4F1A-BF88-8472DF6Bd994", preset)) return 1;
+    if (preset != 1 && !test_ushx_cd("760FBCA3-272E-4F1A-BF88-8472DF6Bg994", preset)) return 1;
+    if (preset != 1 && !test_ushx_cd("FBCA3-272E-4F1A-BF88-8472DF6BD994", preset)) return 1;
+    if (preset != 1 && !test_ushx_cd("Hello 1 5347a688-d8bf-445d-86d1-b470f95b007fHello World", preset)) return 1;
+    if (preset != 1 && !test_ushx_cd("01234567890123", preset)) return 1;
 
     // Templates
-    if (!test_ushx_cd("2020-12-31", preset)) return 1;
-    if (!test_ushx_cd("1934-02", preset)) return 1;
-    if (!test_ushx_cd("2020-12-31T12:23:59.234Z", preset)) return 1;
-    if (!test_ushx_cd("1899-05-12T23:59:59.23434", preset)) return 1;
-    if (!test_ushx_cd("1899-05-12T23:59:59", preset)) return 1;
-    if (!test_ushx_cd("2020-12-31T12:23:59.234Zfa01b51e-7ecc-4e3e-be7b-918a4c2c891c", preset)) return 1;
-    if (!test_ushx_cd("顔に(993) 345-3495あり", preset)) return 1;
-    if (!test_ushx_cd("HELLO(993) 345-3495WORLD", preset)) return 1;
-    if (!test_ushx_cd("顔に1899-05-12T23:59:59あり", preset)) return 1;
-    if (!test_ushx_cd("HELLO1899-05-12T23:59:59WORLD", preset)) return 1;
+    if (preset != 1 && !test_ushx_cd("2020-12-31", preset)) return 1;
+    if (preset != 1 && !test_ushx_cd("1934-02", preset)) return 1;
+    if (preset != 1 && preset != 2 && !test_ushx_cd("2020-12-31T12:23:59.234Z", preset)) return 1;
+    if (preset != 1 && preset != 2 && !test_ushx_cd("1899-05-12T23:59:59.23434", preset)) return 1;
+    if (preset != 1 && preset != 2 && !test_ushx_cd("1899-05-12T23:59:59", preset)) return 1;
+    if (preset != 1 && preset != 2 && !test_ushx_cd("2020-12-31T12:23:59.234Zfa01b51e-7ecc-4e3e-be7b-918a4c2c891c", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("顔に(993) 345-3495あり", preset)) return 1;
+    if (preset != 1 && !test_ushx_cd("HELLO(993) 345-3495WORLD", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("顔に1899-05-12T23:59:59あり", preset)) return 1;
+    if (preset != 1 && preset != 2 && !test_ushx_cd("HELLO1899-05-12T23:59:59WORLD", preset)) return 1;
 
-    if (!test_ushx_cd("Cada buhonero alaba sus agujas. - A peddler praises his needles (wares).", preset)) return 1;
-    if (!test_ushx_cd("Cada gallo canta en su muladar. - Each rooster sings on its dung-heap.", preset)) return 1;
-    if (!test_ushx_cd("Cada martes tiene su domingo. - Each Tuesday has its Sunday.", preset)) return 1;
-    if (!test_ushx_cd("Cada uno habla de la feria como le va en ella. - Our way of talking about things reflects our relevant experience, good or bad.", preset)) return 1;
-    if (!test_ushx_cd("Dime con quien andas y te diré quién eres.. - Tell me who you walk with, and I will tell you who you are.", preset)) return 1;
-    if (!test_ushx_cd("Donde comen dos, comen tres. - You can add one person more in any situation you are managing.", preset)) return 1;
-    if (!test_ushx_cd("El amor es ciego. - Love is blind", preset)) return 1;
-    if (!test_ushx_cd("El amor todo lo iguala. - Love smoothes life out.", preset)) return 1;
-    if (!test_ushx_cd("El tiempo todo lo cura. - Time cures all.", preset)) return 1;
-    if (!test_ushx_cd("La avaricia rompe el saco. - Greed bursts the sack.", preset)) return 1;
-    if (!test_ushx_cd("La cara es el espejo del alma. - The face is the mirror of the soul.", preset)) return 1;
-    if (!test_ushx_cd("La diligencia es la madre de la buena ventura. - Diligence is the mother of good fortune.", preset)) return 1;
-    if (!test_ushx_cd("La fe mueve montañas. - Faith moves mountains.", preset)) return 1;
-    if (!test_ushx_cd("La mejor palabra siempre es la que queda por decir. - The best word is the one left unsaid.", preset)) return 1;
-    if (!test_ushx_cd("La peor gallina es la que más cacarea. - The worst hen is the one that clucks the most.", preset)) return 1;
-    if (!test_ushx_cd("La sangre sin fuego hierve. - Blood boils without fire.", preset)) return 1;
-    if (!test_ushx_cd("La vida no es un camino de rosas. - Life is not a path of roses.", preset)) return 1;
-    if (!test_ushx_cd("Las burlas se vuelven veras. - Bad jokes become reality.", preset)) return 1;
-    if (!test_ushx_cd("Las desgracias nunca vienen solas. - Misfortunes never come one at a time.", preset)) return 1;
-    if (!test_ushx_cd("Lo comido es lo seguro. - You can only be really certain of what is already in your belly.", preset)) return 1;
-    if (!test_ushx_cd("Los años no pasan en balde. - Years don't pass in vain.", preset)) return 1;
-    if (!test_ushx_cd("Los celos son malos consejeros. - Jealousy is a bad counsellor.", preset)) return 1;
-    if (!test_ushx_cd("Los tiempos cambian. - Times change.", preset)) return 1;
-    if (!test_ushx_cd("Mañana será otro día. - Tomorrow will be another day.", preset)) return 1;
-    if (!test_ushx_cd("Ningún jorobado ve su joroba. - No hunchback sees his own hump.", preset)) return 1;
-    if (!test_ushx_cd("No cantan dos gallos en un gallinero. - Two roosters do not crow in a henhouse.", preset)) return 1;
-    if (!test_ushx_cd("No hay harina sin salvado. - No flour without bran.", preset)) return 1;
-    if (!test_ushx_cd("No por mucho madrugar, amanece más temprano.. - No matter if you rise early because it does not sunrise earlier.", preset)) return 1;
-    if (!test_ushx_cd("No se puede hacer tortilla sin romper los huevos. - One can't make an omelette without breaking eggs.", preset)) return 1;
-    if (!test_ushx_cd("No todas las verdades son para dichas. - Not every truth should be said.", preset)) return 1;
-    if (!test_ushx_cd("No todo el monte es orégano. - The whole hillside is not covered in spice.", preset)) return 1;
-    if (!test_ushx_cd("Nunca llueve a gusto de todos. - It never rains to everyone's taste.", preset)) return 1;
-    if (!test_ushx_cd("Perro ladrador, poco mordedor.. - A dog that barks often seldom bites.", preset)) return 1;
-    if (!test_ushx_cd("Todos los caminos llevan a Roma. - All roads lead to Rome.", preset)) return 1;
+    if (preset != 1 && !test_ushx_cd("Cada buhonero alaba sus agujas. - A peddler praises his needles (wares).", preset)) return 1;
+    if (preset != 1 && !test_ushx_cd("Cada gallo canta en su muladar. - Each rooster sings on its dung-heap.", preset)) return 1;
+    if (preset != 1 && !test_ushx_cd("Cada martes tiene su domingo. - Each Tuesday has its Sunday.", preset)) return 1;
+    if (preset != 1 && !test_ushx_cd("Cada uno habla de la feria como le va en ella. - Our way of talking about things reflects our relevant experience, good or bad.", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("Dime con quien andas y te diré quién eres.. - Tell me who you walk with, and I will tell you who you are.", preset)) return 1;
+    if (preset != 1 && !test_ushx_cd("Donde comen dos, comen tres. - You can add one person more in any situation you are managing.", preset)) return 1;
+    if (preset != 1 && !test_ushx_cd("El amor es ciego. - Love is blind", preset)) return 1;
+    if (preset != 1 && !test_ushx_cd("El amor todo lo iguala. - Love smoothes life out.", preset)) return 1;
+    if (preset != 1 && !test_ushx_cd("El tiempo todo lo cura. - Time cures all.", preset)) return 1;
+    if (preset != 1 && !test_ushx_cd("La avaricia rompe el saco. - Greed bursts the sack.", preset)) return 1;
+    if (preset != 1 && !test_ushx_cd("La cara es el espejo del alma. - The face is the mirror of the soul.", preset)) return 1;
+    if (preset != 1 && !test_ushx_cd("La diligencia es la madre de la buena ventura. - Diligence is the mother of good fortune.", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("La fe mueve montañas. - Faith moves mountains.", preset)) return 1;
+    if (preset != 1 && !test_ushx_cd("La mejor palabra siempre es la que queda por decir. - The best word is the one left unsaid.", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("La peor gallina es la que más cacarea. - The worst hen is the one that clucks the most.", preset)) return 1;
+    if (preset != 1 && !test_ushx_cd("La sangre sin fuego hierve. - Blood boils without fire.", preset)) return 1;
+    if (preset != 1 && !test_ushx_cd("La vida no es un camino de rosas. - Life is not a path of roses.", preset)) return 1;
+    if (preset != 1 && !test_ushx_cd("Las burlas se vuelven veras. - Bad jokes become reality.", preset)) return 1;
+    if (preset != 1 && !test_ushx_cd("Las desgracias nunca vienen solas. - Misfortunes never come one at a time.", preset)) return 1;
+    if (preset != 1 && !test_ushx_cd("Lo comido es lo seguro. - You can only be really certain of what is already in your belly.", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("Los años no pasan en balde. - Years don't pass in vain.", preset)) return 1;
+    if (preset != 1 && !test_ushx_cd("Los celos son malos consejeros. - Jealousy is a bad counsellor.", preset)) return 1;
+    if (preset != 1 && !test_ushx_cd("Los tiempos cambian. - Times change.", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("Mañana será otro día. - Tomorrow will be another day.", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("Ningún jorobado ve su joroba. - No hunchback sees his own hump.", preset)) return 1;
+    if (preset != 1 && !test_ushx_cd("No cantan dos gallos en un gallinero. - Two roosters do not crow in a henhouse.", preset)) return 1;
+    if (preset != 1 && !test_ushx_cd("No hay harina sin salvado. - No flour without bran.", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("No por mucho madrugar, amanece más temprano.. - No matter if you rise early because it does not sunrise earlier.", preset)) return 1;
+    if (preset != 1 && preset != 2 && !test_ushx_cd("No se puede hacer tortilla sin romper los huevos. - One can't make an omelette without breaking eggs.", preset)) return 1;
+    if (preset != 1 && !test_ushx_cd("No todas las verdades son para dichas. - Not every truth should be said.", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("No todo el monte es orégano. - The whole hillside is not covered in spice.", preset)) return 1;
+    if (preset != 1 && preset != 2 && !test_ushx_cd("Nunca llueve a gusto de todos. - It never rains to everyone's taste.", preset)) return 1;
+    if (preset != 1 && !test_ushx_cd("Perro ladrador, poco mordedor.. - A dog that barks often seldom bites.", preset)) return 1;
+    if (preset != 1 && !test_ushx_cd("Todos los caminos llevan a Roma. - All roads lead to Rome.", preset)) return 1;
 
     // Unicode
-    if (!test_ushx_cd("案ずるより産むが易し。 - Giving birth to a baby is easier than worrying about it.", preset)) return 1;
-    if (!test_ushx_cd("出る杭は打たれる。 - The stake that sticks up gets hammered down.", preset)) return 1;
-    if (!test_ushx_cd("知らぬが仏。 - Not knowing is Buddha. - Ignorance is bliss.", preset)) return 1;
-    if (!test_ushx_cd("見ぬが花。 - Not seeing is a flower. - Reality can't compete with imagination.", preset)) return 1;
-    if (!test_ushx_cd("花は桜木人は武士 - Of flowers, the cherry blossom; of men, the warrior.", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("案ずるより産むが易し。 - Giving birth to a baby is easier than worrying about it.", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("出る杭は打たれる。 - The stake that sticks up gets hammered down.", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("知らぬが仏。 - Not knowing is Buddha. - Ignorance is bliss.", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("見ぬが花。 - Not seeing is a flower. - Reality can't compete with imagination.", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("花は桜木人は武士 - Of flowers, the cherry blossom; of men, the warrior.", preset)) return 1;
 
-    if (!test_ushx_cd("小洞不补，大洞吃苦 - A small hole not mended in time will become a big hole much more difficult to mend.", preset)) return 1;
-    if (!test_ushx_cd("读万卷书不如行万里路 - Reading thousands of books is not as good as traveling thousands of miles", preset)) return 1;
-    if (!test_ushx_cd("福无重至,祸不单行 - Fortune does not come twice. Misfortune does not come alone.", preset)) return 1;
-    if (!test_ushx_cd("风向转变时,有人筑墙,有人造风车 - When the wind changes, some people build walls and have artificial windmills.", preset)) return 1;
-    if (!test_ushx_cd("父债子还 - Father's debt, son to give back.", preset)) return 1;
-    if (!test_ushx_cd("害人之心不可有 - Do not harbour intentions to hurt others.", preset)) return 1;
-    if (!test_ushx_cd("今日事，今日毕 - Things of today, accomplished today.", preset)) return 1;
-    if (!test_ushx_cd("空穴来风,未必无因 - Where there's smoke, there's fire.", preset)) return 1;
-    if (!test_ushx_cd("良药苦口 - Good medicine tastes bitter.", preset)) return 1;
-    if (!test_ushx_cd("人算不如天算 - Man proposes and God disposes", preset)) return 1;
-    if (!test_ushx_cd("师傅领进门，修行在个人 - Teachers open the door. You enter by yourself.", preset)) return 1;
-    if (!test_ushx_cd("授人以鱼不如授之以渔 - Teach a man to take a fish is not equal to teach a man how to fish.", preset)) return 1;
-    if (!test_ushx_cd("树倒猢狲散 - When the tree falls, the monkeys scatter.", preset)) return 1;
-    if (!test_ushx_cd("水能载舟，亦能覆舟 - Not only can water float a boat, it can sink it also.", preset)) return 1;
-    if (!test_ushx_cd("朝被蛇咬，十年怕井绳 - Once bitten by a snake for a snap dreads a rope for a decade.", preset)) return 1;
-    if (!test_ushx_cd("一分耕耘，一分收获 - If one does not plow, there will be no harvest.", preset)) return 1;
-    if (!test_ushx_cd("有钱能使鬼推磨 - If you have money you can make the devil push your grind stone.", preset)) return 1;
-    if (!test_ushx_cd("一失足成千古恨，再回头已百年身 - A single slip may cause lasting sorrow.", preset)) return 1;
-    if (!test_ushx_cd("自助者天助 - Those who help themselves, God will help.", preset)) return 1;
-    if (!test_ushx_cd("早起的鸟儿有虫吃 - Early bird gets the worm.", preset)) return 1;
-    if (!test_ushx_cd("This is first line,\r\nThis is second line", preset)) return 1;
-    if (!test_ushx_cd("{\"menu\": {\n  \"id\": \"file\",\n  \"value\": \"File\",\n  \"popup\": {\n    \"menuitem\": [\n      {\"value\": \"New\", \"onclick\": \"CreateNewDoc()\"},\n      {\"value\": \"Open\", \"onclick\": \"OpenDoc()\"},\n      {\"value\": \"Close\", \"onclick\": \"CloseDoc()\"}\n    ]\n  }\n}}", preset)) return 1;
-    if (!test_ushx_cd("{\"menu\": {\r\n  \"id\": \"file\",\r\n  \"value\": \"File\",\r\n  \"popup\": {\r\n    \"menuitem\": [\r\n      {\"value\": \"New\", \"onclick\": \"CreateNewDoc()\"},\r\n      {\"value\": \"Open\", \"onclick\": \"OpenDoc()\"},\r\n      {\"value\":\"Close\", \"onclick\": \"CloseDoc()\"}\r\n    ]\r\n  }\r\n}}", preset)) return 1;
-    if (!test_ushx_cd("https://siara.cc", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("小洞不补，大洞吃苦 - A small hole not mended in time will become a big hole much more difficult to mend.", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("读万卷书不如行万里路 - Reading thousands of books is not as good as traveling thousands of miles", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("福无重至,祸不单行 - Fortune does not come twice. Misfortune does not come alone.", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("风向转变时,有人筑墙,有人造风车 - When the wind changes, some people build walls and have artificial windmills.", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("父债子还 - Father's debt, son to give back.", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("害人之心不可有 - Do not harbour intentions to hurt others.", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("今日事，今日毕 - Things of today, accomplished today.", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("空穴来风,未必无因 - Where there's smoke, there's fire.", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("良药苦口 - Good medicine tastes bitter.", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("人算不如天算 - Man proposes and God disposes", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("师傅领进门，修行在个人 - Teachers open the door. You enter by yourself.", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("授人以鱼不如授之以渔 - Teach a man to take a fish is not equal to teach a man how to fish.", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("树倒猢狲散 - When the tree falls, the monkeys scatter.", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("水能载舟，亦能覆舟 - Not only can water float a boat, it can sink it also.", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("朝被蛇咬，十年怕井绳 - Once bitten by a snake for a snap dreads a rope for a decade.", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("一分耕耘，一分收获 - If one does not plow, there will be no harvest.", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("有钱能使鬼推磨 - If you have money you can make the devil push your grind stone.", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("一失足成千古恨，再回头已百年身 - A single slip may cause lasting sorrow.", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("自助者天助 - Those who help themselves, God will help.", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("早起的鸟儿有虫吃 - Early bird gets the worm.", preset)) return 1;
+    if (preset != 1 && preset != 2 && !test_ushx_cd("This is first line,\r\nThis is second line", preset)) return 1;
+    if (preset != 1 && preset != 2 && !test_ushx_cd("{\"menu\": {\n  \"id\": \"file\",\n  \"value\": \"File\",\n  \"popup\": {\n    \"menuitem\": [\n      {\"value\": \"New\", \"onclick\": \"CreateNewDoc()\"},\n      {\"value\": \"Open\", \"onclick\": \"OpenDoc()\"},\n      {\"value\": \"Close\", \"onclick\": \"CloseDoc()\"}\n    ]\n  }\n}}", preset)) return 1;
+    if (preset != 1 && preset != 2 && !test_ushx_cd("{\"menu\": {\r\n  \"id\": \"file\",\r\n  \"value\": \"File\",\r\n  \"popup\": {\r\n    \"menuitem\": [\r\n      {\"value\": \"New\", \"onclick\": \"CreateNewDoc()\"},\r\n      {\"value\": \"Open\", \"onclick\": \"OpenDoc()\"},\r\n      {\"value\":\"Close\", \"onclick\": \"CloseDoc()\"}\r\n    ]\r\n  }\r\n}}", preset)) return 1;
+    if (preset != 1 && preset != 2 && !test_ushx_cd("https://siara.cc", preset)) return 1;
 
-    if (!test_ushx_cd("符号\"δ\"表", preset)) return 1;
-    if (!test_ushx_cd("学者地”[3]。学者", preset)) return 1;
-    if (!test_ushx_cd("한데......아무", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("符号\"δ\"表", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("学者地”[3]。学者", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("한데......아무", preset)) return 1;
 
     // English
-    if (!test_ushx_cd("Beauty is not in the face. Beauty is a light in the heart.", preset)) return 1;
+    if (preset != 1 && !test_ushx_cd("Beauty is not in the face. Beauty is a light in the heart.", preset)) return 1;
     // Spanish
-    if (!test_ushx_cd("La belleza no está en la cara. La belleza es una luz en el corazón.", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("La belleza no está en la cara. La belleza es una luz en el corazón.", preset)) return 1;
     // French
-    if (!test_ushx_cd("La beauté est pas dans le visage. La beauté est la lumière dans le coeur.", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("La beauté est pas dans le visage. La beauté est la lumière dans le coeur.", preset)) return 1;
     // Portugese
-    if (!test_ushx_cd("A beleza não está na cara. A beleza é a luz no coração.", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("A beleza não está na cara. A beleza é a luz no coração.", preset)) return 1;
     // Dutch
-    if (!test_ushx_cd("Schoonheid is niet in het gezicht. Schoonheid is een licht in het hart.", preset)) return 1;
+    if (preset != 1 && !test_ushx_cd("Schoonheid is niet in het gezicht. Schoonheid is een licht in het hart.", preset)) return 1;
 
     // German
-    if (!test_ushx_cd("Schönheit ist nicht im Gesicht. Schönheit ist ein Licht im Herzen.", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("Schönheit ist nicht im Gesicht. Schönheit ist ein Licht im Herzen.", preset)) return 1;
     // Spanish
-    if (!test_ushx_cd("La belleza no está en la cara. La belleza es una luz en el corazón.", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("La belleza no está en la cara. La belleza es una luz en el corazón.", preset)) return 1;
     // French
-    if (!test_ushx_cd("La beauté est pas dans le visage. La beauté est la lumière dans le coeur.", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("La beauté est pas dans le visage. La beauté est la lumière dans le coeur.", preset)) return 1;
     // Italian
-    if (!test_ushx_cd("La bellezza non è in faccia. La bellezza è la luce nel cuore.", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("La bellezza non è in faccia. La bellezza è la luce nel cuore.", preset)) return 1;
     // Swedish
-    if (!test_ushx_cd("Skönhet är inte i ansiktet. Skönhet är ett ljus i hjärtat.", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("Skönhet är inte i ansiktet. Skönhet är ett ljus i hjärtat.", preset)) return 1;
     // Romanian
-    if (!test_ushx_cd("Frumusețea nu este în față. Frumusețea este o lumină în inimă.", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("Frumusețea nu este în față. Frumusețea este o lumină în inimă.", preset)) return 1;
     // Ukranian
-    if (!test_ushx_cd("Краса не в особі. Краса - це світло в серці.", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("Краса не в особі. Краса - це світло в серці.", preset)) return 1;
     // Greek
-    if (!test_ushx_cd("Η ομορφιά δεν είναι στο πρόσωπο. Η ομορφιά είναι ένα φως στην καρδιά.", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("Η ομορφιά δεν είναι στο πρόσωπο. Η ομορφιά είναι ένα φως στην καρδιά.", preset)) return 1;
     // Turkish
-    if (!test_ushx_cd("Güzellik yüzünde değil. Güzellik, kalbin içindeki bir ışıktır.", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("Güzellik yüzünde değil. Güzellik, kalbin içindeki bir ışıktır.", preset)) return 1;
     // Polish
-    if (!test_ushx_cd("Piękno nie jest na twarzy. Piękno jest światłem w sercu.", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("Piękno nie jest na twarzy. Piękno jest światłem w sercu.", preset)) return 1;
 
     // Africans
-    if (!test_ushx_cd("Skoonheid is nie in die gesig nie. Skoonheid is 'n lig in die hart.", preset)) return 1;
+    if (preset != 1 && preset != 2 && !test_ushx_cd("Skoonheid is nie in die gesig nie. Skoonheid is 'n lig in die hart.", preset)) return 1;
     // Swahili
-    if (!test_ushx_cd("Beauty si katika uso. Uzuri ni nuru moyoni.", preset)) return 1;
+    if (preset != 1 && !test_ushx_cd("Beauty si katika uso. Uzuri ni nuru moyoni.", preset)) return 1;
     // Zulu
-    if (!test_ushx_cd("Ubuhle abukho ebusweni. Ubuhle bungukukhanya enhliziyweni.", preset)) return 1;
+    if (preset != 1 && !test_ushx_cd("Ubuhle abukho ebusweni. Ubuhle bungukukhanya enhliziyweni.", preset)) return 1;
     // Somali
-    if (!test_ushx_cd("Beauty ma aha in wajiga. Beauty waa iftiin ah ee wadnaha.", preset)) return 1;
+    if (preset != 1 && !test_ushx_cd("Beauty ma aha in wajiga. Beauty waa iftiin ah ee wadnaha.", preset)) return 1;
 
     // Russian
-    if (!test_ushx_cd("Красота не в лицо. Красота - это свет в сердце.", preset)) return 1;
+    if (preset != 1 && !test_ushx_cd("Красота не в лицо. Красота - это свет в сердце.", preset)) return 1;
     // Arabic
-    if (!test_ushx_cd("الجمال ليس في الوجه. الجمال هو النور الذي في القلب.", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("الجمال ليس في الوجه. الجمال هو النور الذي في القلب.", preset)) return 1;
     // Persian
-    if (!test_ushx_cd("زیبایی در چهره نیست. زیبایی نور در قلب است.", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("زیبایی در چهره نیست. زیبایی نور در قلب است.", preset)) return 1;
     // Pashto
-    if (!test_ushx_cd("ښکلا په مخ کې نه ده. ښکلا په زړه کی یوه رڼا ده.", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("ښکلا په مخ کې نه ده. ښکلا په زړه کی یوه رڼا ده.", preset)) return 1;
     // Azerbaijani
-    if (!test_ushx_cd("Gözəllik üzdə deyil. Gözəllik qəlbdə bir işıqdır.", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("Gözəllik üzdə deyil. Gözəllik qəlbdə bir işıqdır.", preset)) return 1;
     // Uzbek
-    if (!test_ushx_cd("Go'zallik yuzida emas. Go'zallik - qalbdagi nur.", preset)) return 1;
+    if (preset != 1 && preset != 2 && !test_ushx_cd("Go'zallik yuzida emas. Go'zallik - qalbdagi nur.", preset)) return 1;
     // Kurdish
-    if (!test_ushx_cd("Bedewî ne di rû de ye. Bedewî di dil de ronahiyek e.", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("Bedewî ne di rû de ye. Bedewî di dil de ronahiyek e.", preset)) return 1;
     // Urdu
-    if (!test_ushx_cd("خوبصورتی چہرے میں نہیں ہے۔ خوبصورتی دل میں روشنی ہے۔", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("خوبصورتی چہرے میں نہیں ہے۔ خوبصورتی دل میں روشنی ہے۔", preset)) return 1;
 
     // Hindi
-    if (!test_ushx_cd("सुंदरता चेहरे में नहीं है। सौंदर्य हृदय में प्रकाश है।", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("सुंदरता चेहरे में नहीं है। सौंदर्य हृदय में प्रकाश है।", preset)) return 1;
     // Bangla
-    if (!test_ushx_cd("সৌন্দর্য মুখে নেই। সৌন্দর্য হৃদয় একটি আলো।", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("সৌন্দর্য মুখে নেই। সৌন্দর্য হৃদয় একটি আলো।", preset)) return 1;
     // Punjabi
-    if (!test_ushx_cd("ਸੁੰਦਰਤਾ ਚਿਹਰੇ ਵਿੱਚ ਨਹੀਂ ਹੈ. ਸੁੰਦਰਤਾ ਦੇ ਦਿਲ ਵਿਚ ਚਾਨਣ ਹੈ.", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("ਸੁੰਦਰਤਾ ਚਿਹਰੇ ਵਿੱਚ ਨਹੀਂ ਹੈ. ਸੁੰਦਰਤਾ ਦੇ ਦਿਲ ਵਿਚ ਚਾਨਣ ਹੈ.", preset)) return 1;
     // Telugu
-    if (!test_ushx_cd("అందం ముఖంలో లేదు. అందం హృదయంలో ఒక కాంతి.", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("అందం ముఖంలో లేదు. అందం హృదయంలో ఒక కాంతి.", preset)) return 1;
     // Tamil
-    if (!test_ushx_cd("அழகு முகத்தில் இல்லை. அழகு என்பது இதயத்தின் ஒளி.", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("அழகு முகத்தில் இல்லை. அழகு என்பது இதயத்தின் ஒளி.", preset)) return 1;
     // Marathi
-    if (!test_ushx_cd("सौंदर्य चेहरा नाही. सौंदर्य हे हृदयातील एक प्रकाश आहे.", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("सौंदर्य चेहरा नाही. सौंदर्य हे हृदयातील एक प्रकाश आहे.", preset)) return 1;
     // Kannada
-    if (!test_ushx_cd("ಸೌಂದರ್ಯವು ಮುಖದ ಮೇಲೆ ಇಲ್ಲ. ಸೌಂದರ್ಯವು ಹೃದಯದಲ್ಲಿ ಒಂದು ಬೆಳಕು.", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("ಸೌಂದರ್ಯವು ಮುಖದ ಮೇಲೆ ಇಲ್ಲ. ಸೌಂದರ್ಯವು ಹೃದಯದಲ್ಲಿ ಒಂದು ಬೆಳಕು.", preset)) return 1;
     // Gujarati
-    if (!test_ushx_cd("સુંદરતા ચહેરા પર નથી. સુંદરતા હૃદયમાં પ્રકાશ છે.", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("સુંદરતા ચહેરા પર નથી. સુંદરતા હૃદયમાં પ્રકાશ છે.", preset)) return 1;
     // Malayalam
-    if (!test_ushx_cd("സൗന്ദര്യം മുഖത്ത് ഇല്ല. സൗന്ദര്യം ഹൃദയത്തിലെ ഒരു പ്രകാശമാണ്.", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("സൗന്ദര്യം മുഖത്ത് ഇല്ല. സൗന്ദര്യം ഹൃദയത്തിലെ ഒരു പ്രകാശമാണ്.", preset)) return 1;
     // Nepali
-    if (!test_ushx_cd("सौन्दर्य अनुहारमा छैन। सौन्दर्य मुटुको उज्यालो हो।", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("सौन्दर्य अनुहारमा छैन। सौन्दर्य मुटुको उज्यालो हो।", preset)) return 1;
     // Sinhala
-    if (!test_ushx_cd("රූපලාවන්ය මුහුණේ නොවේ. රූපලාවන්ය හදවත තුළ ඇති ආලෝකය වේ.", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("රූපලාවන්ය මුහුණේ නොවේ. රූපලාවන්ය හදවත තුළ ඇති ආලෝකය වේ.", preset)) return 1;
 
     // Chinese
-    if (!test_ushx_cd("美是不是在脸上。 美是心中的亮光。", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("美是不是在脸上。 美是心中的亮光。", preset)) return 1;
     // Javanese
-    if (!test_ushx_cd("Beauty ora ing pasuryan. Kaendahan iku cahya ing sajroning ati.", preset)) return 1;
+    if (preset != 1 && !test_ushx_cd("Beauty ora ing pasuryan. Kaendahan iku cahya ing sajroning ati.", preset)) return 1;
     // Japanese
-    if (!test_ushx_cd("美は顔にありません。美は心の中の光です。", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("美は顔にありません。美は心の中の光です。", preset)) return 1;
     // Filipino
-    if (!test_ushx_cd("Ang kagandahan ay wala sa mukha. Ang kagandahan ay ang ilaw sa puso.", preset)) return 1;
+    if (preset != 1 && !test_ushx_cd("Ang kagandahan ay wala sa mukha. Ang kagandahan ay ang ilaw sa puso.", preset)) return 1;
     // Korean
-    if (!test_ushx_cd("아름다움은 얼굴에 없습니다。아름다움은 마음의 빛입니다。", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("아름다움은 얼굴에 없습니다。아름다움은 마음의 빛입니다。", preset)) return 1;
     // Vietnam
-    if (!test_ushx_cd("Vẻ đẹp không nằm trong khuôn mặt. Vẻ đẹp là ánh sáng trong tim.", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("Vẻ đẹp không nằm trong khuôn mặt. Vẻ đẹp là ánh sáng trong tim.", preset)) return 1;
     // Thai
-    if (!test_ushx_cd("ความงามไม่ได้อยู่ที่ใบหน้า ความงามเป็นแสงสว่างในใจ", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("ความงามไม่ได้อยู่ที่ใบหน้า ความงามเป็นแสงสว่างในใจ", preset)) return 1;
     // Burmese
-    if (!test_ushx_cd("အလှအပမျက်နှာပေါ်မှာမဟုတ်ပါဘူး။ အလှအပစိတ်နှလုံးထဲမှာအလင်းကိုဖြစ်ပါတယ်။", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("အလှအပမျက်နှာပေါ်မှာမဟုတ်ပါဘူး။ အလှအပစိတ်နှလုံးထဲမှာအလင်းကိုဖြစ်ပါတယ်။", preset)) return 1;
     // Malay
-    if (!test_ushx_cd("Kecantikan bukan di muka. Kecantikan adalah cahaya di dalam hati.", preset)) return 1;
+    if (preset != 1 && !test_ushx_cd("Kecantikan bukan di muka. Kecantikan adalah cahaya di dalam hati.", preset)) return 1;
 
     // Emoji
-    if (!test_ushx_cd("🤣🤣🤣🤣🤣🤣🤣🤣🤣🤣🤣", preset)) return 1;
-    if (!test_ushx_cd("😀😃😄😁😆😅🤣😂🙂🙃😉😊😇🥰😍🤩😘😗😚😙😋😛😜🤪😝🤑🤗🤭🤫🤔🤐🤨😐😑😶😏😒🙄😬🤥😌😔😪🤤😴😷🤒🤕🤢", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("🤣🤣🤣🤣🤣🤣🤣🤣🤣🤣🤣", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("😀😃😄😁😆😅🤣😂🙂🙃😉😊😇🥰😍🤩😘😗😚😙😋😛😜🤪😝🤑🤗🤭🤫🤔🤐🤨😐😑😶😏😒🙄😬🤥😌😔😪🤤😴😷🤒🤕🤢", preset)) return 1;
 
     // Binary
-    if (!test_ushx_cd("Hello\x80\x83\xAE\xBC\xBD\xBE", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd("Hello\x80\x83\xAE\xBC\xBD\xBE", preset)) return 1;
 
     return 0;
 
