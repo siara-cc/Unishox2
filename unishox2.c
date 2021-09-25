@@ -774,7 +774,7 @@ int readHCodeIdx(const char *in, int len, int *bit_no_p, const byte usx_hcodes[]
   if (*bit_no_p < len) {
     byte code = read8bitCode(in, len, *bit_no_p);
     for (int code_pos = 0; code_pos < 5; code_pos++) {
-      if ((code & len_masks[usx_hcode_lens[code_pos] - 1]) == usx_hcodes[code_pos]) {
+      if (usx_hcode_lens[code_pos] && (code & len_masks[usx_hcode_lens[code_pos] - 1]) == usx_hcodes[code_pos]) {
         *bit_no_p += usx_hcode_lens[code_pos];
         return code_pos;
       }
