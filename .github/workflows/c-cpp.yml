@@ -17,3 +17,37 @@ jobs:
       run: make
     - name: test
       run: ./test_unishox2 -t
+    - name: test preset 0
+      run: ./test_unishox2 -t 0
+    - name: test preset 1
+      run: ./test_unishox2 -t 1
+    - name: test preset 2
+      run: ./test_unishox2 -t 2
+    - name: test preset 3
+      run: ./test_unishox2 -t 3
+    - name: test preset 4
+      run: ./test_unishox2 -t 4
+    - name: test preset 5
+      run: ./test_unishox2 -t 5
+    - name: test preset 6
+      run: ./test_unishox2 -t 6
+    - name: test preset 7
+      run: ./test_unishox2 -t 7
+    - name: test preset 8
+      run: ./test_unishox2 -t 8
+    - name: test preset 9
+      run: ./test_unishox2 -t 9
+    - name: test preset 10
+      run: ./test_unishox2 -t 10
+    - name: test preset 11
+      run: ./test_unishox2 -t 11
+    - name: test preset 12
+      run: ./test_unishox2 -t 12
+    - name: test preset 13
+      run: ./test_unishox2 -t 13
+    - name: test preset 14
+      run: ./test_unishox2 -t 14
+    - name: test preset 15
+      run: ./test_unishox2 -t 15
+    - name: test preset 16
+      run: ./test_unishox2 -t 16
