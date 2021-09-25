@@ -98,7 +98,7 @@ int unishox2_decompress_preset_lines(const char *in, int len, char *out, int pre
 int test_ushx_cd(char *input, int preset) {
 
   char cbuf[200];
-  char dbuf[250];
+  char dbuf[251];
   long terminator;
   int len = (int)strlen(input);
   int clen = unishox2_compress_preset_lines(input, len, cbuf, preset, NULL, &terminator);
