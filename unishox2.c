@@ -377,6 +377,10 @@ int append_nibble_escape(char *out, int ol, byte state, const byte usx_hcodes[],
   return ol;
 }
 
+long min_of(long c, long i) {
+  return c > i ? i : c;
+}
+
 long append_final_bits(char *const out, const int ol, const byte state, const byte usx_hcodes[], const byte usx_hcode_lens[]) {
   union { char buf[4]; long as_long; } terminator;
   int tl = (ol - 1) % 8 + 1; // 8x+[0..7] -> [8, 1..7]
@@ -814,23 +818,22 @@ int getStepCodeIdx(const char *in, int len, int *bit_no_p, int limit) {
   return idx;
 }
 
-// TODO: Check length
 int32_t getNumFromBits(const char *in, int len, int bit_no, int count) {
    int32_t ret = 0;
    while (count-- && bit_no < len) {
      ret += (readBit(in, bit_no) ? 1 << count : 0);
      bit_no++;
    }
-   return ret;
+   return count < 0 ? ret : -1;
 }
 
-int readCount(const char *in, int *bit_no_p, int len) {
+int32_t readCount(const char *in, int *bit_no_p, int len) {
   int idx = getStepCodeIdx(in, len, bit_no_p, 4);
   if (idx == 99)
     return -1;
   if (*bit_no_p + count_bit_lens[idx] - 1 >= len)
     return -1;
-  int count = getNumFromBits(in, len, *bit_no_p, count_bit_lens[idx]) + (idx ? count_adder[idx - 1] : 0);
+  int32_t count = getNumFromBits(in, len, *bit_no_p, count_bit_lens[idx]) + (idx ? count_adder[idx - 1] : 0);
   (*bit_no_p) += count_bit_lens[idx];
   return count;
 }
@@ -876,13 +879,13 @@ void writeUTF8(char *out, int *ol, int uni) {
 
 int decodeRepeat(const char *in, int len, char *out, int ol, int *bit_no, struct us_lnk_lst *prev_lines) {
   if (prev_lines) {
-    int dict_len = readCount(in, bit_no, len) + NICE_LEN;
-    if (dict_len < 0)
+    int32_t dict_len = readCount(in, bit_no, len) + NICE_LEN;
+    if (dict_len < NICE_LEN)
       return ol;
-    int dist = readCount(in, bit_no, len);
+    int32_t dist = readCount(in, bit_no, len);
     if (dist < 0)
       return ol;
-    int ctx = readCount(in, bit_no, len);
+    int32_t ctx = readCount(in, bit_no, len);
     if (ctx < 0)
       return ol;
     struct us_lnk_lst *cur_line = prev_lines;
@@ -891,20 +894,20 @@ int decodeRepeat(const char *in, int len, char *out, int ol, int *bit_no, struct
     memmove(out + ol, cur_line->data + dist, dict_len);
     ol += dict_len;
   } else {
-    int dict_len = readCount(in, bit_no, len) + NICE_LEN;
-    if (dict_len < 0)
+    int32_t dict_len = readCount(in, bit_no, len) + NICE_LEN;
+    if (dict_len < NICE_LEN)
       return ol;
-    int dist = readCount(in, bit_no, len) + NICE_LEN - 1;
-    if (dist < 0)
+    int32_t dist = readCount(in, bit_no, len) + NICE_LEN - 1;
+    if (dist < NICE_LEN - 1)
       return ol;
     //printf("Decode len: %d, dist: %d\n", dict_len - NICE_LEN, dist - NICE_LEN + 1);
-    memcpy(out + ol, out + ol - dist, dict_len);
+    memmove(out + ol, out + ol - dist, dict_len);
     ol += dict_len;
   }
   return ol;
 }
 
-char getHexChar(int nibble, int hex_type) {
+char getHexChar(int32_t nibble, int hex_type) {
   if (nibble >= 0 && nibble <= 9)
     return '0' + nibble;
   else if (hex_type < USX_NIB_HEX_UPPER)
@@ -928,7 +931,6 @@ int unishox2_decompress_lines(const char *in, int len, char *out, const byte usx
   int prev_uni = 0;
 
   len <<= 3;
-  out[ol] = 0;
   while (bit_no < len) {
     int orig_bit_no = bit_no;
     if (dstate == USX_DELTA || h == USX_DELTA) {
@@ -1045,45 +1047,63 @@ int unishox2_decompress_lines(const char *in, int len, char *out, const byte usx
           int idx = getStepCodeIdx(in, len, &bit_no, 5);
           if (idx == 0) {
             idx = getStepCodeIdx(in, len, &bit_no, 4);
-            int rem = readCount(in, &bit_no, len);
+            int32_t rem = readCount(in, &bit_no, len);
             if (rem < 0)
               break;
             rem = (int)strlen(usx_templates[idx]) - rem;
+            int eof = 0;
             for (int j = 0; j < rem; j++) {
               char c_t = usx_templates[idx][j];
               if (c_t == 'f' || c_t == 'r' || c_t == 't' || c_t == 'o' || c_t == 'F') {
                   char nibble_len = (c_t == 'f' || c_t == 'F' ? 4 : (c_t == 'r' ? 3 : (c_t == 't' ? 2 : 1)));
-                  out[ol++] = getHexChar(getNumFromBits(in, len, bit_no, nibble_len),
+                  const int32_t raw_char = getNumFromBits(in, len, bit_no, nibble_len);
+                  if (raw_char < 0) {
+                      eof = 1;
+                      break;
+                  }
+                  out[ol++] = getHexChar((char)raw_char,
                       c_t == 'f' ? USX_NIB_HEX_LOWER : USX_NIB_HEX_UPPER);
                   bit_no += nibble_len;
               } else
                 out[ol++] = c_t;
             }
+            if (eof) break; // reach input eof
           } else
           if (idx == 5) {
-            int bin_count = readCount(in, &bit_no, len);
+            int32_t bin_count = readCount(in, &bit_no, len);
             if (bin_count < 0)
               break;
+            if (bin_count == 0) // invalid encoding
+              break;
             do {
-              out[ol++] = getNumFromBits(in, len, bit_no, 8);
+              const int32_t raw_char = getNumFromBits(in, len, bit_no, 8);
+              if (raw_char < 0)
+                  break;
+              out[ol++] = (char)raw_char;
               bit_no += 8;
             } while (--bin_count);
+            if (bin_count > 0) break; // reach input eof
           } else {
-            int nibble_count = 0;
+            int32_t nibble_count = 0;
             if (idx == 2 || idx == 4)
               nibble_count = 32;
             else {
               nibble_count = readCount(in, &bit_no, len);
               if (nibble_count < 0)
                 break;
+              if (nibble_count == 0) // invalid encoding
+                break;
             }
             do {
-              int nibble = (int) getNumFromBits(in, len, bit_no, 4);
+              int32_t nibble = getNumFromBits(in, len, bit_no, 4);
+              if (nibble < 0)
+                  break;
               out[ol++] = getHexChar(nibble, idx < 3 ? USX_NIB_HEX_LOWER : USX_NIB_HEX_UPPER);
               if ((idx == 2 || idx == 4) && (nibble_count == 25 || nibble_count == 21 || nibble_count == 17 || nibble_count == 13))
                 out[ol++] = '-';
               bit_no += 4;
             } while (--nibble_count);
+            if (nibble_count > 0) break; // reach input eof
           }
           if (dstate == USX_DELTA)
             h = USX_DELTA;
@@ -1109,10 +1129,12 @@ int unishox2_decompress_lines(const char *in, int len, char *out, const byte usx
           out[ol++] = '\r';
           out[ol++] = '\n';
         } else if (h == USX_NUM && v == 26) {
-          int count = readCount(in, &bit_no, len);
+          int32_t count = readCount(in, &bit_no, len);
           if (count < 0)
             break;
           count += 4;
+          if (ol <= 0)
+            return 0; // invalid encoding
           char rpt_c = out[ol - 1];
           while (count--)
             out[ol++] = rpt_c;
