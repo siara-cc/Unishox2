@@ -21,6 +21,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdint.h>
+#include <limits.h>
 
 #include "unishox2.h"
 
@@ -96,11 +97,12 @@ void init_coder() {
 }
 
 unsigned int usx_mask[] = {0x80, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC, 0xFE, 0xFF};
-int append_bits(char *out, int ol, byte code, int clen) {
+int append_bits(char *out, int olen, int ol, byte code, int clen) {
 
   byte cur_bit;
   byte blen;
   unsigned char a_byte;
+  int oidx;
 
   //printf("%d,%x,%d,%d\n", ol, code, clen, state);
 
@@ -111,10 +113,13 @@ int append_bits(char *out, int ol, byte code, int clen) {
      a_byte >>= cur_bit;
      if (blen + cur_bit > 8)
         blen = (8 - cur_bit);
+     oidx = ol / 8;
+     if (oidx < 0 || olen <= oidx)
+        return -1;
      if (cur_bit == 0)
-        out[ol / 8] = a_byte;
+        out[oidx] = a_byte;
      else
-        out[ol / 8] |= a_byte;
+        out[oidx] |= a_byte;
      code <<= blen;
      ol += blen;
      clen -= blen;
@@ -122,16 +127,21 @@ int append_bits(char *out, int ol, byte code, int clen) {
    return ol;
 }
 
-int append_switch_code(char *out, int ol, byte state) {
+#define SAFE_APPEND_BITS(exp) do { \
+  const int newidx = (exp); \
+  if (newidx < 0) return newidx; \
+} while (0)
+
+int append_switch_code(char *out, int olen, int ol, byte state) {
   if (state == USX_DELTA) {
-    ol = append_bits(out, ol, UNI_STATE_SPL_CODE, UNI_STATE_SPL_CODE_LEN);
-    ol = append_bits(out, ol, UNI_STATE_SW_CODE, UNI_STATE_SW_CODE_LEN);
+    SAFE_APPEND_BITS(ol = append_bits(out, olen, ol, UNI_STATE_SPL_CODE, UNI_STATE_SPL_CODE_LEN));
+    SAFE_APPEND_BITS(ol = append_bits(out, olen, ol, UNI_STATE_SW_CODE, UNI_STATE_SW_CODE_LEN));
   } else
-    ol = append_bits(out, ol, SW_CODE, SW_CODE_LEN);
+    SAFE_APPEND_BITS(ol = append_bits(out, olen, ol, SW_CODE, SW_CODE_LEN));
   return ol;
 }
 
-int append_code(char *out, int ol, byte code, byte *state, const byte usx_hcodes[], const byte usx_hcode_lens[]) {
+int append_code(char *out, int olen, int ol, byte code, byte *state, const byte usx_hcodes[], const byte usx_hcode_lens[]) {
   byte hcode = code >> 5;
   byte vcode = code & 0x1F;
   if (!usx_hcode_lens[hcode] && hcode != USX_ALPHA)
@@ -139,40 +149,41 @@ int append_code(char *out, int ol, byte code, byte *state, const byte usx_hcodes
   switch (hcode) {
     case USX_ALPHA:
       if (*state != USX_ALPHA) {
-        ol = append_switch_code(out, ol, *state);
-        ol = append_bits(out, ol, usx_hcodes[USX_ALPHA], usx_hcode_lens[USX_ALPHA]);
+        SAFE_APPEND_BITS(ol = append_switch_code(out, olen, ol, *state));
+        SAFE_APPEND_BITS(ol = append_bits(out, olen, ol, usx_hcodes[USX_ALPHA], usx_hcode_lens[USX_ALPHA]));
         *state = USX_ALPHA;
       }
       break;
     case USX_SYM:
-      ol = append_switch_code(out, ol, *state);
-      ol = append_bits(out, ol, usx_hcodes[USX_SYM], usx_hcode_lens[USX_SYM]);
+      SAFE_APPEND_BITS(ol = append_switch_code(out, olen, ol, *state));
+      SAFE_APPEND_BITS(ol = append_bits(out, olen, ol, usx_hcodes[USX_SYM], usx_hcode_lens[USX_SYM]));
       break;
     case USX_NUM:
       if (*state != USX_NUM) {
-        ol = append_switch_code(out, ol, *state);
-        ol = append_bits(out, ol, usx_hcodes[USX_NUM], usx_hcode_lens[USX_NUM]);
+        SAFE_APPEND_BITS(ol = append_switch_code(out, olen, ol, *state));
+        SAFE_APPEND_BITS(ol = append_bits(out, olen, ol, usx_hcodes[USX_NUM], usx_hcode_lens[USX_NUM]));
         if (usx_sets[hcode][vcode] >= '0' && usx_sets[hcode][vcode] <= '9')
           *state = USX_NUM;
       }
   }
-  return append_bits(out, ol, usx_vcodes[vcode], usx_vcode_lens[vcode]);
+  SAFE_APPEND_BITS(ol = append_bits(out, olen, ol, usx_vcodes[vcode], usx_vcode_lens[vcode]));
+  return ol;
 }
 
 const byte count_bit_lens[5] = {2, 4, 7, 11, 16};
 const int32_t count_adder[5] = {4, 20, 148, 2196, 67732};
 const byte count_codes[] = {0x01, 0x82, 0xC3, 0xE4, 0xF4};
-int encodeCount(char *out, int ol, int count) {
+int encodeCount(char *out, int olen, int ol, int count) {
   // First five bits are code and Last three bits of codes represent length
   for (int i = 0; i < 5; i++) {
     if (count < count_adder[i]) {
-      ol = append_bits(out, ol, (count_codes[i] & 0xF8), count_codes[i] & 0x07);
+      SAFE_APPEND_BITS(ol = append_bits(out, olen, ol, (count_codes[i] & 0xF8), count_codes[i] & 0x07));
       uint16_t count16 = (count - (i ? count_adder[i - 1] : 0)) << (16 - count_bit_lens[i]);
       if (count_bit_lens[i] > 8) {
-        ol = append_bits(out, ol, count16 >> 8, 8);
-        ol = append_bits(out, ol, count16 & 0xFF, count_bit_lens[i] - 8);
+        SAFE_APPEND_BITS(ol = append_bits(out, olen, ol, count16 >> 8, 8));
+        SAFE_APPEND_BITS(ol = append_bits(out, olen, ol, count16 & 0xFF, count_bit_lens[i] - 8));
       } else
-        ol = append_bits(out, ol, count16 >> 8, count_bit_lens[i]);
+        SAFE_APPEND_BITS(ol = append_bits(out, olen, ol, count16 >> 8, count_bit_lens[i]));
       return ol;
     }
   }
@@ -182,7 +193,7 @@ int encodeCount(char *out, int ol, int count) {
 const byte uni_bit_len[5] = {6, 12, 14, 16, 21};
 const int32_t uni_adder[5] = {0, 64, 4160, 20544, 86080};
 
-int encodeUnicode(char *out, int ol, int32_t code, int32_t prev_code) {
+int encodeUnicode(char *out, int olen, int ol, int32_t code, int32_t prev_code) {
   // First five bits are code and Last three bits of codes represent length
   //const byte codes[8] = {0x00, 0x42, 0x83, 0xA3, 0xC3, 0xE4, 0xF5, 0xFD};
   const byte codes[6] = {0x01, 0x82, 0xC3, 0xE4, 0xF5, 0xFD};
@@ -195,24 +206,24 @@ int encodeUnicode(char *out, int ol, int32_t code, int32_t prev_code) {
   for (int i = 0; i < 5; i++) {
     till += (1 << uni_bit_len[i]);
     if (diff < till) {
-      ol = append_bits(out, ol, (codes[i] & 0xF8), codes[i] & 0x07);
+      SAFE_APPEND_BITS(ol = append_bits(out, olen, ol, (codes[i] & 0xF8), codes[i] & 0x07));
       //if (diff) {
-        ol = append_bits(out, ol, prev_code > code ? 0x80 : 0, 1);
+        SAFE_APPEND_BITS(ol = append_bits(out, olen, ol, prev_code > code ? 0x80 : 0, 1));
         int32_t val = diff - uni_adder[i];
         //printf("Val: %d\n", val);
         if (uni_bit_len[i] > 16) {
           val <<= (24 - uni_bit_len[i]);
-          ol = append_bits(out, ol, val >> 16, 8);
-          ol = append_bits(out, ol, (val >> 8) & 0xFF, 8);
-          ol = append_bits(out, ol, val & 0xFF, uni_bit_len[i] - 16);
+          SAFE_APPEND_BITS(ol = append_bits(out, olen, ol, val >> 16, 8));
+          SAFE_APPEND_BITS(ol = append_bits(out, olen, ol, (val >> 8) & 0xFF, 8));
+          SAFE_APPEND_BITS(ol = append_bits(out, olen, ol, val & 0xFF, uni_bit_len[i] - 16));
         } else
         if (uni_bit_len[i] > 8) {
           val <<= (16 - uni_bit_len[i]);
-          ol = append_bits(out, ol, val >> 8, 8);
-          ol = append_bits(out, ol, val & 0xFF, uni_bit_len[i] - 8);
+          SAFE_APPEND_BITS(ol = append_bits(out, olen, ol, val >> 8, 8));
+          SAFE_APPEND_BITS(ol = append_bits(out, olen, ol, val & 0xFF, uni_bit_len[i] - 8));
         } else {
           val <<= (8 - uni_bit_len[i]);
-          ol = append_bits(out, ol, val & 0xFF, uni_bit_len[i]);
+          SAFE_APPEND_BITS(ol = append_bits(out, olen, ol, val & 0xFF, uni_bit_len[i]));
         }
       return ol;
     }
@@ -257,7 +268,7 @@ int32_t readUTF8(const char *in, int len, int l, int *utf8len) {
   return ret;
 }
 
-int matchOccurance(const char *in, int len, int l, char *out, int *ol, byte *state, const byte usx_hcodes[], const byte usx_hcode_lens[]) {
+int matchOccurance(const char *in, int len, int l, char *out, int olen, int *ol, byte *state, const byte usx_hcodes[], const byte usx_hcode_lens[]) {
   int j, k;
   int longest_dist = 0;
   int longest_len = 0;
@@ -280,11 +291,11 @@ int matchOccurance(const char *in, int len, int l, char *out, int *ol, byte *sta
     }
   }
   if (longest_len) {
-    *ol = append_switch_code(out, *ol, *state);
-    *ol = append_bits(out, *ol, usx_hcodes[USX_DICT], usx_hcode_lens[USX_DICT]);
+    SAFE_APPEND_BITS(*ol = append_switch_code(out, olen, *ol, *state));
+    SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, usx_hcodes[USX_DICT], usx_hcode_lens[USX_DICT]));
     //printf("Len:%d / Dist:%d/%.*s\n", longest_len, longest_dist, longest_len + NICE_LEN, in + l - longest_dist - NICE_LEN + 1);
-    *ol = encodeCount(out, *ol, longest_len);
-    *ol = encodeCount(out, *ol, longest_dist);
+    SAFE_APPEND_BITS(*ol = encodeCount(out, olen, *ol, longest_len));
+    SAFE_APPEND_BITS(*ol = encodeCount(out, olen, *ol, longest_dist));
     l += (longest_len + NICE_LEN);
     l--;
     return l;
@@ -292,7 +303,7 @@ int matchOccurance(const char *in, int len, int l, char *out, int *ol, byte *sta
   return -l;
 }
 
-int matchLine(const char *in, int len, int l, char *out, int *ol, struct us_lnk_lst *prev_lines, byte *state, const byte usx_hcodes[], const byte usx_hcode_lens[]) {
+int matchLine(const char *in, int len, int l, char *out, int olen, int *ol, struct us_lnk_lst *prev_lines, byte *state, const byte usx_hcodes[], const byte usx_hcode_lens[]) {
   int last_ol = *ol;
   int last_len = 0;
   int last_dist = 0;
@@ -324,11 +335,11 @@ int matchLine(const char *in, int len, int l, char *out, int *ol, struct us_lnk_
         last_len = (k - j);
         last_dist = j;
         last_ctx = line_ctr;
-        *ol = append_switch_code(out, *ol, *state);
-        *ol = append_bits(out, *ol, usx_hcodes[USX_DICT], usx_hcode_lens[USX_DICT]);
-        *ol = encodeCount(out, *ol, last_len - NICE_LEN);
-        *ol = encodeCount(out, *ol, last_dist);
-        *ol = encodeCount(out, *ol, last_ctx);
+        SAFE_APPEND_BITS(*ol = append_switch_code(out, olen, *ol, *state));
+        SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, usx_hcodes[USX_DICT], usx_hcode_lens[USX_DICT]));
+        SAFE_APPEND_BITS(*ol = encodeCount(out, olen, *ol, last_len - NICE_LEN));
+        SAFE_APPEND_BITS(*ol = encodeCount(out, olen, *ol, last_dist));
+        SAFE_APPEND_BITS(*ol = encodeCount(out, olen, *ol, last_ctx));
         /*
         if ((*ol - last_ol) > (last_len * 4)) {
           last_len = 0;
@@ -370,10 +381,10 @@ char getNibbleType(char ch) {
   return USX_NIB_NOT;
 }
 
-int append_nibble_escape(char *out, int ol, byte state, const byte usx_hcodes[], const byte usx_hcode_lens[]) {
-  ol = append_switch_code(out, ol, state);
-  ol = append_bits(out, ol, usx_hcodes[USX_NUM], usx_hcode_lens[USX_NUM]);
-  ol = append_bits(out, ol, 0, 2);
+int append_nibble_escape(char *out, int olen, int ol, byte state, const byte usx_hcodes[], const byte usx_hcode_lens[]) {
+  SAFE_APPEND_BITS(ol = append_switch_code(out, olen, ol, state));
+  SAFE_APPEND_BITS(ol = append_bits(out, olen, ol, usx_hcodes[USX_NUM], usx_hcode_lens[USX_NUM]));
+  SAFE_APPEND_BITS(ol = append_bits(out, olen, ol, 0, 2));
   return ol;
 }
 
@@ -391,17 +402,17 @@ long append_final_bits(char *const out, const int ol, const byte state, const by
     if (USX_NUM != state) {
       // for num state, append TERM_CODE directly
       // for other state, switch to num first
-      tl = append_switch_code(terminator.buf, tl, state);
-      tl = append_bits(terminator.buf, tl, usx_hcodes[USX_NUM], usx_hcode_lens[USX_NUM]);
+      tl = append_switch_code(terminator.buf, sizeof terminator.buf, tl, state);
+      tl = append_bits(terminator.buf, sizeof terminator.buf, tl, usx_hcodes[USX_NUM], usx_hcode_lens[USX_NUM]);
     }
-    tl = append_bits(terminator.buf, tl, usx_vcodes[TERM_CODE & 0x1F], usx_vcode_lens[TERM_CODE & 0x1F]);
+    tl = append_bits(terminator.buf, sizeof terminator.buf, tl, usx_vcodes[TERM_CODE & 0x1F], usx_vcode_lens[TERM_CODE & 0x1F]);
   } else {
     // preset 1, terminate at 4 SW_CODE, i.e., 8 continuous 0 bits
-    tl = append_bits(terminator.buf, tl, TERM_BYTE_PRESET_1, 8);
+    tl = append_bits(terminator.buf, sizeof terminator.buf, tl, TERM_BYTE_PRESET_1, 8);
   }
 
   // fill byte with the last bit
-  tl = append_bits(terminator.buf, tl, terminator.buf[(tl-1)/8] << ((tl-1)&7), (8 - tl % 8) & 7);
+  tl = append_bits(terminator.buf, sizeof terminator.buf, tl, terminator.buf[(tl-1)/8] << ((tl-1)&7), (8 - tl % 8) & 7);
 
   if (ol%8) out[(ol-1) / 8] |= terminator.buf[0];
   terminator.buf[0] = terminator.buf[1];
@@ -412,7 +423,12 @@ long append_final_bits(char *const out, const int ol, const byte state, const by
   return terminator.as_long;
 }
 
-int unishox2_compress_lines(const char *in, int len, char *out, const byte usx_hcodes[], const byte usx_hcode_lens[], const char *usx_freq_seq[], const char *usx_templates[], struct us_lnk_lst *prev_lines, long *term) {
+#define SAFE_APPEND_BITS2(olen, exp) do { \
+  const int newidx = (exp); \
+  if (newidx < 0) return (olen) + 1; \
+} while (0)
+
+int unishox2_compress_lines(const char *in, int len, UNISHOX_API_OUT_AND_LEN(char *out, int olen), const byte usx_hcodes[], const byte usx_hcode_lens[], const char *usx_freq_seq[], const char *usx_templates[], struct us_lnk_lst *prev_lines, long *term) {
 
   byte state;
 
@@ -420,26 +436,33 @@ int unishox2_compress_lines(const char *in, int len, char *out, const byte usx_h
   char c_in, c_next;
   int prev_uni;
   byte is_upper, is_all_upper;
+#if (UNISHOX_API_OUT_AND_LEN(0,1)) == 0
+  const int olen = INT_MAX - 1;
+#endif
 
   init_coder();
   ol = 0;
   prev_uni = 0;
   state = USX_ALPHA;
   is_all_upper = 0;
-  ol = append_bits(out, ol, 0x80, 1); // magic bit
+  SAFE_APPEND_BITS2(olen, ol = append_bits(out, olen, ol, 0x80, 1)); // magic bit
   for (l=0; l<len; l++) {
 
     if (usx_hcode_lens[USX_DICT] && l < (len - NICE_LEN + 1)) {
       if (prev_lines) {
-        l = matchLine(in, len, l, out, &ol, prev_lines, &state, usx_hcodes, usx_hcode_lens);
+        l = matchLine(in, len, l, out, olen, &ol, prev_lines, &state, usx_hcodes, usx_hcode_lens);
         if (l > 0) {
           continue;
+        } else if (l < 0 && ol < 0) {
+          return olen + 1;
         }
         l = -l;
       } else {
-          l = matchOccurance(in, len, l, out, &ol, &state, usx_hcodes, usx_hcode_lens);
+          l = matchOccurance(in, len, l, out, olen, &ol, &state, usx_hcodes, usx_hcode_lens);
           if (l > 0) {
             continue;
+          } else if (l < 0 && ol < 0) {
+            return olen + 1;
           }
           l = -l;
       }
@@ -452,8 +475,8 @@ int unishox2_compress_lines(const char *in, int len, char *out, const byte usx_h
         while (rpt_count < len && in[rpt_count] == c_in)
           rpt_count++;
         rpt_count -= l;
-        ol = append_code(out, ol, RPT_CODE, &state, usx_hcodes, usx_hcode_lens);
-        ol = encodeCount(out, ol, rpt_count - 4);
+        SAFE_APPEND_BITS2(olen, ol = append_code(out, olen, ol, RPT_CODE, &state, usx_hcodes, usx_hcode_lens));
+        SAFE_APPEND_BITS2(olen, ol = encodeCount(out, olen, ol, rpt_count - 4));
         l += rpt_count;
         l--;
         continue;
@@ -478,13 +501,13 @@ int unishox2_compress_lines(const char *in, int len, char *out, const byte usx_h
           }
         }
         if (uid_pos == l + 36) {
-          ol = append_nibble_escape(out, ol, state, usx_hcodes, usx_hcode_lens);
-          ol = append_bits(out, ol, (hex_type == USX_NIB_HEX_LOWER ? 0xC0 : 0xF0),
-                 (hex_type == USX_NIB_HEX_LOWER ? 3 : 5));
+          SAFE_APPEND_BITS2(olen, ol = append_nibble_escape(out, olen, ol, state, usx_hcodes, usx_hcode_lens));
+          SAFE_APPEND_BITS2(olen, ol = append_bits(out, olen, ol, (hex_type == USX_NIB_HEX_LOWER ? 0xC0 : 0xF0),
+                 (hex_type == USX_NIB_HEX_LOWER ? 3 : 5)));
           for (uid_pos = l; uid_pos < l + 36; uid_pos++) {
             char c_uid = in[uid_pos];
             if (c_uid != '-')
-              ol = append_bits(out, ol, getBaseCode(c_uid), 4);
+              SAFE_APPEND_BITS2(olen, ol = append_bits(out, olen, ol, getBaseCode(c_uid), 4));
           }
           //printf("GUID:\n");
           l += 35;
@@ -510,11 +533,11 @@ int unishox2_compress_lines(const char *in, int len, char *out, const byte usx_h
       if (hex_len > 10 && hex_type == USX_NIB_NUM)
         hex_type = USX_NIB_HEX_LOWER;
       if ((hex_type == USX_NIB_HEX_LOWER || hex_type == USX_NIB_HEX_UPPER) && hex_len > 3) {
-        ol = append_nibble_escape(out, ol, state, usx_hcodes, usx_hcode_lens);
-        ol = append_bits(out, ol, (hex_type == USX_NIB_HEX_LOWER ? 0x80 : 0xE0), (hex_type == USX_NIB_HEX_LOWER ? 2 : 4));
-        ol = encodeCount(out, ol, hex_len);
+        SAFE_APPEND_BITS2(olen, ol = append_nibble_escape(out, olen, ol, state, usx_hcodes, usx_hcode_lens));
+        SAFE_APPEND_BITS2(olen, ol = append_bits(out, olen, ol, (hex_type == USX_NIB_HEX_LOWER ? 0x80 : 0xE0), (hex_type == USX_NIB_HEX_LOWER ? 2 : 4)));
+        SAFE_APPEND_BITS2(olen, ol = encodeCount(out, olen, ol, hex_len));
         do {
-          ol = append_bits(out, ol, getBaseCode(in[l++]), 4);
+          SAFE_APPEND_BITS2(olen, ol = append_bits(out, olen, ol, getBaseCode(in[l++]), 4));
         } while (--hex_len);
         l--;
         continue;
@@ -546,17 +569,17 @@ int unishox2_compress_lines(const char *in, int len, char *out, const byte usx_h
           if (((float)j / rem) > 0.66) {
             //printf("%s\n", usx_templates[i]);
             rem = rem - j;
-            ol = append_nibble_escape(out, ol, state, usx_hcodes, usx_hcode_lens);
-            ol = append_bits(out, ol, 0, 1);
-            ol = append_bits(out, ol, (count_codes[i] & 0xF8), count_codes[i] & 0x07);
-            ol = encodeCount(out, ol, rem);
+            SAFE_APPEND_BITS2(olen, ol = append_nibble_escape(out, olen, ol, state, usx_hcodes, usx_hcode_lens));
+            SAFE_APPEND_BITS2(olen, ol = append_bits(out, olen, ol, 0, 1));
+            SAFE_APPEND_BITS2(olen, ol = append_bits(out, olen, ol, (count_codes[i] & 0xF8), count_codes[i] & 0x07));
+            SAFE_APPEND_BITS2(olen, ol = encodeCount(out, olen, ol, rem));
             for (int k = 0; k < j; k++) {
               char c_t = usx_templates[i][k];
               if (c_t == 'f' || c_t == 'F')
-                ol = append_bits(out, ol, getBaseCode(in[l + k]), 4);
+                SAFE_APPEND_BITS2(olen, ol = append_bits(out, olen, ol, getBaseCode(in[l + k]), 4));
               else if (c_t == 'r' || c_t == 't' || c_t == 'o') {
                 c_t = (c_t == 'r' ? 3 : (c_t == 't' ? 2 : 1));
-                ol = append_bits(out, ol, (in[l + k] - '0') << (8 - c_t), c_t);
+                SAFE_APPEND_BITS2(olen, ol = append_bits(out, olen, ol, (in[l + k] - '0') << (8 - c_t), c_t));
               }
             }
             l += j;
@@ -575,7 +598,7 @@ int unishox2_compress_lines(const char *in, int len, char *out, const byte usx_h
         int seq_len = (int)strlen(usx_freq_seq[i]);
         if (len - seq_len >= 0 && l <= len - seq_len) {
           if (memcmp(usx_freq_seq[i], in + l, seq_len) == 0 && usx_hcode_lens[usx_freq_codes[i] >> 5]) {
-            ol = append_code(out, ol, usx_freq_codes[i], &state, usx_hcodes, usx_hcode_lens);
+            SAFE_APPEND_BITS2(olen, ol = append_code(out, olen, ol, usx_freq_codes[i], &state, usx_hcodes, usx_hcode_lens));
             l += seq_len;
             l--;
             break;
@@ -594,23 +617,23 @@ int unishox2_compress_lines(const char *in, int len, char *out, const byte usx_h
     else {
       if (is_all_upper) {
         is_all_upper = 0;
-        ol = append_switch_code(out, ol, state);
-        ol = append_bits(out, ol, usx_hcodes[USX_ALPHA], usx_hcode_lens[USX_ALPHA]);
+        SAFE_APPEND_BITS2(olen, ol = append_switch_code(out, olen, ol, state));
+        SAFE_APPEND_BITS2(olen, ol = append_bits(out, olen, ol, usx_hcodes[USX_ALPHA], usx_hcode_lens[USX_ALPHA]));
         state = USX_ALPHA;
       }
     }
     if (is_upper && !is_all_upper) {
       if (state == USX_NUM) {
-        ol = append_switch_code(out, ol, state);
-        ol = append_bits(out, ol, usx_hcodes[USX_ALPHA], usx_hcode_lens[USX_ALPHA]);
+        SAFE_APPEND_BITS2(olen, ol = append_switch_code(out, olen, ol, state));
+        SAFE_APPEND_BITS2(olen, ol = append_bits(out, olen, ol, usx_hcodes[USX_ALPHA], usx_hcode_lens[USX_ALPHA]));
         state = USX_ALPHA;
       }
-      ol = append_switch_code(out, ol, state);
-      ol = append_bits(out, ol, usx_hcodes[USX_ALPHA], usx_hcode_lens[USX_ALPHA]);
+      SAFE_APPEND_BITS2(olen, ol = append_switch_code(out, olen, ol, state));
+      SAFE_APPEND_BITS2(olen, ol = append_bits(out, olen, ol, usx_hcodes[USX_ALPHA], usx_hcode_lens[USX_ALPHA]));
       if (state == USX_DELTA) {
         state = USX_ALPHA;
-        ol = append_switch_code(out, ol, state);
-        ol = append_bits(out, ol, usx_hcodes[USX_ALPHA], usx_hcode_lens[USX_ALPHA]);
+        SAFE_APPEND_BITS2(olen, ol = append_switch_code(out, olen, ol, state));
+        SAFE_APPEND_BITS2(olen, ol = append_bits(out, olen, ol, usx_hcodes[USX_ALPHA], usx_hcode_lens[USX_ALPHA]));
       }
     }
     c_next = 0;
@@ -624,8 +647,8 @@ int unishox2_compress_lines(const char *in, int len, char *out, const byte usx_h
             break;
         }
         if (ll == l-1) {
-          ol = append_switch_code(out, ol, state);
-          ol = append_bits(out, ol, usx_hcodes[USX_ALPHA], usx_hcode_lens[USX_ALPHA]);
+          SAFE_APPEND_BITS2(olen, ol = append_switch_code(out, olen, ol, state));
+          SAFE_APPEND_BITS2(olen, ol = append_bits(out, olen, ol, usx_hcodes[USX_ALPHA], usx_hcode_lens[USX_ALPHA]));
           state = USX_ALPHA;
           is_all_upper = 1;
         }
@@ -634,8 +657,8 @@ int unishox2_compress_lines(const char *in, int len, char *out, const byte usx_h
         byte spl_code = (c_in == ',' ? 0xC0 : (c_in == '.' ? 0xE0 : (c_in == ' ' ? 0 : 0xFF)));
         if (spl_code != 0xFF) {
           byte spl_code_len = (c_in == ',' ? 3 : (c_in == '.' ? 4 : (c_in == ' ' ? 1 : 4)));
-          ol = append_bits(out, ol, UNI_STATE_SPL_CODE, UNI_STATE_SPL_CODE_LEN);
-          ol = append_bits(out, ol, spl_code, spl_code_len);
+          SAFE_APPEND_BITS2(olen, ol = append_bits(out, olen, ol, UNI_STATE_SPL_CODE, UNI_STATE_SPL_CODE_LEN));
+          SAFE_APPEND_BITS2(olen, ol = append_bits(out, olen, ol, spl_code, spl_code_len));
           continue;
         }
       }
@@ -644,30 +667,30 @@ int unishox2_compress_lines(const char *in, int len, char *out, const byte usx_h
         c_in += 32;
       if (c_in == 0) {
         if (state == USX_NUM)
-          ol = append_bits(out, ol, usx_vcodes[NUM_SPC_CODE & 0x1F], usx_vcode_lens[NUM_SPC_CODE & 0x1F]);
+          SAFE_APPEND_BITS2(olen, ol = append_bits(out, olen, ol, usx_vcodes[NUM_SPC_CODE & 0x1F], usx_vcode_lens[NUM_SPC_CODE & 0x1F]));
         else
-          ol = append_bits(out, ol, usx_vcodes[1], usx_vcode_lens[1]);
+          SAFE_APPEND_BITS2(olen, ol = append_bits(out, olen, ol, usx_vcodes[1], usx_vcode_lens[1]));
       } else {
         c_in--;
-        ol = append_code(out, ol, usx_code_94[(int)c_in], &state, usx_hcodes, usx_hcode_lens);
+        SAFE_APPEND_BITS2(olen, ol = append_code(out, olen, ol, usx_code_94[(int)c_in], &state, usx_hcodes, usx_hcode_lens));
       }
     } else
     if (c_in == 13 && c_next == 10) {
-      ol = append_code(out, ol, CRLF_CODE, &state, usx_hcodes, usx_hcode_lens);
+      SAFE_APPEND_BITS2(olen, ol = append_code(out, olen, ol, CRLF_CODE, &state, usx_hcodes, usx_hcode_lens));
       l++;
     } else
     if (c_in == 10) {
       if (state == USX_DELTA) {
-        ol = append_bits(out, ol, UNI_STATE_SPL_CODE, UNI_STATE_SPL_CODE_LEN);
-        ol = append_bits(out, ol, 0xF0, 4);
+        SAFE_APPEND_BITS2(olen, ol = append_bits(out, olen, ol, UNI_STATE_SPL_CODE, UNI_STATE_SPL_CODE_LEN));
+        SAFE_APPEND_BITS2(olen, ol = append_bits(out, olen, ol, 0xF0, 4));
       } else
-        ol = append_code(out, ol, LF_CODE, &state, usx_hcodes, usx_hcode_lens);
+        SAFE_APPEND_BITS2(olen, ol = append_code(out, olen, ol, LF_CODE, &state, usx_hcodes, usx_hcode_lens));
     } else
     if (c_in == 13) {
-      ol = append_code(out, ol, CR_CODE, &state, usx_hcodes, usx_hcode_lens);
+      SAFE_APPEND_BITS2(olen, ol = append_code(out, olen, ol, CR_CODE, &state, usx_hcodes, usx_hcode_lens));
     } else
     if (c_in == '\t') {
-      ol = append_code(out, ol, TAB_CODE, &state, usx_hcodes, usx_hcode_lens);
+      SAFE_APPEND_BITS2(olen, ol = append_code(out, olen, ol, TAB_CODE, &state, usx_hcodes, usx_hcode_lens));
     } else {
       int utf8len;
       int32_t uni = readUTF8(in, len, l, &utf8len);
@@ -677,19 +700,19 @@ int unishox2_compress_lines(const char *in, int len, char *out, const byte usx_h
           int32_t uni2 = readUTF8(in, len, l, &utf8len);
           if (uni2) {
             if (state != USX_ALPHA) {
-              ol = append_switch_code(out, ol, state);
-              ol = append_bits(out, ol, usx_hcodes[USX_ALPHA], usx_hcode_lens[USX_ALPHA]);
+              SAFE_APPEND_BITS2(olen, ol = append_switch_code(out, olen, ol, state));
+              SAFE_APPEND_BITS2(olen, ol = append_bits(out, olen, ol, usx_hcodes[USX_ALPHA], usx_hcode_lens[USX_ALPHA]));
             }
-            ol = append_switch_code(out, ol, state);
-            ol = append_bits(out, ol, usx_hcodes[USX_ALPHA], usx_hcode_lens[USX_ALPHA]);
-            ol = append_bits(out, ol, usx_vcodes[1], usx_vcode_lens[1]); // code for space (' ')
+            SAFE_APPEND_BITS2(olen, ol = append_switch_code(out, olen, ol, state));
+            SAFE_APPEND_BITS2(olen, ol = append_bits(out, olen, ol, usx_hcodes[USX_ALPHA], usx_hcode_lens[USX_ALPHA]));
+            SAFE_APPEND_BITS2(olen, ol = append_bits(out, olen, ol, usx_vcodes[1], usx_vcode_lens[1])); // code for space (' ')
             state = USX_DELTA;
           } else {
-            ol = append_switch_code(out, ol, state);
-            ol = append_bits(out, ol, usx_hcodes[USX_DELTA], usx_hcode_lens[USX_DELTA]);
+            SAFE_APPEND_BITS2(olen, ol = append_switch_code(out, olen, ol, state));
+            SAFE_APPEND_BITS2(olen, ol = append_bits(out, olen, ol, usx_hcodes[USX_DELTA], usx_hcode_lens[USX_DELTA]));
           }
         }
-        ol = encodeUnicode(out, ol, uni, prev_uni);
+        SAFE_APPEND_BITS2(olen, ol = encodeUnicode(out, olen, ol, uni, prev_uni));
         //printf("%d:%d:%d\n", l, utf8len, uni);
         prev_uni = uni;
         l--;
@@ -706,11 +729,11 @@ int unishox2_compress_lines(const char *in, int len, char *out, const byte usx_h
           bin_count++;
         }
         //printf("Bin:%d:%d:%x:%d\n", l, (unsigned char) c_in, (unsigned char) c_in, bin_count);
-        ol = append_nibble_escape(out, ol, state, usx_hcodes, usx_hcode_lens);
-        ol = append_bits(out, ol, 0xF8, 5);
-        ol = encodeCount(out, ol, bin_count);
+        SAFE_APPEND_BITS2(olen, ol = append_nibble_escape(out, olen, ol, state, usx_hcodes, usx_hcode_lens));
+        SAFE_APPEND_BITS2(olen, ol = append_bits(out, olen, ol, 0xF8, 5));
+        SAFE_APPEND_BITS2(olen, ol = encodeCount(out, olen, ol, bin_count));
         do {
-          ol = append_bits(out, ol, in[l++], 8);
+          SAFE_APPEND_BITS2(olen, ol = append_bits(out, olen, ol, in[l++], 8));
         } while (--bin_count);
         l--;
       }
@@ -726,12 +749,12 @@ int unishox2_compress_lines(const char *in, int len, char *out, const byte usx_h
   return (ol + 7) / 8;
 }
 
-int unishox2_compress(const char *in, int len, char *out, const byte usx_hcodes[], const byte usx_hcode_lens[], const char *usx_freq_seq[], const char *usx_templates[], long *term) {
-  return unishox2_compress_lines(in, len, out, usx_hcodes, usx_hcode_lens, usx_freq_seq, usx_templates, NULL, term);
+int unishox2_compress(const char *in, int len, UNISHOX_API_OUT_AND_LEN(char *out, int olen), const byte usx_hcodes[], const byte usx_hcode_lens[], const char *usx_freq_seq[], const char *usx_templates[], long *term) {
+  return unishox2_compress_lines(in, len, UNISHOX_API_OUT_AND_LEN(out, olen), usx_hcodes, usx_hcode_lens, usx_freq_seq, usx_templates, NULL, term);
 }
 
 int unishox2_compress_simple(const char *in, int len, char *out, long *term) {
-  return unishox2_compress_lines(in, len, out, USX_HCODES_DFLT, USX_HCODE_LENS_DFLT, USX_FREQ_SEQ_DFLT, USX_TEMPLATES, NULL, term);
+  return unishox2_compress_lines(in, len, UNISHOX_API_OUT_AND_LEN(out, INT_MAX - 1), USX_HCODES_DFLT, USX_HCODE_LENS_DFLT, USX_FREQ_SEQ_DFLT, USX_TEMPLATES, NULL, term);
 }
 
 int readBit(const char *in, int bit_no) {
@@ -860,24 +883,40 @@ int32_t readUnicode(const char *in, int *bit_no_p, int len) {
   return 0;
 }
 
-void writeUTF8(char *out, int *ol, int uni) {
+#define DEC_OUTPUT_CHAR(out, olen, ol, c) do { \
+  char *const obuf = (out); \
+  const int oidx = (ol); \
+  const int limit = (olen); \
+  if (limit <= oidx) return limit + 1; \
+  else if (oidx < 0) return 0; \
+  else obuf[oidx] = (c); \
+} while (0)
+
+#define DEC_OUTPUT_CHARS(olen, exp) do { \
+  const int newidx = (exp); \
+  const int limit = (olen); \
+  if (newidx > limit) return limit + 1; \
+} while (0)
+
+int writeUTF8(char *out, int olen, int ol, int uni) {
   if (uni < (1 << 11)) {
-    out[(*ol)++] = (0xC0 + (uni >> 6));
-    out[(*ol)++] = (0x80 + (uni & 0x3F));
+    DEC_OUTPUT_CHAR(out, olen, ol++, 0xC0 + (uni >> 6));
+    DEC_OUTPUT_CHAR(out, olen, ol++, 0x80 + (uni & 0x3F));
   } else
   if (uni < (1 << 16)) {
-    out[(*ol)++] = (0xE0 + (uni >> 12));
-    out[(*ol)++] = (0x80 + ((uni >> 6) & 0x3F));
-    out[(*ol)++] = (0x80 + (uni & 0x3F));
+    DEC_OUTPUT_CHAR(out, olen, ol++, 0xE0 + (uni >> 12));
+    DEC_OUTPUT_CHAR(out, olen, ol++, 0x80 + ((uni >> 6) & 0x3F));
+    DEC_OUTPUT_CHAR(out, olen, ol++, 0x80 + (uni & 0x3F));
   } else {
-    out[(*ol)++] = (0xF0 + (uni >> 18));
-    out[(*ol)++] = (0x80 + ((uni >> 12) & 0x3F));
-    out[(*ol)++] = (0x80 + ((uni >> 6) & 0x3F));
-    out[(*ol)++] = (0x80 + (uni & 0x3F));
+    DEC_OUTPUT_CHAR(out, olen, ol++, 0xF0 + (uni >> 18));
+    DEC_OUTPUT_CHAR(out, olen, ol++, 0x80 + ((uni >> 12) & 0x3F));
+    DEC_OUTPUT_CHAR(out, olen, ol++, 0x80 + ((uni >> 6) & 0x3F));
+    DEC_OUTPUT_CHAR(out, olen, ol++, 0x80 + (uni & 0x3F));
   }
+  return ol;
 }
 
-int decodeRepeat(const char *in, int len, char *out, int ol, int *bit_no, struct us_lnk_lst *prev_lines) {
+int decodeRepeat(const char *in, int len, char *out, int olen, int ol, int *bit_no, struct us_lnk_lst *prev_lines) {
   if (prev_lines) {
     int32_t dict_len = readCount(in, bit_no, len) + NICE_LEN;
     if (dict_len < NICE_LEN)
@@ -889,9 +928,12 @@ int decodeRepeat(const char *in, int len, char *out, int ol, int *bit_no, struct
     if (ctx < 0)
       return ol;
     struct us_lnk_lst *cur_line = prev_lines;
+    const int left = olen - ol;
     while (ctx--)
       cur_line = cur_line->previous;
-    memmove(out + ol, cur_line->data + dist, dict_len);
+    if (left <= 0) return olen + 1;
+    memmove(out + ol, cur_line->data + dist, min_of(left, dict_len));
+    if (left < dict_len) return olen + 1;
     ol += dict_len;
   } else {
     int32_t dict_len = readCount(in, bit_no, len) + NICE_LEN;
@@ -900,8 +942,11 @@ int decodeRepeat(const char *in, int len, char *out, int ol, int *bit_no, struct
     int32_t dist = readCount(in, bit_no, len) + NICE_LEN - 1;
     if (dist < NICE_LEN - 1)
       return ol;
+    const int32_t left = olen - ol;
     //printf("Decode len: %d, dist: %d\n", dict_len - NICE_LEN, dist - NICE_LEN + 1);
-    memmove(out + ol, out + ol - dist, dict_len);
+    if (left <= 0) return olen + 1;
+    memmove(out + ol, out + ol - dist, min_of(left, dict_len));
+    if (left < dict_len) return olen + 1;
     ol += dict_len;
   }
   return ol;
@@ -915,12 +960,15 @@ char getHexChar(int32_t nibble, int hex_type) {
   return 'A' + nibble - 10;
 }
 
-int unishox2_decompress_lines(const char *in, int len, char *out, const byte usx_hcodes[], const byte usx_hcode_lens[], const char *usx_freq_seq[], const char *usx_templates[], struct us_lnk_lst *prev_lines) {
+int unishox2_decompress_lines(const char *in, int len, UNISHOX_API_OUT_AND_LEN(char *out, int olen), const byte usx_hcodes[], const byte usx_hcode_lens[], const char *usx_freq_seq[], const char *usx_templates[], struct us_lnk_lst *prev_lines) {
 
   int dstate;
   int bit_no;
   int h, v;
   byte is_all_upper;
+#if (UNISHOX_API_OUT_AND_LEN(0,1)) == 0
+  const int olen = INT_MAX - 1;
+#endif
 
   init_coder();
   int ol = 0;
@@ -943,7 +991,7 @@ int unishox2_decompress_lines(const char *in, int len, char *out, const byte usx
           break;
         switch (spl_code_idx) {
           case 0:
-            out[ol++] = ' ';
+            DEC_OUTPUT_CHAR(out, olen, ol++, ' ');
             continue;
           case 1:
             h = readHCodeIdx(in, len, &bit_no, usx_hcodes, usx_hcode_lens);
@@ -956,24 +1004,24 @@ int unishox2_decompress_lines(const char *in, int len, char *out, const byte usx
               continue;
             }
             if (h == USX_DICT) {
-              ol = decodeRepeat(in, len, out, ol, &bit_no, prev_lines);
+              DEC_OUTPUT_CHARS(olen, ol = decodeRepeat(in, len, out, olen, ol, &bit_no, prev_lines));
               h = dstate;
               continue;
             }
             break;
           case 2:
-            out[ol++] = ',';
+            DEC_OUTPUT_CHAR(out, olen, ol++, ',');
             continue;
           case 3:
-            out[ol++] = '.';
+            DEC_OUTPUT_CHAR(out, olen, ol++, '.');
             continue;
           case 4:
-            out[ol++] = 10;
+            DEC_OUTPUT_CHAR(out, olen, ol++, 10);
             continue;
         }
       } else {
         prev_uni += delta;
-        writeUTF8(out, &ol, prev_uni);
+        DEC_OUTPUT_CHARS(olen, ol = writeUTF8(out, olen, ol, prev_uni));
         //printf("%ld, ", prev_uni);
       }
       if (dstate == USX_DELTA && h == USX_DELTA)
@@ -1028,7 +1076,7 @@ int unishox2_decompress_lines(const char *in, int len, char *out, const byte usx
          }
       } else
       if (h == USX_DICT) {
-        ol = decodeRepeat(in, len, out, ol, &bit_no, prev_lines);
+        DEC_OUTPUT_CHARS(olen, ol = decodeRepeat(in, len, out, olen, ol, &bit_no, prev_lines));
         continue;
       } else
       if (h == USX_DELTA) {
@@ -1061,11 +1109,11 @@ int unishox2_decompress_lines(const char *in, int len, char *out, const byte usx
                       eof = 1;
                       break;
                   }
-                  out[ol++] = getHexChar((char)raw_char,
-                      c_t == 'f' ? USX_NIB_HEX_LOWER : USX_NIB_HEX_UPPER);
+                  DEC_OUTPUT_CHAR(out, olen, ol++, getHexChar((char)raw_char,
+                      c_t == 'f' ? USX_NIB_HEX_LOWER : USX_NIB_HEX_UPPER));
                   bit_no += nibble_len;
               } else
-                out[ol++] = c_t;
+                DEC_OUTPUT_CHAR(out, olen, ol++, c_t);
             }
             if (eof) break; // reach input eof
           } else
@@ -1079,7 +1127,7 @@ int unishox2_decompress_lines(const char *in, int len, char *out, const byte usx
               const int32_t raw_char = getNumFromBits(in, len, bit_no, 8);
               if (raw_char < 0)
                   break;
-              out[ol++] = (char)raw_char;
+              DEC_OUTPUT_CHAR(out, olen, ol++, (char)raw_char);
               bit_no += 8;
             } while (--bin_count);
             if (bin_count > 0) break; // reach input eof
@@ -1098,9 +1146,9 @@ int unishox2_decompress_lines(const char *in, int len, char *out, const byte usx
               int32_t nibble = getNumFromBits(in, len, bit_no, 4);
               if (nibble < 0)
                   break;
-              out[ol++] = getHexChar(nibble, idx < 3 ? USX_NIB_HEX_LOWER : USX_NIB_HEX_UPPER);
+              DEC_OUTPUT_CHAR(out, olen, ol++, getHexChar(nibble, idx < 3 ? USX_NIB_HEX_LOWER : USX_NIB_HEX_UPPER));
               if ((idx == 2 || idx == 4) && (nibble_count == 25 || nibble_count == 21 || nibble_count == 17 || nibble_count == 13))
-                out[ol++] = '-';
+                DEC_OUTPUT_CHAR(out, olen, ol++, '-');
               bit_no += 4;
             } while (--nibble_count);
             if (nibble_count > 0) break; // reach input eof
@@ -1126,8 +1174,8 @@ int unishox2_decompress_lines(const char *in, int len, char *out, const byte usx
         dstate = USX_NUM;
       } else if (c == 0) {
         if (v == 8) {
-          out[ol++] = '\r';
-          out[ol++] = '\n';
+          DEC_OUTPUT_CHAR(out, olen, ol++, '\r');
+          DEC_OUTPUT_CHAR(out, olen, ol++, '\n');
         } else if (h == USX_NUM && v == 26) {
           int32_t count = readCount(in, &bit_no, len);
           if (count < 0)
@@ -1137,15 +1185,23 @@ int unishox2_decompress_lines(const char *in, int len, char *out, const byte usx
             return 0; // invalid encoding
           char rpt_c = out[ol - 1];
           while (count--)
-            out[ol++] = rpt_c;
+            DEC_OUTPUT_CHAR(out, olen, ol++, rpt_c);
         } else if (h == USX_SYM && v > 24) {
           v -= 25;
-          memcpy(out + ol, usx_freq_seq[v], strlen(usx_freq_seq[v]));
-          ol += (int)strlen(usx_freq_seq[v]);
+          const int freqlen = (int)strlen(usx_freq_seq[v]);
+          const int left = olen - ol;
+          if (left <= 0) return olen + 1;
+          memcpy(out + ol, usx_freq_seq[v], min_of(left, freqlen));
+          if (left < freqlen) return olen + 1;
+          ol += freqlen;
         } else if (h == USX_NUM && v > 22 && v < 26) {
           v -= (23 - 3);
-          memcpy(out + ol, usx_freq_seq[v], strlen(usx_freq_seq[v]));
-          ol += (int)strlen(usx_freq_seq[v]);
+          const int freqlen = (int)strlen(usx_freq_seq[v]);
+          const int left = olen - ol;
+          if (left <= 0) return olen + 1;
+          memcpy(out + ol, usx_freq_seq[v], min_of(left, freqlen));
+          if (left < freqlen) return olen + 1;
+          ol += freqlen;
         } else
           break; // Terminator
         if (dstate == USX_DELTA)
@@ -1155,17 +1211,17 @@ int unishox2_decompress_lines(const char *in, int len, char *out, const byte usx
     }
     if (dstate == USX_DELTA)
       h = USX_DELTA;
-    out[ol++] = c;
+    DEC_OUTPUT_CHAR(out, olen, ol++, c);
   }
 
   return ol;
 
 }
 
-int unishox2_decompress(const char *in, int len, char *out, const byte usx_hcodes[], const byte usx_hcode_lens[], const char *usx_freq_seq[], const char *usx_templates[]) {
-  return unishox2_decompress_lines(in, len, out, usx_hcodes, usx_hcode_lens, usx_freq_seq, usx_templates, NULL);
+int unishox2_decompress(const char *in, int len, UNISHOX_API_OUT_AND_LEN(char *out, int olen), const byte usx_hcodes[], const byte usx_hcode_lens[], const char *usx_freq_seq[], const char *usx_templates[]) {
+  return unishox2_decompress_lines(in, len, UNISHOX_API_OUT_AND_LEN(out, olen), usx_hcodes, usx_hcode_lens, usx_freq_seq, usx_templates, NULL);
 }
 
 int unishox2_decompress_simple(const char *in, int len, char *out) {
-  return unishox2_decompress(in, len, out, USX_PSET_DFLT);
+  return unishox2_decompress(in, len, UNISHOX_API_OUT_AND_LEN(out, INT_MAX - 1), USX_PSET_DFLT);
 }
