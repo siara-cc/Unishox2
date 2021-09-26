@@ -21,6 +21,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdint.h>
+#include <limits.h>
 
 #include "unishox2.h"
 
@@ -405,7 +406,7 @@ void append_final_bits(char *out, int ol, const byte bits[], const int bit_lens[
   if (newidx < 0) return (olen) + 1; \
 } while (0)
 
-int unishox2_compress_lines(const char *in, int len, char *out, int olen, const byte usx_hcodes[], const byte usx_hcode_lens[], const char *usx_freq_seq[], const char *usx_templates[], struct us_lnk_lst *prev_lines) {
+int unishox2_compress_lines(const char *in, int len, UNISHOX_API_OUT_AND_LEN(char *out, int olen), const byte usx_hcodes[], const byte usx_hcode_lens[], const char *usx_freq_seq[], const char *usx_templates[], struct us_lnk_lst *prev_lines) {
 
   byte state;
 
@@ -413,6 +414,9 @@ int unishox2_compress_lines(const char *in, int len, char *out, int olen, const 
   char c_in, c_next;
   int prev_uni;
   byte is_upper, is_all_upper;
+#if (UNISHOX_API_OUT_AND_LEN(0,1)) == 0
+  const int olen = INT_MAX - 1;
+#endif
 
   init_coder();
   ol = 0;
@@ -725,12 +729,12 @@ int unishox2_compress_lines(const char *in, int len, char *out, int olen, const 
 
 }
 
-int unishox2_compress(const char *in, int len, char *out, int olen, const byte usx_hcodes[], const byte usx_hcode_lens[], const char *usx_freq_seq[], const char *usx_templates[]) {
-  return unishox2_compress_lines(in, len, out, olen, usx_hcodes, usx_hcode_lens, usx_freq_seq, usx_templates, NULL);
+int unishox2_compress(const char *in, int len, UNISHOX_API_OUT_AND_LEN(char *out, int olen), const byte usx_hcodes[], const byte usx_hcode_lens[], const char *usx_freq_seq[], const char *usx_templates[]) {
+  return unishox2_compress_lines(in, len, UNISHOX_API_OUT_AND_LEN(out, olen), usx_hcodes, usx_hcode_lens, usx_freq_seq, usx_templates, NULL);
 }
 
-int unishox2_compress_simple(const char *in, int len, char *out, int olen) {
-  return unishox2_compress_lines(in, len, out, olen, USX_HCODES_DFLT, USX_HCODE_LENS_DFLT, USX_FREQ_SEQ_DFLT, USX_TEMPLATES, NULL);
+int unishox2_compress_simple(const char *in, int len, char *out) {
+  return unishox2_compress_lines(in, len, UNISHOX_API_OUT_AND_LEN(out, INT_MAX - 1), USX_HCODES_DFLT, USX_HCODE_LENS_DFLT, USX_FREQ_SEQ_DFLT, USX_TEMPLATES, NULL);
 }
 
 int readBit(const char *in, int bit_no) {
@@ -936,12 +940,15 @@ char getHexChar(int32_t nibble, int hex_type) {
   return 'A' + nibble - 10;
 }
 
-int unishox2_decompress_lines(const char *in, int len, char *out, int olen, const byte usx_hcodes[], const byte usx_hcode_lens[], const char *usx_freq_seq[], const char *usx_templates[], struct us_lnk_lst *prev_lines) {
+int unishox2_decompress_lines(const char *in, int len, UNISHOX_API_OUT_AND_LEN(char *out, int olen), const byte usx_hcodes[], const byte usx_hcode_lens[], const char *usx_freq_seq[], const char *usx_templates[], struct us_lnk_lst *prev_lines) {
 
   int dstate;
   int bit_no;
   int h, v;
   byte is_all_upper;
+#if (UNISHOX_API_OUT_AND_LEN(0,1)) == 0
+  const int olen = INT_MAX - 1;
+#endif
 
   init_coder();
   int ol = 0;
@@ -1189,10 +1196,10 @@ int unishox2_decompress_lines(const char *in, int len, char *out, int olen, cons
 
 }
 
-int unishox2_decompress(const char *in, int len, char *out, int olen, const byte usx_hcodes[], const byte usx_hcode_lens[], const char *usx_freq_seq[], const char *usx_templates[]) {
-  return unishox2_decompress_lines(in, len, out, olen, usx_hcodes, usx_hcode_lens, usx_freq_seq, usx_templates, NULL);
+int unishox2_decompress(const char *in, int len, UNISHOX_API_OUT_AND_LEN(char *out, int olen), const byte usx_hcodes[], const byte usx_hcode_lens[], const char *usx_freq_seq[], const char *usx_templates[]) {
+  return unishox2_decompress_lines(in, len, UNISHOX_API_OUT_AND_LEN(out, olen), usx_hcodes, usx_hcode_lens, usx_freq_seq, usx_templates, NULL);
 }
 
-int unishox2_decompress_simple(const char *in, int len, char *out, int olen) {
-  return unishox2_decompress(in, len, out, olen, USX_PSET_DFLT);
+int unishox2_decompress_simple(const char *in, int len, char *out) {
+  return unishox2_decompress(in, len, UNISHOX_API_OUT_AND_LEN(out, INT_MAX - 1), USX_PSET_DFLT);
 }

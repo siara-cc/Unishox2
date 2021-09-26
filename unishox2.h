@@ -21,6 +21,13 @@
 
 #define UNISHOX_VERSION "2.0"
 
+// macro switch to enable/disable output buffer lenth parameter in low level api
+// default disable the output buffer length parameter
+// simple api, i.e. unishox2_(de)compress_simple will always omit the buffer length
+#ifndef UNISHOX_API_WITH_OUTPUT_LEN
+#  define UNISHOX_API_WITH_OUTPUT_LEN 0
+#endif
+
 //enum {USX_ALPHA = 0, USX_SYM, USX_NUM, USX_DICT, USX_DELTA};
 
 #define USX_HCODES_DFLT (const unsigned char[]){0x00, 0x40, 0x80, 0xC0, 0xE0}
@@ -88,19 +95,25 @@ struct us_lnk_lst {
   struct us_lnk_lst *previous;
 };
 
-extern int unishox2_compress_simple(const char *in, int len, char *out, int olen);
-extern int unishox2_decompress_simple(const char *in, int len, char *out, int olen);
-extern int unishox2_compress(const char *in, int len, char *out, int olen,
+#if defined(UNISHOX_API_WITH_OUTPUT_LEN) && UNISHOX_API_WITH_OUTPUT_LEN != 0
+#  define UNISHOX_API_OUT_AND_LEN(out, olen) out, olen
+#else
+#  define UNISHOX_API_OUT_AND_LEN(out, olen) out
+#endif
+
+extern int unishox2_compress_simple(const char *in, int len, char *out);
+extern int unishox2_decompress_simple(const char *in, int len, char *out);
+extern int unishox2_compress(const char *in, int len, UNISHOX_API_OUT_AND_LEN(char *out, int olen),
               const unsigned char usx_hcodes[], const unsigned char usx_hcode_lens[],
               const char *usx_freq_seq[], const char *usx_templates[]);
-extern int unishox2_decompress(const char *in, int len, char *out, int olen,
+extern int unishox2_decompress(const char *in, int len, UNISHOX_API_OUT_AND_LEN(char *out, int olen),
               const unsigned char usx_hcodes[], const unsigned char usx_hcode_lens[],
               const char *usx_freq_seq[], const char *usx_templates[]);
-extern int unishox2_compress_lines(const char *in, int len, char *out, int olen,
+extern int unishox2_compress_lines(const char *in, int len, UNISHOX_API_OUT_AND_LEN(char *out, int olen),
               const unsigned char usx_hcodes[], const unsigned char usx_hcode_lens[],
               const char *usx_freq_seq[], const char *usx_templates[],
               struct us_lnk_lst *prev_lines);
-extern int unishox2_decompress_lines(const char *in, int len, char *out, int olen,
+extern int unishox2_decompress_lines(const char *in, int len, UNISHOX_API_OUT_AND_LEN(char *out, int olen),
               const unsigned char usx_hcodes[], const unsigned char usx_hcode_lens[],
               const char *usx_freq_seq[], const char *usx_templates[],
               struct us_lnk_lst *prev_lines);
