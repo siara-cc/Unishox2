@@ -161,6 +161,7 @@ int test_ushx_cd(char *input, int preset) {
 #endif
 
   // test terminator
+  const int orig_clen = clen;
   for (int i = 0; i < ((byte*)&terminator)[3];) {
     cbuf[clen++] = ((byte*)&terminator)[i++];
   }
@@ -168,16 +169,23 @@ int test_ushx_cd(char *input, int preset) {
   cbuf[clen++] = cbuf[1];
   cbuf[clen++] = cbuf[2];
 
-  memset(dbuf, 0, sizeof(dbuf));
-  dlen = unishox2_decompress_preset_lines(cbuf, sizeof cbuf, UNISHOX_API_OUT_AND_LEN(dbuf, sizeof dbuf), preset, NULL);
-  dbuf[dlen] = '\0';
-  if (dlen != len) {
-    printf("Fail len (term): %d, %d:\n%s\n%s\n", len, dlen, input, dbuf);
-    return 0;
-  }
-  if (strncmp(input, dbuf, len)) {
-    printf("Fail cmp (term):\n%s\n%s\n", input, dbuf);
-    return 0;
+  for (int i = 1; i <= 7 && orig_clen + i <= (int)sizeof cbuf; ++i) {
+    memset(dbuf, 0, sizeof(dbuf));
+    dlen = unishox2_decompress_preset_lines(cbuf, orig_clen + i, UNISHOX_API_OUT_AND_LEN(dbuf, sizeof dbuf), preset, NULL);
+    if (dlen > (int)sizeof dbuf) {
+      printf("Decompress Overflow for testing terminator\n");
+      return 0;
+    } else if (dlen < (int)sizeof dbuf)
+      dbuf[dlen] = '\0';
+    if (dlen != len) {
+      dbuf[sizeof dbuf - 1] = '\0';
+      printf("Fail len (term+%d): %d, %d:\n%s\n%s\n", i, len, dlen, input, dbuf);
+      return 0;
+    }
+    if (strncmp(input, dbuf, len)) {
+      printf("Fail cmp (term+%d):\n%s\n%s\n", i, input, dbuf);
+      return 0;
+    }
   }
 
   return 1;
