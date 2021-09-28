@@ -74,7 +74,9 @@ const int UTF8_PREFIX[] = {0xC0, 0xE0, 0xF0};
 
 #define SW_CODE 0
 #define SW_CODE_LEN 2
-#define TERM_BYTE_PRESET_1 (byte)(SW_CODE | ((SW_CODE | ((SW_CODE | ((SW_CODE | ((SW_CODE | ((SW_CODE | ((SW_CODE | (SW_CODE >> SW_CODE_LEN)) >> SW_CODE_LEN)) >> SW_CODE_LEN)) >> SW_CODE_LEN)) >> SW_CODE_LEN)) >> SW_CODE_LEN) >> SW_CODE_LEN)))
+#define TERM_BYTE_PRESET_1 0
+#define TERM_BYTE_PRESET_1_LEN_LOWER 6
+#define TERM_BYTE_PRESET_1_LEN_UPPER 4
 
 #define USX_OFFSET_94 33
 
@@ -392,35 +394,72 @@ long min_of(long c, long i) {
   return c > i ? i : c;
 }
 
-long append_final_bits(char *const out, const int ol, const byte state, const byte usx_hcodes[], const byte usx_hcode_lens[]) {
-  union { char buf[4]; long as_long; } terminator;
+byte append_final_bits(char *const out, const int ol, const byte state, const byte is_all_upper, const byte usx_hcodes[], const byte usx_hcode_lens[]) {
+  char term_buf[4] = { 0 };
+  byte indicator = 0;
   int tl = (ol - 1) % 8 + 1; // 8x+[0..7] -> [8, 1..7]
 
-  terminator.as_long = 0;
-
   if (usx_hcode_lens[USX_ALPHA]) {
+    indicator = (state << 3) | ((byte)(8 - tl) & 7);
     if (USX_NUM != state) {
       // for num state, append TERM_CODE directly
-      // for other state, switch to num first
-      tl = append_switch_code(terminator.buf, sizeof terminator.buf, tl, state);
-      tl = append_bits(terminator.buf, sizeof terminator.buf, tl, usx_hcodes[USX_NUM], usx_hcode_lens[USX_NUM]);
+      // for other state, switch to Num Set first
+      tl = append_switch_code(term_buf, sizeof term_buf, tl, state);
+      tl = append_bits(term_buf, sizeof term_buf, tl, usx_hcodes[USX_NUM], usx_hcode_lens[USX_NUM]);
     }
-    tl = append_bits(terminator.buf, sizeof terminator.buf, tl, usx_vcodes[TERM_CODE & 0x1F], usx_vcode_lens[TERM_CODE & 0x1F]);
+    tl = append_bits(term_buf, sizeof term_buf, tl, usx_vcodes[TERM_CODE & 0x1F], usx_vcode_lens[TERM_CODE & 0x1F]);
   } else {
-    // preset 1, terminate at 4 SW_CODE, i.e., 8 continuous 0 bits
-    tl = append_bits(terminator.buf, sizeof terminator.buf, tl, TERM_BYTE_PRESET_1, 8);
+    // preset 1, terminate at 2 or 3 SW_CODE, i.e., 4 or 6 continuous 0 bits
+    // see discussion: https://github.com/siara-cc/Unishox/issues/19#issuecomment-922435580
+    tl = append_bits(term_buf, sizeof term_buf, tl, TERM_BYTE_PRESET_1, is_all_upper ? TERM_BYTE_PRESET_1_LEN_UPPER : TERM_BYTE_PRESET_1_LEN_LOWER);
+    indicator = tl <= 8 ? 0xFF : 0x00;
   }
 
   // fill byte with the last bit
-  tl = append_bits(terminator.buf, sizeof terminator.buf, tl, terminator.buf[(tl-1)/8] << ((tl-1)&7), (8 - tl % 8) & 7);
+  tl = append_bits(term_buf, sizeof term_buf, tl, term_buf[(tl-1)/8] << ((tl-1)&7), (8 - tl % 8) & 7);
 
-  if (ol%8) out[(ol-1) / 8] |= terminator.buf[0];
-  terminator.buf[0] = terminator.buf[1];
-  terminator.buf[1] = terminator.buf[2];
-  terminator.buf[2] = terminator.buf[3];
-  terminator.buf[3] = tl / 8 - 1; // terminator length
+  if (ol%8) {
+    out[(ol-1) / 8] |= term_buf[0];
+  }
 
-  return terminator.as_long;
+  return indicator;
+}
+
+// return 0 - 3 for valid indicator, fill term codes in term_buf[0..return)
+// return -1 for invalid indicator
+int expand_term_codes(const byte indicator, char term_buf[3], const byte usx_hcodes[], const byte usx_hcode_lens[], ...) {
+  if (usx_hcode_lens[USX_ALPHA]) {
+    const byte state = indicator >> 3;
+    const byte emitted = indicator & 7;
+    int tl = 8 - emitted;
+    int rst = 0;
+    char buf[4];
+
+    if (USX_NUM != state) {
+      // for num state, append TERM_CODE directly
+      // for other state, switch to Num Set first
+      tl = append_switch_code(buf, sizeof buf, tl, state);
+      tl = append_bits(buf, sizeof buf, tl, usx_hcodes[USX_NUM], usx_hcode_lens[USX_NUM]);
+    }
+    tl = append_bits(buf, sizeof buf, tl, usx_vcodes[TERM_CODE & 0x1F], usx_vcode_lens[TERM_CODE & 0x1F]);
+
+    // fill byte with the last bit
+    tl = append_bits(buf, sizeof buf, tl, buf[(tl-1)/8] << ((tl-1)&7), (8 - tl % 8) & 7);
+
+    tl /= 8;
+    rst = tl - 1;
+    while (--tl > 0) {
+      term_buf[tl - 1] = buf[tl];
+    }
+    return rst;
+  } else if (indicator == 0xFF) {
+    return 0;
+  } else if (indicator == 0x00) {
+    term_buf[0] = 0x00;
+    return 1;
+  } else {
+    return -1;
+  }
 }
 
 #define SAFE_APPEND_BITS2(olen, exp) do { \
@@ -428,7 +467,7 @@ long append_final_bits(char *const out, const int ol, const byte state, const by
   if (newidx < 0) return (olen) + 1; \
 } while (0)
 
-int unishox2_compress_lines(const char *in, int len, UNISHOX_API_OUT_AND_LEN(char *out, int olen), const byte usx_hcodes[], const byte usx_hcode_lens[], const char *usx_freq_seq[], const char *usx_templates[], struct us_lnk_lst *prev_lines, long *term) {
+int unishox2_compress_lines(const char *in, int len, UNISHOX_API_OUT_AND_LEN(char *out, int olen), const byte usx_hcodes[], const byte usx_hcode_lens[], const char *usx_freq_seq[], const char *usx_templates[], struct us_lnk_lst *prev_lines) {
 
   byte state;
 
@@ -741,20 +780,21 @@ int unishox2_compress_lines(const char *in, int len, UNISHOX_API_OUT_AND_LEN(cha
   }
 
   {
-    // even if term == null, still need to fill the last parital byte
-    // with terminator code to avoid outputting extra contents after decompressing ol bits
-    const long terminator = append_final_bits(out, ol, state, usx_hcodes, usx_hcode_lens);
-    if (term) *term = terminator;
+    const byte term_indicator = append_final_bits(out, ol, state, is_all_upper, usx_hcodes, usx_hcode_lens);
+    const int rst = (ol + 7) / 8;
+    if (rst < olen) {
+      out[rst] = term_indicator;
+    }
+    return rst;
   }
-  return (ol + 7) / 8;
 }
 
-int unishox2_compress(const char *in, int len, UNISHOX_API_OUT_AND_LEN(char *out, int olen), const byte usx_hcodes[], const byte usx_hcode_lens[], const char *usx_freq_seq[], const char *usx_templates[], long *term) {
-  return unishox2_compress_lines(in, len, UNISHOX_API_OUT_AND_LEN(out, olen), usx_hcodes, usx_hcode_lens, usx_freq_seq, usx_templates, NULL, term);
+int unishox2_compress(const char *in, int len, UNISHOX_API_OUT_AND_LEN(char *out, int olen), const byte usx_hcodes[], const byte usx_hcode_lens[], const char *usx_freq_seq[], const char *usx_templates[]) {
+  return unishox2_compress_lines(in, len, UNISHOX_API_OUT_AND_LEN(out, olen), usx_hcodes, usx_hcode_lens, usx_freq_seq, usx_templates, NULL);
 }
 
-int unishox2_compress_simple(const char *in, int len, char *out, long *term) {
-  return unishox2_compress_lines(in, len, UNISHOX_API_OUT_AND_LEN(out, INT_MAX - 1), USX_HCODES_DFLT, USX_HCODE_LENS_DFLT, USX_FREQ_SEQ_DFLT, USX_TEMPLATES, NULL, term);
+int unishox2_compress_simple(const char *in, int len, char *out) {
+  return unishox2_compress_lines(in, len, UNISHOX_API_OUT_AND_LEN(out, INT_MAX - 1), USX_HCODES_DFLT, USX_HCODE_LENS_DFLT, USX_FREQ_SEQ_DFLT, USX_TEMPLATES, NULL);
 }
 
 int readBit(const char *in, int bit_no) {
@@ -1047,7 +1087,7 @@ int unishox2_decompress_lines(const char *in, int len, UNISHOX_API_OUT_AND_LEN(c
       }
       if (h == USX_ALPHA) {
          if (dstate == USX_ALPHA) {
-           if (!usx_hcode_lens[USX_ALPHA] && TERM_BYTE_PRESET_1 == read8bitCode(in, len, bit_no - SW_CODE_LEN))
+           if (!usx_hcode_lens[USX_ALPHA] && TERM_BYTE_PRESET_1 == (read8bitCode(in, len, bit_no - SW_CODE_LEN) & (0xFF << (8 - (is_all_upper ? TERM_BYTE_PRESET_1_LEN_UPPER : TERM_BYTE_PRESET_1_LEN_LOWER)))))
              break; // Terminator for preset 1
            if (is_all_upper) {
              is_upper = is_all_upper = 0;

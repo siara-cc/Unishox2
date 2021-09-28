@@ -101,21 +101,23 @@ struct us_lnk_lst {
 #  define UNISHOX_API_OUT_AND_LEN(out, olen) out
 #endif
 
-extern int unishox2_compress_simple(const char *in, int len, char *out, long *term);
+extern int unishox2_compress_simple(const char *in, int len, char *out);
 extern int unishox2_decompress_simple(const char *in, int len, char *out);
 extern int unishox2_compress(const char *in, int len, UNISHOX_API_OUT_AND_LEN(char *out, int olen),
               const unsigned char usx_hcodes[], const unsigned char usx_hcode_lens[],
-              const char *usx_freq_seq[], const char *usx_templates[], long *term);
+              const char *usx_freq_seq[], const char *usx_templates[]);
 extern int unishox2_decompress(const char *in, int len, UNISHOX_API_OUT_AND_LEN(char *out, int olen),
               const unsigned char usx_hcodes[], const unsigned char usx_hcode_lens[],
               const char *usx_freq_seq[], const char *usx_templates[]);
 extern int unishox2_compress_lines(const char *in, int len, UNISHOX_API_OUT_AND_LEN(char *out, int olen),
               const unsigned char usx_hcodes[], const unsigned char usx_hcode_lens[],
               const char *usx_freq_seq[], const char *usx_templates[],
-              struct us_lnk_lst *prev_lines, long *term);
+              struct us_lnk_lst *prev_lines);
 extern int unishox2_decompress_lines(const char *in, int len, UNISHOX_API_OUT_AND_LEN(char *out, int olen),
               const unsigned char usx_hcodes[], const unsigned char usx_hcode_lens[],
               const char *usx_freq_seq[], const char *usx_templates[],
               struct us_lnk_lst *prev_lines);
+
+extern int expand_term_codes(unsigned char indicator, char term_buf[3], const unsigned char usx_hcodes[], const unsigned char usx_hcode_lens[], ...);
 
 #endif

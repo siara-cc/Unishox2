@@ -15,42 +15,42 @@
 
 typedef unsigned char byte;
 
-int unishox2_compress_preset_lines(const char *in, int len, UNISHOX_API_OUT_AND_LEN(char *out, int olen), int preset, struct us_lnk_lst *prev_lines, long *term) {
+int unishox2_compress_preset_lines(const char *in, int len, UNISHOX_API_OUT_AND_LEN(char *out, int olen), int preset, struct us_lnk_lst *prev_lines) {
   switch (preset) {
     case 0:
-      return unishox2_compress_lines(in, len, UNISHOX_API_OUT_AND_LEN(out, olen), USX_PSET_DFLT, prev_lines, term);
+      return unishox2_compress_lines(in, len, UNISHOX_API_OUT_AND_LEN(out, olen), USX_PSET_DFLT, prev_lines);
     case 1:
-      return unishox2_compress_lines(in, len, UNISHOX_API_OUT_AND_LEN(out, olen), USX_PSET_ALPHA_ONLY, prev_lines, term);
+      return unishox2_compress_lines(in, len, UNISHOX_API_OUT_AND_LEN(out, olen), USX_PSET_ALPHA_ONLY, prev_lines);
     case 2:
-      return unishox2_compress_lines(in, len, UNISHOX_API_OUT_AND_LEN(out, olen), USX_PSET_ALPHA_NUM_ONLY, prev_lines, term);
+      return unishox2_compress_lines(in, len, UNISHOX_API_OUT_AND_LEN(out, olen), USX_PSET_ALPHA_NUM_ONLY, prev_lines);
     case 3:
-      return unishox2_compress_lines(in, len, UNISHOX_API_OUT_AND_LEN(out, olen), USX_PSET_ALPHA_NUM_SYM_ONLY, prev_lines, term);
+      return unishox2_compress_lines(in, len, UNISHOX_API_OUT_AND_LEN(out, olen), USX_PSET_ALPHA_NUM_SYM_ONLY, prev_lines);
     case 4:
-      return unishox2_compress_lines(in, len, UNISHOX_API_OUT_AND_LEN(out, olen), USX_PSET_ALPHA_NUM_SYM_ONLY_TXT, prev_lines, term);
+      return unishox2_compress_lines(in, len, UNISHOX_API_OUT_AND_LEN(out, olen), USX_PSET_ALPHA_NUM_SYM_ONLY_TXT, prev_lines);
     case 5:
-      return unishox2_compress_lines(in, len, UNISHOX_API_OUT_AND_LEN(out, olen), USX_PSET_FAVOR_ALPHA, prev_lines, term);
+      return unishox2_compress_lines(in, len, UNISHOX_API_OUT_AND_LEN(out, olen), USX_PSET_FAVOR_ALPHA, prev_lines);
     case 6:
-      return unishox2_compress_lines(in, len, UNISHOX_API_OUT_AND_LEN(out, olen), USX_PSET_FAVOR_DICT, prev_lines, term);
+      return unishox2_compress_lines(in, len, UNISHOX_API_OUT_AND_LEN(out, olen), USX_PSET_FAVOR_DICT, prev_lines);
     case 7:
-      return unishox2_compress_lines(in, len, UNISHOX_API_OUT_AND_LEN(out, olen), USX_PSET_FAVOR_SYM, prev_lines, term);
+      return unishox2_compress_lines(in, len, UNISHOX_API_OUT_AND_LEN(out, olen), USX_PSET_FAVOR_SYM, prev_lines);
     case 8:
-      return unishox2_compress_lines(in, len, UNISHOX_API_OUT_AND_LEN(out, olen), USX_PSET_FAVOR_UMLAUT, prev_lines, term);
+      return unishox2_compress_lines(in, len, UNISHOX_API_OUT_AND_LEN(out, olen), USX_PSET_FAVOR_UMLAUT, prev_lines);
     case 9:
-      return unishox2_compress_lines(in, len, UNISHOX_API_OUT_AND_LEN(out, olen), USX_PSET_NO_DICT, prev_lines, term);
+      return unishox2_compress_lines(in, len, UNISHOX_API_OUT_AND_LEN(out, olen), USX_PSET_NO_DICT, prev_lines);
     case 10:
-      return unishox2_compress_lines(in, len, UNISHOX_API_OUT_AND_LEN(out, olen), USX_PSET_NO_UNI, prev_lines, term);
+      return unishox2_compress_lines(in, len, UNISHOX_API_OUT_AND_LEN(out, olen), USX_PSET_NO_UNI, prev_lines);
     case 11:
-      return unishox2_compress_lines(in, len, UNISHOX_API_OUT_AND_LEN(out, olen), USX_PSET_NO_UNI_FAVOR_TEXT, prev_lines, term);
+      return unishox2_compress_lines(in, len, UNISHOX_API_OUT_AND_LEN(out, olen), USX_PSET_NO_UNI_FAVOR_TEXT, prev_lines);
     case 12:
-      return unishox2_compress_lines(in, len, UNISHOX_API_OUT_AND_LEN(out, olen), USX_PSET_URL, prev_lines, term);
+      return unishox2_compress_lines(in, len, UNISHOX_API_OUT_AND_LEN(out, olen), USX_PSET_URL, prev_lines);
     case 13:
-      return unishox2_compress_lines(in, len, UNISHOX_API_OUT_AND_LEN(out, olen), USX_PSET_JSON, prev_lines, term);
+      return unishox2_compress_lines(in, len, UNISHOX_API_OUT_AND_LEN(out, olen), USX_PSET_JSON, prev_lines);
     case 14:
-      return unishox2_compress_lines(in, len, UNISHOX_API_OUT_AND_LEN(out, olen), USX_PSET_JSON_NO_UNI, prev_lines, term);
+      return unishox2_compress_lines(in, len, UNISHOX_API_OUT_AND_LEN(out, olen), USX_PSET_JSON_NO_UNI, prev_lines);
     case 15:
-      return unishox2_compress_lines(in, len, UNISHOX_API_OUT_AND_LEN(out, olen), USX_PSET_XML, prev_lines, term);
+      return unishox2_compress_lines(in, len, UNISHOX_API_OUT_AND_LEN(out, olen), USX_PSET_XML, prev_lines);
     case 16:
-      return unishox2_compress_lines(in, len, UNISHOX_API_OUT_AND_LEN(out, olen), USX_PSET_HTML, prev_lines, term);
+      return unishox2_compress_lines(in, len, UNISHOX_API_OUT_AND_LEN(out, olen), USX_PSET_HTML, prev_lines);
   }
   return 0;
 }
@@ -99,9 +99,8 @@ int test_ushx_cd(char *input, int preset) {
 
   char cbuf[200];
   char dbuf[251];
-  long terminator;
   int len = (int)strlen(input);
-  int clen = unishox2_compress_preset_lines(input, len, UNISHOX_API_OUT_AND_LEN(cbuf, sizeof cbuf), preset, NULL, &terminator);
+  int clen = unishox2_compress_preset_lines(input, len, UNISHOX_API_OUT_AND_LEN(cbuf, sizeof cbuf), preset, NULL);
   if (clen > (int)sizeof cbuf) {
     printf("Compress Overflow\n");
     return 0;
@@ -132,7 +131,7 @@ int test_ushx_cd(char *input, int preset) {
   // check compress overflow
   for (int i = 1; i <= 16 && clen - i >= 0; ++i) {
     char cbuf_cut[sizeof cbuf];
-    const int clen_cut = unishox2_compress_preset_lines(input, len, cbuf_cut, clen - i, preset, NULL, NULL);
+    const int clen_cut = unishox2_compress_preset_lines(input, len, cbuf_cut, clen - i, preset, NULL);
     if (clen_cut != clen - i + 1) { // should overflow
       printf("Fail compress len overflow: %d, %d\n", clen - i, clen_cut);
       return 0;
@@ -162,8 +161,49 @@ int test_ushx_cd(char *input, int preset) {
 
   // test terminator
   const int orig_clen = clen;
-  for (int i = 0; i < ((byte*)&terminator)[3];) {
-    cbuf[clen++] = ((byte*)&terminator)[i++];
+  if (orig_clen > (int)sizeof cbuf - 6) {
+      printf("Fail, no room for term indicator\n");
+      return 0;
+  }
+  switch (preset) {
+    case 0:
+      clen += expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_DFLT); break;
+    case 1:
+      clen += expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_ALPHA_ONLY); break;
+    case 2:
+      clen += expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_ALPHA_NUM_ONLY); break;
+    case 3:
+      clen += expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_ALPHA_NUM_SYM_ONLY); break;
+    case 4:
+      clen += expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_ALPHA_NUM_SYM_ONLY_TXT); break;
+    case 5:
+      clen += expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_FAVOR_ALPHA); break;
+    case 6:
+      clen += expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_FAVOR_DICT); break;
+    case 7:
+      clen += expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_FAVOR_SYM); break;
+    case 8:
+      clen += expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_FAVOR_UMLAUT); break;
+    case 9:
+      clen += expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_NO_DICT); break;
+    case 10:
+      clen += expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_NO_UNI); break;
+    case 11:
+      clen += expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_NO_UNI_FAVOR_TEXT); break;
+    case 12:
+      clen += expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_URL); break;
+    case 13:
+      clen += expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_JSON); break;
+    case 14:
+      clen += expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_JSON_NO_UNI); break;
+    case 15:
+      clen += expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_XML); break;
+    case 16:
+      clen += expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_HTML); break;
+  }
+  if (clen < orig_clen) {
+    printf("invalid indicator\n");
+    return 0;
   }
   cbuf[clen++] = cbuf[0];
   cbuf[clen++] = cbuf[1];
@@ -319,7 +359,7 @@ if (argv >= 4 && strcmp(args[1], "-c") == 0) {
    do {
      bytes_read = (int)fread(cbuf, 1, sizeof(cbuf), fp);
      if (bytes_read > 0) {
-        clen = unishox2_compress_preset_lines(cbuf, bytes_read, UNISHOX_API_OUT_AND_LEN(dbuf, sizeof dbuf), preset, NULL, NULL);
+        clen = unishox2_compress_preset_lines(cbuf, bytes_read, UNISHOX_API_OUT_AND_LEN(dbuf, sizeof dbuf), preset, NULL);
         ctot += clen;
         tot_len += bytes_read;
         if (clen > 0) {
@@ -416,7 +456,7 @@ if (argv >= 4 && (strcmp(args[1], "-g") == 0 ||
         cur_line->data = (char *) malloc(len + 1);
         strncpy(cur_line->data, cbuf, len);
         cur_line->previous = ll;
-        clen = unishox2_compress_preset_lines(cbuf, len, UNISHOX_API_OUT_AND_LEN(dbuf, sizeof dbuf), preset, cur_line, NULL);
+        clen = unishox2_compress_preset_lines(cbuf, len, UNISHOX_API_OUT_AND_LEN(dbuf, sizeof dbuf), preset, cur_line);
         if (clen > 0) {
             perc = (float)(len-clen);
             perc /= len;
@@ -492,7 +532,7 @@ if (argv >= 2 && strcmp(args[1], "-t") == 0) {
      char dbuf[128];
      char *hex = ":AAAAAA-bbbbbb";
      const int len = strlen(hex);
-     const int clen = unishox2_compress_lines(hex, len, UNISHOX_API_OUT_AND_LEN(cbuf, sizeof cbuf), USX_HCODES_DFLT, USX_HCODE_LENS_DFLT, USX_FREQ_SEQ_DFLT, (const char *[]){":FFFFFF", "-ffffff", 0, 0, 0} , NULL, NULL);
+     const int clen = unishox2_compress_lines(hex, len, UNISHOX_API_OUT_AND_LEN(cbuf, sizeof cbuf), USX_HCODES_DFLT, USX_HCODE_LENS_DFLT, USX_FREQ_SEQ_DFLT, (const char *[]){":FFFFFF", "-ffffff", 0, 0, 0} , NULL);
      const int dlen = unishox2_decompress_lines(cbuf, clen, UNISHOX_API_OUT_AND_LEN(dbuf, sizeof dbuf), USX_HCODES_DFLT, USX_HCODE_LENS_DFLT, USX_FREQ_SEQ_DFLT, (const char *[]){":FFFFFF", "-ffffff", 0, 0, 0} , NULL);
      if (dlen != len) {
        printf("Fail len (template): %d, %d:\n%s\n%s\n", len, dlen, hex, dbuf);
@@ -746,7 +786,7 @@ if (argv == 2 || (argv == 3 && atoi(args[2]) > 0)) {
    printf("String: %s, Len:%ld\n", args[1], len);
    //print_string_as_hex(args[1], len);
    memset(cbuf, 0, sizeof(cbuf));
-   ctot = unishox2_compress_preset_lines(args[1], len, UNISHOX_API_OUT_AND_LEN(cbuf, sizeof cbuf), preset, NULL, NULL);
+   ctot = unishox2_compress_preset_lines(args[1], len, UNISHOX_API_OUT_AND_LEN(cbuf, sizeof cbuf), preset, NULL);
    print_compressed(cbuf, ctot);
    memset(dbuf, 0, sizeof(dbuf));
    dlen = unishox2_decompress_preset_lines(cbuf, ctot, UNISHOX_API_OUT_AND_LEN(dbuf, sizeof dbuf - 1), preset, NULL);
