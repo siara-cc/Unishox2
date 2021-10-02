@@ -423,7 +423,7 @@ int unishox2_compress_lines(const char *in, int len, UNISHOX_API_OUT_AND_LEN(cha
   prev_uni = 0;
   state = USX_ALPHA;
   is_all_upper = 0;
-  SAFE_APPEND_BITS2(olen, ol = append_bits(out, olen, ol, 0x80, 1)); // magic bit
+  SAFE_APPEND_BITS2(olen, ol = append_bits(out, olen, ol, UNISHOX_MAGIC_BITS, UNISHOX_MAGIC_BIT_LEN)); // magic bit(s)
   for (l=0; l<len; l++) {
 
     if (usx_hcode_lens[USX_DICT] && l < (len - NICE_LEN + 1)) {
@@ -952,7 +952,7 @@ int unishox2_decompress_lines(const char *in, int len, UNISHOX_API_OUT_AND_LEN(c
 
   init_coder();
   int ol = 0;
-  bit_no = 1; // ignore the magic bit
+  bit_no = UNISHOX_MAGIC_BIT_LEN; // ignore the magic bit
   dstate = h = USX_ALPHA;
   is_all_upper = 0;
 
