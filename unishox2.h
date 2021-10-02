@@ -28,6 +28,10 @@
 #  define UNISHOX_API_WITH_OUTPUT_LEN 0
 #endif
 
+#ifndef UNISHOX_MAGIC_BITS
+#  define UNISHOX_MAGIC_BITS 0xFF
+#endif
+
 #ifdef UNISHOX_MAGIC_BIT_LEN
 #  if UNISHOX_MAGIC_BIT_LEN < 0 || 8 <= UNISHOX_MAGIC_BIT_LEN
 #    error "UNISHOX_MAGIC_BIT_LEN need between [0, 7)"
