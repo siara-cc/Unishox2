@@ -427,7 +427,7 @@ byte append_final_bits(char *const out, const int ol, const byte state, const by
 
 // return 0 - 3 for valid indicator, fill term codes in term_buf[0..return)
 // return -1 for invalid indicator
-int expand_term_codes(const byte indicator, char term_buf[3], const byte usx_hcodes[], const byte usx_hcode_lens[], ...) {
+int unishox2_expand_term_codes(const byte indicator, char term_buf[3], const byte usx_hcodes[], const byte usx_hcode_lens[], ...) {
   if (usx_hcode_lens[USX_ALPHA]) {
     const byte state = indicator >> 3;
     const byte emitted = indicator & 7;

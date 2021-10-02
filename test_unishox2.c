@@ -167,39 +167,39 @@ int test_ushx_cd(char *input, int preset) {
   }
   switch (preset) {
     case 0:
-      clen += expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_DFLT); break;
+      clen += unishox2_expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_DFLT); break;
     case 1:
-      clen += expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_ALPHA_ONLY); break;
+      clen += unishox2_expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_ALPHA_ONLY); break;
     case 2:
-      clen += expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_ALPHA_NUM_ONLY); break;
+      clen += unishox2_expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_ALPHA_NUM_ONLY); break;
     case 3:
-      clen += expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_ALPHA_NUM_SYM_ONLY); break;
+      clen += unishox2_expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_ALPHA_NUM_SYM_ONLY); break;
     case 4:
-      clen += expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_ALPHA_NUM_SYM_ONLY_TXT); break;
+      clen += unishox2_expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_ALPHA_NUM_SYM_ONLY_TXT); break;
     case 5:
-      clen += expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_FAVOR_ALPHA); break;
+      clen += unishox2_expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_FAVOR_ALPHA); break;
     case 6:
-      clen += expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_FAVOR_DICT); break;
+      clen += unishox2_expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_FAVOR_DICT); break;
     case 7:
-      clen += expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_FAVOR_SYM); break;
+      clen += unishox2_expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_FAVOR_SYM); break;
     case 8:
-      clen += expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_FAVOR_UMLAUT); break;
+      clen += unishox2_expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_FAVOR_UMLAUT); break;
     case 9:
-      clen += expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_NO_DICT); break;
+      clen += unishox2_expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_NO_DICT); break;
     case 10:
-      clen += expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_NO_UNI); break;
+      clen += unishox2_expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_NO_UNI); break;
     case 11:
-      clen += expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_NO_UNI_FAVOR_TEXT); break;
+      clen += unishox2_expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_NO_UNI_FAVOR_TEXT); break;
     case 12:
-      clen += expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_URL); break;
+      clen += unishox2_expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_URL); break;
     case 13:
-      clen += expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_JSON); break;
+      clen += unishox2_expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_JSON); break;
     case 14:
-      clen += expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_JSON_NO_UNI); break;
+      clen += unishox2_expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_JSON_NO_UNI); break;
     case 15:
-      clen += expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_XML); break;
+      clen += unishox2_expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_XML); break;
     case 16:
-      clen += expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_HTML); break;
+      clen += unishox2_expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_HTML); break;
   }
   if (clen < orig_clen) {
     printf("invalid indicator\n");

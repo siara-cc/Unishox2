@@ -118,6 +118,6 @@ extern int unishox2_decompress_lines(const char *in, int len, UNISHOX_API_OUT_AN
               const char *usx_freq_seq[], const char *usx_templates[],
               struct us_lnk_lst *prev_lines);
 
-extern int expand_term_codes(unsigned char indicator, char term_buf[3], const unsigned char usx_hcodes[], const unsigned char usx_hcode_lens[], ...);
+extern int unishox2_expand_term_codes(unsigned char indicator, char term_buf[3], const unsigned char usx_hcodes[], const unsigned char usx_hcode_lens[], ...);
 
 #endif
