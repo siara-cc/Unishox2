@@ -444,7 +444,7 @@ int unishox2_expand_term_codes(const byte indicator, char term_buf[3], const byt
     tl = append_bits(buf, sizeof buf, tl, usx_vcodes[TERM_CODE & 0x1F], usx_vcode_lens[TERM_CODE & 0x1F]);
 
     // fill byte with the last bit
-    tl = append_bits(buf, sizeof buf, tl, buf[(tl-1)/8] << ((tl-1)&7), (8 - tl % 8) & 7);
+    tl = append_bits(buf, sizeof buf, tl, (buf[(tl-1)/8] << ((tl-1)&7)) >= 0 ? 0 : 0xFF, (8 - tl % 8) & 7);
 
     tl /= 8;
     rst = tl - 1;

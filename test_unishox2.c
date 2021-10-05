@@ -205,6 +205,10 @@ int test_ushx_cd(char *input, int preset) {
     printf("invalid indicator\n");
     return 0;
   }
+  if (clen > orig_clen && (unsigned char)cbuf[clen-1] != (preset == 1 ? 0 : 0xFF)) {
+    printf("term size = %d, last byte is not 0 or 0xFF: %X\n", clen - orig_clen, (unsigned char)cbuf[clen-1]);
+    return 0;
+  }
   cbuf[clen++] = cbuf[0];
   cbuf[clen++] = cbuf[1];
   cbuf[clen++] = cbuf[2];
