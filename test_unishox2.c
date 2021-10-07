@@ -157,65 +157,35 @@ int test_ushx_cd(char *input, int preset) {
       return 0;
     }
   }
-#endif
 
-  // test terminator
-  const int orig_clen = clen;
-  if (orig_clen > (int)sizeof cbuf - 6) {
-      printf("Fail, no room for term indicator\n");
+  // test terminator, only valid when olen parameter is used in *_compress api
+  char cbuf_term[sizeof cbuf + 6];
+  const int clen_term_raw = unishox2_compress_preset_lines(input, len, UNISHOX_API_OUT_AND_LEN(cbuf_term, -(int)(sizeof cbuf_term)), preset, NULL);
+  int clen_term = clen_term_raw / 4;
+  const int clen_term_size = clen_term_raw % 4;
+  if (clen_term > (int)sizeof cbuf_term) {
+      printf("Fail, overflow for full term codes\n");
       return 0;
   }
-  switch (preset) {
-    case 0:
-      clen += unishox2_expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_DFLT); break;
-    case 1:
-      clen += unishox2_expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_ALPHA_ONLY); break;
-    case 2:
-      clen += unishox2_expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_ALPHA_NUM_ONLY); break;
-    case 3:
-      clen += unishox2_expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_ALPHA_NUM_SYM_ONLY); break;
-    case 4:
-      clen += unishox2_expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_ALPHA_NUM_SYM_ONLY_TXT); break;
-    case 5:
-      clen += unishox2_expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_FAVOR_ALPHA); break;
-    case 6:
-      clen += unishox2_expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_FAVOR_DICT); break;
-    case 7:
-      clen += unishox2_expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_FAVOR_SYM); break;
-    case 8:
-      clen += unishox2_expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_FAVOR_UMLAUT); break;
-    case 9:
-      clen += unishox2_expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_NO_DICT); break;
-    case 10:
-      clen += unishox2_expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_NO_UNI); break;
-    case 11:
-      clen += unishox2_expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_NO_UNI_FAVOR_TEXT); break;
-    case 12:
-      clen += unishox2_expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_URL); break;
-    case 13:
-      clen += unishox2_expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_JSON); break;
-    case 14:
-      clen += unishox2_expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_JSON_NO_UNI); break;
-    case 15:
-      clen += unishox2_expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_XML); break;
-    case 16:
-      clen += unishox2_expand_term_codes(cbuf[clen], cbuf + clen, USX_PSET_HTML); break;
-  }
-  if (clen < orig_clen) {
-    printf("invalid indicator\n");
+  if (clen != clen_term - clen_term_size) {
+    printf("Fail compress len with term codes: %d, %d\n", clen, clen_term - clen_term_size);
     return 0;
   }
-  if (clen > orig_clen && (unsigned char)cbuf[clen-1] != (preset == 1 ? 0 : 0xFF)) {
-    printf("term size = %d, last byte is not 0 or 0xFF: %X\n", clen - orig_clen, (unsigned char)cbuf[clen-1]);
+  if (memcmp(cbuf, cbuf_term, clen)) {
+    printf("Fail compress with term codes cmp\n");
     return 0;
   }
-  cbuf[clen++] = cbuf[0];
-  cbuf[clen++] = cbuf[1];
-  cbuf[clen++] = cbuf[2];
+  if ((unsigned char)cbuf_term[clen_term-1] != (preset == 1 ? 0 : 0xFF)) {
+    printf("term size = %d, last byte is not 0 or 0xFF: %X\n", clen_term_size, (unsigned char)cbuf[clen-1]);
+    return 0;
+  }
+  cbuf_term[clen_term++] = cbuf_term[0];
+  cbuf_term[clen_term++] = cbuf_term[1];
+  cbuf_term[clen_term++] = cbuf_term[2];
 
-  for (int i = 1; i <= 7 && orig_clen + i <= (int)sizeof cbuf; ++i) {
+  for (int i = 1; i <= 7 && clen + i <= (int)sizeof cbuf_term; ++i) {
     memset(dbuf, 0, sizeof(dbuf));
-    dlen = unishox2_decompress_preset_lines(cbuf, orig_clen + i, UNISHOX_API_OUT_AND_LEN(dbuf, sizeof dbuf), preset, NULL);
+    dlen = unishox2_decompress_preset_lines(cbuf_term, clen + i, UNISHOX_API_OUT_AND_LEN(dbuf, sizeof dbuf), preset, NULL);
     if (dlen > (int)sizeof dbuf) {
       printf("Decompress Overflow for testing terminator\n");
       return 0;
@@ -231,6 +201,7 @@ int test_ushx_cd(char *input, int preset) {
       return 0;
     }
   }
+#endif
 
   return 1;
 

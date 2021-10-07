@@ -394,35 +394,25 @@ long min_of(long c, long i) {
   return c > i ? i : c;
 }
 
-byte append_final_bits(char *const out, const int ol, const byte state, const byte is_all_upper, const byte usx_hcodes[], const byte usx_hcode_lens[]) {
-  char term_buf[4] = { 0 };
-  byte indicator = 0;
-  int tl = (ol - 1) % 8 + 1; // 8x+[0..7] -> [8, 1..7]
-
+int append_final_bits(char *const out, const int olen, int ol, const byte state, const byte is_all_upper, const byte usx_hcodes[], const byte usx_hcode_lens[]) {
   if (usx_hcode_lens[USX_ALPHA]) {
-    indicator = (state << 3) | ((byte)(8 - tl) & 7);
     if (USX_NUM != state) {
       // for num state, append TERM_CODE directly
       // for other state, switch to Num Set first
-      tl = append_switch_code(term_buf, sizeof term_buf, tl, state);
-      tl = append_bits(term_buf, sizeof term_buf, tl, usx_hcodes[USX_NUM], usx_hcode_lens[USX_NUM]);
+      SAFE_APPEND_BITS(ol = append_switch_code(out, olen, ol, state));
+      SAFE_APPEND_BITS(ol = append_bits(out, olen, ol, usx_hcodes[USX_NUM], usx_hcode_lens[USX_NUM]));
     }
-    tl = append_bits(term_buf, sizeof term_buf, tl, usx_vcodes[TERM_CODE & 0x1F], usx_vcode_lens[TERM_CODE & 0x1F]);
+    SAFE_APPEND_BITS(ol = append_bits(out, olen, ol, usx_vcodes[TERM_CODE & 0x1F], usx_vcode_lens[TERM_CODE & 0x1F]));
   } else {
     // preset 1, terminate at 2 or 3 SW_CODE, i.e., 4 or 6 continuous 0 bits
     // see discussion: https://github.com/siara-cc/Unishox/issues/19#issuecomment-922435580
-    tl = append_bits(term_buf, sizeof term_buf, tl, TERM_BYTE_PRESET_1, is_all_upper ? TERM_BYTE_PRESET_1_LEN_UPPER : TERM_BYTE_PRESET_1_LEN_LOWER);
-    indicator = tl <= 8 ? 0xFF : 0x00;
+    SAFE_APPEND_BITS(ol = append_bits(out, olen, ol, TERM_BYTE_PRESET_1, is_all_upper ? TERM_BYTE_PRESET_1_LEN_UPPER : TERM_BYTE_PRESET_1_LEN_LOWER));
   }
 
   // fill byte with the last bit
-  tl = append_bits(term_buf, sizeof term_buf, tl, (term_buf[(tl-1)/8] << ((tl-1)&7)) >= 0 ? 0 : 0xFF, (8 - tl % 8) & 7);
+  SAFE_APPEND_BITS(ol = append_bits(out, olen, ol, (ol == 0 || out[(ol-1)/8] << ((ol-1)&7) >= 0) ? 0 : 0xFF, (8 - ol % 8) & 7));
 
-  if (ol%8) {
-    out[(ol-1) / 8] |= term_buf[0];
-  }
-
-  return indicator;
+  return ol;
 }
 
 // return 0 - 3 for valid indicator, fill term codes in term_buf[0..return)
@@ -467,7 +457,7 @@ int unishox2_expand_term_codes(const byte indicator, char term_buf[3], const byt
   if (newidx < 0) return (olen) + 1; \
 } while (0)
 
-int unishox2_compress_lines(const char *in, int len, UNISHOX_API_OUT_AND_LEN(char *out, int olen), const byte usx_hcodes[], const byte usx_hcode_lens[], const char *usx_freq_seq[], const char *usx_templates[], struct us_lnk_lst *prev_lines) {
+int unishox2_compress_lines(const char *in, int len, UNISHOX_API_OUT_AND_LEN(char *const out, int olen), const byte usx_hcodes[], const byte usx_hcode_lens[], const char *usx_freq_seq[], const char *usx_templates[], struct us_lnk_lst *prev_lines) {
 
   byte state;
 
@@ -477,6 +467,13 @@ int unishox2_compress_lines(const char *in, int len, UNISHOX_API_OUT_AND_LEN(cha
   byte is_upper, is_all_upper;
 #if (UNISHOX_API_OUT_AND_LEN(0,1)) == 0
   const int olen = INT_MAX - 1;
+  const byte need_full_term_codes = 0;
+#else
+  byte need_full_term_codes = 0;
+  if (olen < 0) {
+    need_full_term_codes = 1;
+    olen *= -1;
+  }
 #endif
 
   init_coder();
@@ -779,12 +776,15 @@ int unishox2_compress_lines(const char *in, int len, UNISHOX_API_OUT_AND_LEN(cha
     }
   }
 
-  {
-    const byte term_indicator = append_final_bits(out, ol, state, is_all_upper, usx_hcodes, usx_hcode_lens);
+  if (need_full_term_codes) {
+    const int orig_ol = ol;
+    ol = append_final_bits(out, olen, ol, state, is_all_upper, usx_hcodes, usx_hcode_lens);
+    if (ol < 0)
+      return olen >= INT_MAX - 1 ? INT_MAX : (olen + 1) * 4;
+    return (ol / 8) * 4 + (((ol-orig_ol)/8) & 3);
+  } else {
     const int rst = (ol + 7) / 8;
-    if (rst < olen) {
-      out[rst] = term_indicator;
-    }
+    append_final_bits(out, rst, ol, state, is_all_upper, usx_hcodes, usx_hcode_lens);
     return rst;
   }
 }
