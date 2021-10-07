@@ -415,43 +415,6 @@ int append_final_bits(char *const out, const int olen, int ol, const byte state,
   return ol;
 }
 
-// return 0 - 3 for valid indicator, fill term codes in term_buf[0..return)
-// return -1 for invalid indicator
-int unishox2_expand_term_codes(const byte indicator, char term_buf[3], const byte usx_hcodes[], const byte usx_hcode_lens[], ...) {
-  if (usx_hcode_lens[USX_ALPHA]) {
-    const byte state = indicator >> 3;
-    const byte emitted = indicator & 7;
-    int tl = 8 - emitted;
-    int rst = 0;
-    char buf[4];
-
-    if (USX_NUM != state) {
-      // for num state, append TERM_CODE directly
-      // for other state, switch to Num Set first
-      tl = append_switch_code(buf, sizeof buf, tl, state);
-      tl = append_bits(buf, sizeof buf, tl, usx_hcodes[USX_NUM], usx_hcode_lens[USX_NUM]);
-    }
-    tl = append_bits(buf, sizeof buf, tl, usx_vcodes[TERM_CODE & 0x1F], usx_vcode_lens[TERM_CODE & 0x1F]);
-
-    // fill byte with the last bit
-    tl = append_bits(buf, sizeof buf, tl, (buf[(tl-1)/8] << ((tl-1)&7)) >= 0 ? 0 : 0xFF, (8 - tl % 8) & 7);
-
-    tl /= 8;
-    rst = tl - 1;
-    while (--tl > 0) {
-      term_buf[tl - 1] = buf[tl];
-    }
-    return rst;
-  } else if (indicator == 0xFF) {
-    return 0;
-  } else if (indicator == 0x00) {
-    term_buf[0] = 0x00;
-    return 1;
-  } else {
-    return -1;
-  }
-}
-
 #define SAFE_APPEND_BITS2(olen, exp) do { \
   const int newidx = (exp); \
   if (newidx < 0) return (olen) + 1; \
