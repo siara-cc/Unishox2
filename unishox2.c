@@ -420,7 +420,7 @@ int append_final_bits(char *const out, const int olen, int ol, const byte state,
   if (newidx < 0) return (olen) + 1; \
 } while (0)
 
-int unishox2_compress_lines(const char *in, int len, UNISHOX_API_OUT_AND_LEN(char *const out, int olen), const byte usx_hcodes[], const byte usx_hcode_lens[], const char *usx_freq_seq[], const char *usx_templates[], struct us_lnk_lst *prev_lines) {
+int unishox2_compress_lines(const char *in, int len, UNISHOX_API_OUT_AND_LEN(char *out, int olen), const byte usx_hcodes[], const byte usx_hcode_lens[], const char *usx_freq_seq[], const char *usx_templates[], struct us_lnk_lst *prev_lines) {
 
   byte state;
 
