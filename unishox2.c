@@ -416,7 +416,7 @@ byte append_final_bits(char *const out, const int ol, const byte state, const by
   }
 
   // fill byte with the last bit
-  tl = append_bits(term_buf, sizeof term_buf, tl, term_buf[(tl-1)/8] << ((tl-1)&7), (8 - tl % 8) & 7);
+  tl = append_bits(term_buf, sizeof term_buf, tl, (term_buf[(tl-1)/8] << ((tl-1)&7)) >= 0 ? 0 : 0xFF, (8 - tl % 8) & 7);
 
   if (ol%8) {
     out[(ol-1) / 8] |= term_buf[0];
