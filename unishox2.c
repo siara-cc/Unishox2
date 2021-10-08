@@ -429,11 +429,12 @@ int unishox2_compress_lines(const char *in, int len, UNISHOX_API_OUT_AND_LEN(cha
   char c_in, c_next;
   int prev_uni;
   byte is_upper, is_all_upper;
-  const int rawolen = olen;
 #if (UNISHOX_API_OUT_AND_LEN(0,1)) == 0
   const int olen = INT_MAX - 1;
+  const int rawolen = olen;
   const byte need_full_term_codes = 0;
 #else
+  const int rawolen = olen;
   byte need_full_term_codes = 0;
   if (olen < 0) {
     need_full_term_codes = 1;
