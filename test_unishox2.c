@@ -157,6 +157,50 @@ int test_ushx_cd(char *input, int preset) {
       return 0;
     }
   }
+
+  // test terminator, only valid when olen parameter is used in *_compress api
+  char cbuf_term[sizeof cbuf + 6];
+  const int clen_term_raw = unishox2_compress_preset_lines(input, len, UNISHOX_API_OUT_AND_LEN(cbuf_term, -(int)(sizeof cbuf_term)), preset, NULL);
+  int clen_term = clen_term_raw / 4;
+  const int clen_term_size = clen_term_raw % 4;
+  if (clen_term > (int)sizeof cbuf_term) {
+      printf("Fail, overflow for full term codes\n");
+      return 0;
+  }
+  if (clen != clen_term - clen_term_size) {
+    printf("Fail compress len with term codes: %d, %d\n", clen, clen_term - clen_term_size);
+    return 0;
+  }
+  if (memcmp(cbuf, cbuf_term, clen)) {
+    printf("Fail compress with term codes cmp\n");
+    return 0;
+  }
+  if ((unsigned char)cbuf_term[clen_term-1] != (preset == 1 ? 0 : 0xFF)) {
+    printf("term size = %d, last byte is not 0 or 0xFF: %X\n", clen_term_size, (unsigned char)cbuf[clen-1]);
+    return 0;
+  }
+  cbuf_term[clen_term++] = cbuf_term[0];
+  cbuf_term[clen_term++] = cbuf_term[1];
+  cbuf_term[clen_term++] = cbuf_term[2];
+
+  for (int i = 1; i <= 7 && clen + i <= (int)sizeof cbuf_term; ++i) {
+    memset(dbuf, 0, sizeof(dbuf));
+    dlen = unishox2_decompress_preset_lines(cbuf_term, clen + i, UNISHOX_API_OUT_AND_LEN(dbuf, sizeof dbuf), preset, NULL);
+    if (dlen > (int)sizeof dbuf) {
+      printf("Decompress Overflow for testing terminator\n");
+      return 0;
+    } else if (dlen < (int)sizeof dbuf)
+      dbuf[dlen] = '\0';
+    if (dlen != len) {
+      dbuf[sizeof dbuf - 1] = '\0';
+      printf("Fail len (term+%d): %d, %d:\n%s\n%s\n", i, len, dlen, input, dbuf);
+      return 0;
+    }
+    if (strncmp(input, dbuf, len)) {
+      printf("Fail cmp (term+%d):\n%s\n%s\n", i, input, dbuf);
+      return 0;
+    }
+  }
 #endif
 
   return 1;
