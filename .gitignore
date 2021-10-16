@@ -63,6 +63,7 @@ delta_only
 *.xdv
 *.csu
 *.bcu
+doc/*.pdf
 
 # Traditional cmake building directories
 build*
