@@ -51,3 +51,45 @@ jobs:
       run: ./test_unishox2 -t 15 && ./test_unishox2-w-olen -t 15
     - name: test preset 16
       run: ./test_unishox2 -t 16 && ./test_unishox2-w-olen -t 16
+    - name: test sample_texts/chinese.txt
+      run: ./test_unishox2 -c sample_texts/chinese.txt sample_texts/chinese.usx && ./test_unishox2 -d sample_texts/chinese.usx sample_texts/chinese.dsx && cmp sample_texts/chinese.txt sample_texts/chinese.dsx
+    - name: test sample_texts/emoji.txt
+      run: ./test_unishox2 -c sample_texts/emoji.txt sample_texts/emoji.usx && ./test_unishox2 -d sample_texts/emoji.usx sample_texts/emoji.dsx && cmp sample_texts/emoji.txt sample_texts/emoji.dsx
+    - name: test sample_texts/french.txt
+      run: ./test_unishox2 -c sample_texts/french.txt sample_texts/french.usx && ./test_unishox2 -d sample_texts/french.usx sample_texts/french.dsx && cmp sample_texts/french.txt sample_texts/french.dsx
+    - name: test sample_texts/hindi.txt
+      run: ./test_unishox2 -c sample_texts/hindi.txt sample_texts/hindi.usx && ./test_unishox2 -d sample_texts/hindi.usx sample_texts/hindi.dsx && cmp sample_texts/hindi.txt sample_texts/hindi.dsx
+    - name: test sample_texts/japanese.txt
+      run: ./test_unishox2 -c sample_texts/japanese.txt sample_texts/japanese.usx && ./test_unishox2 -d sample_texts/japanese.usx sample_texts/japanese.dsx && cmp sample_texts/japanese.txt sample_texts/japanese.dsx
+    - name: test sample_texts/json1.txt
+      run: ./test_unishox2 -c sample_texts/json1.txt sample_texts/json1.usx && ./test_unishox2 -d sample_texts/json1.usx sample_texts/json1.dsx && cmp sample_texts/json1.txt sample_texts/json1.dsx
+    - name: test sample_texts/json2.txt
+      run: ./test_unishox2 -c sample_texts/json2.txt sample_texts/json2.usx && ./test_unishox2 -d sample_texts/json2.usx sample_texts/json2.dsx && cmp sample_texts/json2.txt sample_texts/json2.dsx
+    - name: test sample_texts/json3.txt
+      run: ./test_unishox2 -c sample_texts/json3.txt sample_texts/json3.usx && ./test_unishox2 -d sample_texts/json3.usx sample_texts/json3.dsx && cmp sample_texts/json3.txt sample_texts/json3.dsx
+    - name: test sample_texts/json4.txt
+      run: ./test_unishox2 -c sample_texts/json4.txt sample_texts/json4.usx && ./test_unishox2 -d sample_texts/json4.usx sample_texts/json4.dsx && cmp sample_texts/json4.txt sample_texts/json4.dsx
+    - name: test sample_texts/korean.txt
+      run: ./test_unishox2 -c sample_texts/korean.txt sample_texts/korean.usx && ./test_unishox2 -d sample_texts/korean.usx sample_texts/korean.dsx && cmp sample_texts/korean.txt sample_texts/korean.dsx
+    - name: test sample_texts/spanish.txt
+      run: ./test_unishox2 -c sample_texts/spanish.txt sample_texts/spanish.usx && ./test_unishox2 -d sample_texts/spanish.usx sample_texts/spanish.dsx && cmp sample_texts/spanish.txt sample_texts/spanish.dsx
+    - name: test sample_texts/tamil.txt
+      run: ./test_unishox2 -c sample_texts/tamil.txt sample_texts/tamil.usx && ./test_unishox2 -d sample_texts/tamil.usx sample_texts/tamil.dsx && cmp sample_texts/tamil.txt sample_texts/tamil.dsx
+    - name: test sample_texts/xml1.txt
+      run: ./test_unishox2 -c sample_texts/xml1.txt sample_texts/xml1.usx && ./test_unishox2 -d sample_texts/xml1.usx sample_texts/xml1.dsx && cmp sample_texts/xml1.txt sample_texts/xml1.dsx
+    - name: test sample_texts/world95.txt
+      run: ./test_unishox2 -c sample_texts/world95.txt sample_texts/world95.usx && ./test_unishox2 -d sample_texts/world95.usx sample_texts/world95.dsx && cmp sample_texts/world95.txt sample_texts/world95.dsx
+    - name: test utf8_samples/alice_wland_chn.txt
+      run: ./test_unishox2 -c utf8_samples/alice_wland_chn.txt utf8_samples/alice_wland_chn.usx && ./test_unishox2 -d utf8_samples/alice_wland_chn.usx utf8_samples/alice_wland_chn.dsx && cmp utf8_samples/alice_wland_chn.txt utf8_samples/alice_wland_chn.dsx
+    - name: test utf8_samples/alice_wland.txt
+      run: ./test_unishox2 -c utf8_samples/alice_wland.txt utf8_samples/alice_wland.usx && ./test_unishox2 -d utf8_samples/alice_wland.usx utf8_samples/alice_wland.dsx && cmp utf8_samples/alice_wland.txt utf8_samples/alice_wland.dsx
+    - name: test utf8_samples/hi.txt
+      run: ./test_unishox2 -c utf8_samples/hi.txt utf8_samples/hi.usx && ./test_unishox2 -d utf8_samples/hi.usx utf8_samples/hi.dsx && cmp utf8_samples/hi.txt utf8_samples/hi.dsx
+    - name: test utf8_samples/ja.txt
+      run: ./test_unishox2 -c utf8_samples/ja.txt utf8_samples/ja.usx && ./test_unishox2 -d utf8_samples/ja.usx utf8_samples/ja.dsx && cmp utf8_samples/ja.txt utf8_samples/ja.dsx
+    - name: test utf8_samples/ru.txt
+      run: ./test_unishox2 -c utf8_samples/ru.txt utf8_samples/ru.usx && ./test_unishox2 -d utf8_samples/ru.usx utf8_samples/ru.dsx && cmp utf8_samples/ru.txt utf8_samples/ru.dsx
+    - name: test utf8_samples/ta.txt
+      run: ./test_unishox2 -c utf8_samples/ta.txt utf8_samples/ta.usx && ./test_unishox2 -d utf8_samples/ta.usx utf8_samples/ta.dsx && cmp utf8_samples/ta.txt utf8_samples/ta.dsx
+    - name: test utf8_samples/zh.txt
+      run: ./test_unishox2 -c utf8_samples/zh.txt utf8_samples/zh.usx && ./test_unishox2 -d utf8_samples/zh.usx utf8_samples/zh.dsx && cmp utf8_samples/zh.txt utf8_samples/zh.dsx
