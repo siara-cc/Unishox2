@@ -97,7 +97,7 @@ Unlike smaz and shoco, no \emph{a priori} knowledge about the input text is assu
 
 In the ASCII chart, we have 95 printable letters starting from 32 through 126. For the purpose of arriving at fixed codes for each of these letters, two sets of prefix-free codes are used.
 
-The first set consists of 27 codes, which are: 00, 010, 011, 1000, 1001, 1010, 1011, 1100, 11010, 11011, 111000, 111001, 111010, 1110110, 1110111, 1111000, 1111001, 1111010, 11110110, 11110111, 11111000, 11111001, 11111010, 11111011, 11111100, 11111101, 11111110, 11111111. These are called vertical codes (vcodes).
+The first set consists of 28 codes, which are: 00, 010, 011, 1000, 1001, 1010, 1011, 1100, 11010, 11011, 111000, 111001, 111010, 1110110, 1110111, 1111000, 1111001, 1111010, 11110110, 11110111, 11111000, 11111001, 11111010, 11111011, 11111100, 11111101, 11111110, 11111111. These are called vertical codes (vcodes).
 
 The second set consists of 5 codes, which by default will be 00, 01, 10, 110, 111. These are called horizontal codes (hcodes). These 5 codes can be configured according to the composition of text that needs to be compressed.
 
@@ -343,7 +343,7 @@ With these two sets of codes, several sets of letters are formed as shown in the
 \begin{itemize}
 	\item[$\bullet$] The horizontal codes can be redefined to get better compression ratio, depending on composition of the text to be encoded.
 	\item[$\bullet$] Several "preset" codes have been identified for achieving better compression ratios for different compositions as below (Codes are for Alpha, Sym, Num, Dict, Delta):
-	\item[$\bullet$] For preset 1 (Alpha only) there are no horizontal code required. For encoding upper case symbols, just the switch code followed by the letter code is sufficient. Further continuous upper case can be accomplished by using two switch codes.
+	\item[$\bullet$] For preset 1 (Alpha only) there are no horizontal code required. For encoding upper case symbols, just the switch code followed by the letter code is sufficient. Further, continuous upper case can be accomplished by using two switch codes. Termination of encoding is accomplished by encoding 3 or 4 switch codes continuously depending on whether continuous upper case encoding is active or not.
 	\item[$\bullet$] The codes marked x in the table are the sets that are not expected in the text.
 \end{itemize}
 \begin{tabular}{ | l | l | l |} \hline
@@ -483,6 +483,18 @@ It is especially useful in memory constrained environments such as embedded devi
 \section{Further work}
 
 It is proposed to make Unishox available in more languages than just C, Javascript and Python, such as Java and C\#.Net. It is also proposed to make it available for more platforms.
+
+\section{Implementation}
+
+The author is sincerely thankful to the following people who have notably contributed towards the development of Unishox implementation:
+
+\begin{itemize}
+	\item[$\bullet$] Thanks to Jonathan Greenblatt (https://github.com/leafgarden) for his port of Unishox2 that works on Particle Photon (https://github.com/siara-cc/Unishox/tree/master/Arduino)
+	\item[$\bullet$] Thanks to Chris Partridge (https://github.com/tweedge) for his port of Unishox2 to CPython and his comprehensive tests using Hypothesis and extensive performance tests (https://github.com/tweedge/unishox2-py3)
+	\item[$\bullet$] Thanks to Stephan Hadinger (https://github.com/s-hadinger) for his \href{https://github.com/arendst/Tasmota/tree/development/tools/unishox}{port of Unishox1 to Python for Tasmota}
+	\item[$\bullet$] Thanks to Luis Díaz Más (https://github.com/piponazo) for his PRs to support MSVC and CMake setup
+	\item[$\bullet$] Thanks to James Z.M. Gao (https://github.com/gsm55) for his PRs on improving presets, safety checks, terminator codes, unit tests, bug fixes, documentation and more.
+\end{itemize}
 
 \section{About the Author}
 
