@@ -14,7 +14,7 @@ Note: The present byte-code version is 2 and it replaces [Unishox 1](Unishox_Art
 - Faster retrieval speed when used as join keys
 - Bandwidth and storage cost reduction for Cloud
 
-![Promo video](demo/Banner1.png?raw=true)
+![Promo video](promo/Banner1.png?raw=true)
 
 # How it works
 
@@ -22,7 +22,7 @@ Unishox is an hybrid encoder (entropy, dictionary and delta coding).  It works b
 
 The model used for arriving at the prefix-free code is shown below:
 
-![Promo video](demo/model.png?raw=true)
+![Promo video](promo/model.png?raw=true)
 
 The complete specification can be found in this article: [A hybrid encoder for compressing Short Unicode Strings](Unishox_Article_2.pdf?raw=true).
 

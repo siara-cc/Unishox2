@@ -33,8 +33,8 @@
 #endif
 
 #ifdef UNISHOX_MAGIC_BIT_LEN
-#  if UNISHOX_MAGIC_BIT_LEN < 0 || 8 <= UNISHOX_MAGIC_BIT_LEN
-#    error "UNISHOX_MAGIC_BIT_LEN need between [0, 7)"
+#  if UNISHOX_MAGIC_BIT_LEN < 0 || 9 <= UNISHOX_MAGIC_BIT_LEN
+#    error "UNISHOX_MAGIC_BIT_LEN need between [0, 8)"
 #  endif
 #else
 #  define UNISHOX_MAGIC_BIT_LEN 1
