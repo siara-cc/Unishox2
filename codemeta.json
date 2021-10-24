@@ -1,0 +1,16 @@
+{
+  "@context": "https://raw.githubusercontent.com/codemeta/codemeta/master/codemeta.jsonld",
+  "@type": "Code",
+  "author": ["Arundale Ramanathan"
+  ],
+  "identifier": "",
+  "codeRepository": "https://github.com/siara-cc/Unishox2",
+  "datePublished": "2021-10-17",
+  "dateModified": "2021-10-17",
+  "dateCreated": "2021-10-17",
+  "description": "Unishox2 is a hybrid encoding technique with which short unicode strings could be compressed using context aware pre-mapped codes and delta coding resulting in surprisingly good ratios.",
+  "keywords": "compression, string-compression, encoding",
+  "license": "Apache 2.0",
+  "title": "Unishox: A hybrid encoder for compressing Short Unicode Strings",
+  "version": "v1.0.1"
+}
