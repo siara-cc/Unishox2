@@ -31,7 +31,7 @@ The complete specification can be found in this article: [A hybrid encoder for c
 To compile, just use `make` or use gcc as follows:
 
 ```sh
-gcc -o unishox2 test_unishox2.c unishox2.c
+gcc -std=c99 -o unishox2 test_unishox2.c unishox2.c
 ```
 
 For testing the compiled program, use:

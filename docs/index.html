@@ -109,15 +109,15 @@ How it works</h1>
 <h1><a class="anchor" id="autotoc_md3"></a>
 Compiling</h1>
 <p >To compile, just use <code>make</code> or use gcc as follows:</p>
-<div class="fragment"><div class="line">gcc -o unishox2 test_unishox2.c unishox2.c</div>
+<div class="fragment"><div class="line">gcc -std=c99 -o unishox2 test_unishox2.c unishox2.c</div>
 </div><!-- fragment --><p >For testing the compiled program, use:</p>
 <div class="fragment"><div class="line">./test_unishox2 -t</div>
 </div><!-- fragment --><h1><a class="anchor" id="autotoc_md4"></a>
 API</h1>
 <div class="fragment"><div class="line"><span class="keywordtype">int</span> <a class="code hl_function" href="unishox2_8h.html#a37df146e9ddd9ff1b07c7c160683d96c">unishox2_compress_simple</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> *in, <span class="keywordtype">int</span> len, <span class="keywordtype">char</span> *out);</div>
 <div class="line"><span class="keywordtype">int</span> <a class="code hl_function" href="unishox2_8h.html#a3e5c00a0c5db7979d94b0b294908a04e">unishox2_decompress_simple</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> *in, <span class="keywordtype">int</span> len, <span class="keywordtype">char</span> *out);</div>
-<div class="ttc" id="aunishox2_8h_html_a37df146e9ddd9ff1b07c7c160683d96c"><div class="ttname"><a href="unishox2_8h.html#a37df146e9ddd9ff1b07c7c160683d96c">unishox2_compress_simple</a></div><div class="ttdeci">int unishox2_compress_simple(const char *in, int len, char *out)</div><div class="ttdef"><b>Definition:</b> unishox2.c:768</div></div>
-<div class="ttc" id="aunishox2_8h_html_a3e5c00a0c5db7979d94b0b294908a04e"><div class="ttname"><a href="unishox2_8h.html#a3e5c00a0c5db7979d94b0b294908a04e">unishox2_decompress_simple</a></div><div class="ttdeci">int unishox2_decompress_simple(const char *in, int len, char *out)</div><div class="ttdef"><b>Definition:</b> unishox2.c:1237</div></div>
+<div class="ttc" id="aunishox2_8h_html_a37df146e9ddd9ff1b07c7c160683d96c"><div class="ttname"><a href="unishox2_8h.html#a37df146e9ddd9ff1b07c7c160683d96c">unishox2_compress_simple</a></div><div class="ttdeci">int unishox2_compress_simple(const char *in, int len, char *out)</div></div>
+<div class="ttc" id="aunishox2_8h_html_a3e5c00a0c5db7979d94b0b294908a04e"><div class="ttname"><a href="unishox2_8h.html#a3e5c00a0c5db7979d94b0b294908a04e">unishox2_decompress_simple</a></div><div class="ttdeci">int unishox2_decompress_simple(const char *in, int len, char *out)</div></div>
 </div><!-- fragment --><h1><a class="anchor" id="autotoc_md5"></a>
 Usage</h1>
 <p >To see Unishox in action, simply try to compress a string:</p>
