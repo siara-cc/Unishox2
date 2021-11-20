@@ -16,6 +16,14 @@
  * @author Arundale Ramanathan
  *
  */
+/**
+ * @file unishox2.c
+ * @author Arundale Ramanathan, James Z. M. Gao
+ * @brief Main code of Unishox2 Compression and Decompression library
+ *
+ * This file implements the code for the Unishox API function \n
+ * defined in unishox2.h
+ */
 
 #include <stdlib.h>
 #include <string.h>

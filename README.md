@@ -4,7 +4,7 @@
 
 In general compression utilities such as `zip`, `gzip` do not compress short strings well and often expand them. They also use lots of memory which makes them unusable in constrained environments like Arduino.  So Unishox algorithm was developed for individually compressing (and decompressing) short strings.
 
-Note: The present byte-code version is 2 and it replaces [Unishox 1](Unishox_Article_1.pdf?raw=true).  Unishox 1 is still available as unishox1.c, but it will have to be compiled manually if it is needed.
+Note: The present byte-code version is 2 and it replaces [Unishox 1](https://github.com/siara-cc/Unishox2/blob/master/Unishox_Article_1.pdf?raw=true).  Unishox 1 is still available as unishox1.c, but it will have to be compiled manually if it is needed.
 
 # Applications
 
@@ -14,7 +14,7 @@ Note: The present byte-code version is 2 and it replaces [Unishox 1](Unishox_Art
 - Faster retrieval speed when used as join keys
 - Bandwidth and storage cost reduction for Cloud
 
-![Promo video](promo/Banner1.png?raw=true)
+![Promo video](https://github.com/siara-cc/Unishox2/blob/master/promo/Banner1.png?raw=true)
 
 # How it works
 
@@ -22,9 +22,9 @@ Unishox is an hybrid encoder (entropy, dictionary and delta coding).  It works b
 
 The model used for arriving at the prefix-free code is shown below:
 
-![Promo video](promo/model.png?raw=true)
+![Promo video](https://github.com/siara-cc/Unishox2/blob/master/promo/model.png?raw=true)
 
-The complete specification can be found in this article: [A hybrid encoder for compressing Short Unicode Strings](Unishox_Article_2.pdf?raw=true).
+The complete specification can be found in this article: [A hybrid encoder for compressing Short Unicode Strings](https://github.com/siara-cc/Unishox2/blob/master/Unishox_Article_2.pdf?raw=true).
 
 # Compiling
 

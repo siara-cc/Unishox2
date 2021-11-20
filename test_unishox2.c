@@ -1,3 +1,30 @@
+/*
+ * Copyright (C) 2020 Siara Logics (cc)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * @author Arundale Ramanathan
+ *
+ */
+/**
+ * @file test_unishox2.c
+ * @author Arundale Ramanathan, James Z. M. Gao
+ * @brief Demo / Test program for Unishox2 Compression and Decompression
+ *
+ * This file run comprehensive tests on the Unishox2 API \n
+ * It also provides command line options for demonstration \n
+ * of its features.
+ */
 #include "unishox2.h"
 
 #ifdef _MSC_VER
@@ -15,6 +42,7 @@
 
 typedef unsigned char byte;
 
+/// Internal function to call compress function in unishox2.c
 int unishox2_compress_preset_lines(const char *in, int len, UNISHOX_API_OUT_AND_LEN(char *out, int olen), int preset, struct us_lnk_lst *prev_lines) {
   switch (preset) {
     case 0:
@@ -55,6 +83,7 @@ int unishox2_compress_preset_lines(const char *in, int len, UNISHOX_API_OUT_AND_
   return 0;
 }
 
+/// Internal function to call decompress function in unishox2.c
 int unishox2_decompress_preset_lines(const char *in, int len, UNISHOX_API_OUT_AND_LEN(char *out, int olen), int preset, struct us_lnk_lst *prev_lines) {
   switch (preset) {
     case 0:
@@ -95,6 +124,7 @@ int unishox2_decompress_preset_lines(const char *in, int len, UNISHOX_API_OUT_AN
   return 0;
 }
 
+/// Helper function for unit tests
 int test_ushx_cd(char *input, int preset) {
 
   char cbuf[200];
@@ -219,6 +249,7 @@ int is_empty(const char *s) {
 // From https://stackoverflow.com/questions/19758270/read-varint-from-linux-sockets#19760246
 // Encode an unsigned 64-bit varint.  Returns number of encoded bytes.
 // 'buffer' must have room for up to 10 bytes.
+/// Internal helper function
 int encode_unsigned_varint(uint8_t *buffer, uint64_t value) {
   int encoded = 0;
   do {
@@ -231,6 +262,7 @@ int encode_unsigned_varint(uint8_t *buffer, uint64_t value) {
   return encoded;
 }
 
+/// Internal helper function
 uint64_t decode_unsigned_varint(const uint8_t *data, int *decoded_bytes) {
   int i = 0;
   uint64_t decoded_value = 0;
@@ -243,6 +275,7 @@ uint64_t decode_unsigned_varint(const uint8_t *data, int *decoded_bytes) {
   return decoded_value;
 }
 
+/// Internal helper function
 void print_string_as_hex(char *in, int len) {
 
   int l;
@@ -253,6 +286,7 @@ void print_string_as_hex(char *in, int len) {
   printf("\n");
 }
 
+/// Internal helper function
 void print_compressed(char *in, int len) {
 
   int l;
@@ -271,6 +305,7 @@ void print_compressed(char *in, int len) {
 
 }
 
+/// Internal helper function
 uint32_t getTimeVal() {
 #ifdef _MSC_VER
     return GetTickCount() * 1000;
@@ -281,6 +316,7 @@ uint32_t getTimeVal() {
 #endif
 }
 
+/// Internal helper function
 double timedifference(uint32_t t0, uint32_t t1) {
     double ret = t1;
     ret -= t0;
@@ -288,6 +324,7 @@ double timedifference(uint32_t t0, uint32_t t1) {
     return ret;
 }
 
+/// Internal helper function
 int presetForUnicode(int preset) {
   switch (preset) {
   case  1: return 0; // false
@@ -303,198 +340,12 @@ int presetForUnicode(int preset) {
   return  1; // true
 }
 
-int main(int argv, char *args[]) {
-
-char cbuf[4096];
-char dbuf[8192];
-long len, tot_len, clen, ctot=0;
-size_t dlen;
-float perc=0.F;
-FILE *fp, *wfp;
-int bytes_read;
-uint32_t tStart;
-
-tStart = getTimeVal();
-
-if (argv >= 4 && strcmp(args[1], "-c") == 0) {
-   int preset = 0;
-   if (argv > 4)
-     preset = atoi(args[4]);
-   tot_len = 0;
-   fp = fopen(args[2], "rb");
-   if (fp == NULL) {
-      perror(args[2]);
-      return 1;
-   }
-   wfp = fopen(args[3], "wb");
-   if (wfp == NULL) {
-      perror(args[3]);
-      return 1;
-   }
-   do {
-     bytes_read = (int)fread(cbuf, 1, sizeof(cbuf), fp);
-     if (bytes_read > 0) {
-        clen = unishox2_compress_preset_lines(cbuf, bytes_read, UNISHOX_API_OUT_AND_LEN(dbuf, sizeof dbuf), preset, NULL);
-        ctot += clen;
-        tot_len += bytes_read;
-        if (clen > 0) {
-           fputc(clen >> 8, wfp);
-           fputc(clen & 0xFF, wfp);
-           if (clen != (long)fwrite(dbuf, 1, clen, wfp)) {
-              perror("fwrite");
-              return 1;
-           }
-        }
-     }
-   } while (bytes_read > 0);
-   perc = (float)(tot_len-ctot);
-   perc /= tot_len;
-   perc *= 100;
-   printf("\nBytes (Compressed/Original=Savings%%): %ld/%ld=", ctot, tot_len);
-   printf("%.2f%%\n", perc);
-} else
-if (argv >= 4 && strcmp(args[1], "-d") == 0) {
-   int preset = 0;
-   if (argv > 4)
-     preset = atoi(args[4]);
-   fp = fopen(args[2], "rb");
-   if (fp == NULL) {
-      perror(args[2]);
-      return 1;
-   }
-   wfp = fopen(args[3], "wb");
-   if (wfp == NULL) {
-      perror(args[3]);
-      return 1;
-   }
-   do {
-     //memset(dbuf, 0, sizeof(dbuf));
-     int len_to_read = fgetc(fp) << 8;
-     len_to_read += fgetc(fp);
-     bytes_read = (int)fread(dbuf, 1, len_to_read, fp);
-     if (bytes_read > 0) {
-        dlen = unishox2_decompress_preset_lines(dbuf, bytes_read, UNISHOX_API_OUT_AND_LEN(cbuf, sizeof cbuf), preset, NULL);
-        if (dlen > 0) {
-           if (dlen != fwrite(cbuf, 1, dlen, wfp)) {
-              perror("fwrite");
-              return 1;
-           }
-        }
-     }
-   } while (bytes_read > 0);
-} else
-if (argv >= 4 && (strcmp(args[1], "-g") == 0 || 
-      strcmp(args[1], "-G") == 0)) {
-   int preset = 0;
-   if (argv > 4)
-     preset = atoi(args[4]);
-   if (strcmp(args[1], "-g") == 0)
-     preset = 9; // = USX_PSET_NO_DICT;
-   fp = fopen(args[2], "r");
-   if (fp == NULL) {
-      perror(args[2]);
-      return 1;
-   }
-   sprintf(cbuf, "%s.h", args[3]);
-   wfp = fopen(cbuf, "w");
-   if (wfp == NULL) {
-      perror(args[3]);
-      return 1;
-   }
-   tot_len = 0;
-   ctot = 0;
-   struct us_lnk_lst *cur_line = NULL;
-   fputs("#ifndef __", wfp);
-   fputs(args[3], wfp);
-   fputs("_UNISHOX2_COMPRESSED__\n", wfp);
-   fputs("#define __", wfp);
-   fputs(args[3], wfp);
-   fputs("_UNISHOX2_COMPRESSED__\n", wfp);
-   int line_ctr = 0;
-   int max_len = 0;
-   const size_t short_buf_len = strlen(args[3]) + 100;
-   char* short_buf = malloc(short_buf_len);
-   while (fgets(cbuf, sizeof(cbuf), fp) != NULL) {
-      // compress the line and look in previous lines
-      // add to linked list
-      len = (long)strlen(cbuf);
-      if (cbuf[len - 1] == '\n' || cbuf[len - 1] == '\r') {
-         len--;
-         cbuf[len] = 0;
-      }
-      if (is_empty(cbuf))
-        continue;
-      if (len > 0) {
-        struct us_lnk_lst *ll;
-        ll = cur_line;
-        cur_line = (struct us_lnk_lst *) malloc(sizeof(struct us_lnk_lst));
-        cur_line->data = (char *) malloc(len + 1);
-        strncpy(cur_line->data, cbuf, len);
-        cur_line->previous = ll;
-        clen = unishox2_compress_preset_lines(cbuf, len, UNISHOX_API_OUT_AND_LEN(dbuf, sizeof dbuf), preset, cur_line);
-        if (clen > 0) {
-            perc = (float)(len-clen);
-            perc /= len;
-            perc *= 100;
-            //print_compressed(dbuf, clen);
-            printf("len: %ld/%ld=", clen, len);
-            printf("%.2f %s\n", perc, cbuf);
-            tot_len += len;
-            ctot += clen;
-            snprintf(short_buf, short_buf_len, "const byte %s_%d[] PROGMEM = {", args[3], line_ctr++);
-            fputs(short_buf, wfp);
-            int len_len = encode_unsigned_varint((byte *) short_buf, clen);
-            for (int i = 0; i < len_len; i++) {
-              snprintf(short_buf, 10, "%u, ", (byte) short_buf[i]);
-              fputs(short_buf, wfp);
-            }
-            for (int i = 0; i < clen; i++) {
-              if (i) {
-                strcpy(short_buf, ", ");
-                fputs(short_buf, wfp);
-              }
-              snprintf(short_buf, 6, "%u", (byte) dbuf[i]);
-              fputs(short_buf, wfp);
-            }
-            strcpy(short_buf, "};\n");
-            fputs(short_buf, wfp);
-        }
-        if (len > max_len)
-          max_len = len;
-        dlen = unishox2_decompress_preset_lines(dbuf, clen, UNISHOX_API_OUT_AND_LEN(cbuf, sizeof cbuf - 1), preset, cur_line);
-        cbuf[dlen] = 0;
-        printf("\n%s\n", cbuf);
-      }
-   }
-   perc = (float)(tot_len-ctot);
-   perc /= tot_len;
-   perc *= 100;
-   printf("\nBytes (Compressed/Original=Savings%%): %ld/%ld=", ctot, tot_len);
-   printf("%.2f%%\n", perc);
-   snprintf(short_buf, short_buf_len, "const byte * const %s[] PROGMEM = {", args[3]);
-   fputs(short_buf, wfp);
-   for (int i = 0; i < line_ctr; i++) {
-     if (i) {
-       strcpy(short_buf, ", ");
-       fputs(short_buf, wfp);
-     }
-     snprintf(short_buf, strlen(args[3]) + 15, "%s_%d", args[3], i);
-     fputs(short_buf, wfp);
-   }
-   strcpy(short_buf, "};\n");
-   fputs(short_buf, wfp);
-   snprintf(short_buf, short_buf_len, "#define %s_line_count %d\n", args[3], line_ctr);
-   fputs(short_buf, wfp);
-   snprintf(short_buf, short_buf_len, "#define %s_max_len %d\n", args[3], max_len);
-   fputs(short_buf, wfp);
-   fputs("#endif\n", wfp);
-   free(short_buf);
-} else
-if (argv >= 2 && strcmp(args[1], "-t") == 0) {
+/// This is the unit-test function
+int run_unit_tests(int argc, char *argv[]) {
 
    int preset = 0;
-   if (argv > 2)
-     preset = atoi(args[2]);
+   if (argc > 2)
+     preset = atoi(argv[2]);
 
    if (preset < 0 || 16 < preset) {
      printf("invalid preset %d\n", preset);
@@ -751,17 +602,240 @@ if (argv >= 2 && strcmp(args[1], "-t") == 0) {
     if (presetForUnicode(preset) && !test_ushx_cd("Hello\x80\x83\xAE\xBC\xBD\xBE", preset)) return 1;
 
     return 0;
+}
 
-} else
-if (argv == 2 || (argv == 3 && atoi(args[2]) > 0)) {
+/**
+ * <pre>
+ * Usage: test_unishox2 \"string\" [preset_number]
+ *               (or)
+ *        test_unishox2 [action] [in_file] [out_file] [preset_number]
+ *
+ *          action:
+ *          -t    run tests
+ *          -c    compress
+ *          -d    decompress
+ *          -g    generate C header file
+ *          -G    generate C header file using additional compression (slower)
+ *
+ *          preset_number:
+ *          0    Optimum - favors all including JSON, XML, URL and HTML (default)
+ *          1    Alphabets [a-z], [A-Z] and space only
+ *          2    Alphanumeric [a-z], [A-Z], [0-9], [.,/()-=+$%%#] and space only
+ *          3    Alphanumeric and symbols only
+ *          4    Alphanumeric and symbols only (Favor English text)
+ *          5    Favor Alphabets
+ *          6    Favor Dictionary coding
+ *          7    Favor Symbols
+ *          8    Favor Umlaut
+ *          9    No dictionary
+ *          10   No Unicode
+ *          11   No Unicode, favour English text
+ *          12   Favor URLs
+ *          13   Favor JSON
+ *          14   Favor JSON (No Unicode)
+ *          15   Favor XML
+ *          16   Favor HTML
+ * </pre>
+ */
+int main(int argc, char *argv[]) {
+
+char cbuf[4096];
+char dbuf[8192];
+long len, tot_len, clen, ctot=0;
+size_t dlen;
+float perc=0.F;
+FILE *fp, *wfp;
+int bytes_read;
+uint32_t tStart;
+
+tStart = getTimeVal();
+
+if (argc >= 4 && strcmp(argv[1], "-c") == 0) {
    int preset = 0;
-   if (argv >= 3)
-     preset = atoi(args[2]);
-   len = (long)strlen(args[1]);
-   printf("String: %s, Len:%ld\n", args[1], len);
-   //print_string_as_hex(args[1], len);
+   if (argc > 4)
+     preset = atoi(argv[4]);
+   tot_len = 0;
+   fp = fopen(argv[2], "rb");
+   if (fp == NULL) {
+      perror(argv[2]);
+      return 1;
+   }
+   wfp = fopen(argv[3], "wb");
+   if (wfp == NULL) {
+      perror(argv[3]);
+      return 1;
+   }
+   do {
+     bytes_read = (int)fread(cbuf, 1, sizeof(cbuf), fp);
+     if (bytes_read > 0) {
+        clen = unishox2_compress_preset_lines(cbuf, bytes_read, UNISHOX_API_OUT_AND_LEN(dbuf, sizeof dbuf), preset, NULL);
+        ctot += clen;
+        tot_len += bytes_read;
+        if (clen > 0) {
+           fputc(clen >> 8, wfp);
+           fputc(clen & 0xFF, wfp);
+           if (clen != (long)fwrite(dbuf, 1, clen, wfp)) {
+              perror("fwrite");
+              return 1;
+           }
+        }
+     }
+   } while (bytes_read > 0);
+   perc = (float)(tot_len-ctot);
+   perc /= tot_len;
+   perc *= 100;
+   printf("\nBytes (Compressed/Original=Savings%%): %ld/%ld=", ctot, tot_len);
+   printf("%.2f%%\n", perc);
+} else
+if (argc >= 4 && strcmp(argv[1], "-d") == 0) {
+   int preset = 0;
+   if (argc > 4)
+     preset = atoi(argv[4]);
+   fp = fopen(argv[2], "rb");
+   if (fp == NULL) {
+      perror(argv[2]);
+      return 1;
+   }
+   wfp = fopen(argv[3], "wb");
+   if (wfp == NULL) {
+      perror(argv[3]);
+      return 1;
+   }
+   do {
+     //memset(dbuf, 0, sizeof(dbuf));
+     int len_to_read = fgetc(fp) << 8;
+     len_to_read += fgetc(fp);
+     bytes_read = (int)fread(dbuf, 1, len_to_read, fp);
+     if (bytes_read > 0) {
+        dlen = unishox2_decompress_preset_lines(dbuf, bytes_read, UNISHOX_API_OUT_AND_LEN(cbuf, sizeof cbuf), preset, NULL);
+        if (dlen > 0) {
+           if (dlen != fwrite(cbuf, 1, dlen, wfp)) {
+              perror("fwrite");
+              return 1;
+           }
+        }
+     }
+   } while (bytes_read > 0);
+} else
+if (argc >= 4 && (strcmp(argv[1], "-g") == 0 || 
+      strcmp(argv[1], "-G") == 0)) {
+   int preset = 0;
+   if (argc > 4)
+     preset = atoi(argv[4]);
+   if (strcmp(argv[1], "-g") == 0)
+     preset = 9; // = USX_PSET_NO_DICT;
+   fp = fopen(argv[2], "r");
+   if (fp == NULL) {
+      perror(argv[2]);
+      return 1;
+   }
+   sprintf(cbuf, "%s.h", argv[3]);
+   wfp = fopen(cbuf, "w");
+   if (wfp == NULL) {
+      perror(argv[3]);
+      return 1;
+   }
+   tot_len = 0;
+   ctot = 0;
+   struct us_lnk_lst *cur_line = NULL;
+   fputs("#ifndef __", wfp);
+   fputs(argv[3], wfp);
+   fputs("_UNISHOX2_COMPRESSED__\n", wfp);
+   fputs("#define __", wfp);
+   fputs(argv[3], wfp);
+   fputs("_UNISHOX2_COMPRESSED__\n", wfp);
+   int line_ctr = 0;
+   int max_len = 0;
+   const size_t short_buf_len = strlen(argv[3]) + 100;
+   char* short_buf = malloc(short_buf_len);
+   while (fgets(cbuf, sizeof(cbuf), fp) != NULL) {
+      // compress the line and look in previous lines
+      // add to linked list
+      len = (long)strlen(cbuf);
+      if (cbuf[len - 1] == '\n' || cbuf[len - 1] == '\r') {
+         len--;
+         cbuf[len] = 0;
+      }
+      if (is_empty(cbuf))
+        continue;
+      if (len > 0) {
+        struct us_lnk_lst *ll;
+        ll = cur_line;
+        cur_line = (struct us_lnk_lst *) malloc(sizeof(struct us_lnk_lst));
+        cur_line->data = (char *) malloc(len + 1);
+        strncpy(cur_line->data, cbuf, len);
+        cur_line->previous = ll;
+        clen = unishox2_compress_preset_lines(cbuf, len, UNISHOX_API_OUT_AND_LEN(dbuf, sizeof dbuf), preset, cur_line);
+        if (clen > 0) {
+            perc = (float)(len-clen);
+            perc /= len;
+            perc *= 100;
+            //print_compressed(dbuf, clen);
+            printf("len: %ld/%ld=", clen, len);
+            printf("%.2f %s\n", perc, cbuf);
+            tot_len += len;
+            ctot += clen;
+            snprintf(short_buf, short_buf_len, "const byte %s_%d[] PROGMEM = {", argv[3], line_ctr++);
+            fputs(short_buf, wfp);
+            int len_len = encode_unsigned_varint((byte *) short_buf, clen);
+            for (int i = 0; i < len_len; i++) {
+              snprintf(short_buf, 10, "%u, ", (byte) short_buf[i]);
+              fputs(short_buf, wfp);
+            }
+            for (int i = 0; i < clen; i++) {
+              if (i) {
+                strcpy(short_buf, ", ");
+                fputs(short_buf, wfp);
+              }
+              snprintf(short_buf, 6, "%u", (byte) dbuf[i]);
+              fputs(short_buf, wfp);
+            }
+            strcpy(short_buf, "};\n");
+            fputs(short_buf, wfp);
+        }
+        if (len > max_len)
+          max_len = len;
+        dlen = unishox2_decompress_preset_lines(dbuf, clen, UNISHOX_API_OUT_AND_LEN(cbuf, sizeof cbuf - 1), preset, cur_line);
+        cbuf[dlen] = 0;
+        printf("\n%s\n", cbuf);
+      }
+   }
+   perc = (float)(tot_len-ctot);
+   perc /= tot_len;
+   perc *= 100;
+   printf("\nBytes (Compressed/Original=Savings%%): %ld/%ld=", ctot, tot_len);
+   printf("%.2f%%\n", perc);
+   snprintf(short_buf, short_buf_len, "const byte * const %s[] PROGMEM = {", argv[3]);
+   fputs(short_buf, wfp);
+   for (int i = 0; i < line_ctr; i++) {
+     if (i) {
+       strcpy(short_buf, ", ");
+       fputs(short_buf, wfp);
+     }
+     snprintf(short_buf, strlen(argv[3]) + 15, "%s_%d", argv[3], i);
+     fputs(short_buf, wfp);
+   }
+   strcpy(short_buf, "};\n");
+   fputs(short_buf, wfp);
+   snprintf(short_buf, short_buf_len, "#define %s_line_count %d\n", argv[3], line_ctr);
+   fputs(short_buf, wfp);
+   snprintf(short_buf, short_buf_len, "#define %s_max_len %d\n", argv[3], max_len);
+   fputs(short_buf, wfp);
+   fputs("#endif\n", wfp);
+   free(short_buf);
+} else
+if (argc >= 2 && strcmp(argv[1], "-t") == 0) {
+  return run_unit_tests(argc, argv);
+} else
+if (argc == 2 || (argc == 3 && atoi(argv[2]) > 0)) {
+   int preset = 0;
+   if (argc >= 3)
+     preset = atoi(argv[2]);
+   len = (long)strlen(argv[1]);
+   printf("String: %s, Len:%ld\n", argv[1], len);
+   //print_string_as_hex(argv[1], len);
    memset(cbuf, 0, sizeof(cbuf));
-   ctot = unishox2_compress_preset_lines(args[1], len, UNISHOX_API_OUT_AND_LEN(cbuf, sizeof cbuf), preset, NULL);
+   ctot = unishox2_compress_preset_lines(argv[1], len, UNISHOX_API_OUT_AND_LEN(cbuf, sizeof cbuf), preset, NULL);
    print_compressed(cbuf, ctot);
    memset(dbuf, 0, sizeof(dbuf));
    dlen = unishox2_decompress_preset_lines(cbuf, ctot, UNISHOX_API_OUT_AND_LEN(dbuf, sizeof dbuf - 1), preset, NULL);

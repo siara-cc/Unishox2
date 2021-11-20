@@ -1,0 +1,21 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Ramanathan"
+  given-names: "Arundale"
+  orcid: "https://orcid.org/0000-0001-6642-447X"
+title: "Unishox: A hybrid encoder for compressing Short Unicode Strings"
+version: 1.0.2
+doi: 10.5281/zenodo.5573864
+date-released: 2021-11-20
+url: "https://github.com/siara-cc/Unishox2"
+preferred-citation:
+  type: article
+  authors:
+  - family-names: "Ramanathan"
+    given-names: "Arundale"
+    orcid: "https://orcid.org/0000-0001-6642-447X"
+  doi: "10.5281/zenodo.5573864"
+  month: 11
+  title: "Unishox: A hybrid encoder for compressing Short Unicode Strings"
+  year: 2021

@@ -64,6 +64,8 @@ delta_only
 *.csu
 *.bcu
 doc/*.pdf
+doc/.~*
+paper/*.pdf
 
 # Traditional cmake building directories
 build*
