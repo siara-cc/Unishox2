@@ -24,7 +24,7 @@ The model used for arriving at the prefix-free code is shown below:
 
 ![Promo video](https://github.com/siara-cc/Unishox2/blob/master/promo/model.png?raw=true)
 
-The complete specification can be found in this article: [A hybrid encoder for compressing Short Unicode Strings](https://github.com/siara-cc/Unishox2/blob/master/Unishox_Article_2.pdf?raw=true). This can also be found at `figshare` [here](https://figshare.com/articles/preprint/Unishox_A_hybrid_encoder_for_Short_Unicode_Strings/17056334) with DOI `10.6084/m9.figshare`.
+The complete specification can be found in this article: [A hybrid encoder for compressing Short Unicode Strings](https://github.com/siara-cc/Unishox2/blob/master/Unishox_Article_2.pdf?raw=true). This can also be found at `figshare` [here](https://figshare.com/articles/preprint/Unishox_A_hybrid_encoder_for_Short_Unicode_Strings/17056334) with DOI `10.6084/m9.figshare.17056334.v2`.
 
 # Compiling
 
