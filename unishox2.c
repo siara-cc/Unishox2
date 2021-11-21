@@ -33,9 +33,13 @@
 
 #include "unishox2.h"
 
+/// byte is unsigned char
 typedef unsigned char byte;
 
+/// possible horizontal sets and states
 enum {USX_ALPHA = 0, USX_SYM, USX_NUM, USX_DICT, USX_DELTA, USX_NUM_TEMP};
+
+/// This 2D array has the characters for the sets USX_ALPHA, USX_SYM and USX_NUM. Where a character cannot fit into a byte, 0 is used and handled in code.
 byte usx_sets[][28] = {{  0, ' ', 'e', 't', 'a', 'o', 'i', 'n',
                         's', 'r', 'l', 'c', 'd', 'h', 'u', 'p', 'm', 'b',
                         'g', 'w', 'f', 'y', 'v', 'k', 'q', 'j', 'x', 'z'},
@@ -46,49 +50,78 @@ byte usx_sets[][28] = {{  0, ' ', 'e', 't', 'a', 'o', 'i', 'n',
                         '/', '3', '4', '6', '7', '8', '(', ')', ' ',
                         '=', '+', '$', '%', '#', 0, 0, 0, 0, 0}};
 
-// Stores position of letter in usx_sets.
-// First 3 bits - position in usx_hcodes
-// Next  5 bits - position in usx_vcodes
+/// Stores position of letter in usx_sets.
+/// First 3 bits - position in usx_hcodes
+/// Next  5 bits - position in usx_vcodes
 byte usx_code_94[94];
 
+/// Vertical codes starting from the MSB
 byte usx_vcodes[]   = { 0x00, 0x40, 0x60, 0x80, 0x90, 0xA0, 0xB0,
                         0xC0, 0xD0, 0xD8, 0xE0, 0xE4, 0xE8, 0xEC,
                         0xEE, 0xF0, 0xF2, 0xF4, 0xF6, 0xF7, 0xF8,
                         0xF9, 0xFA, 0xFB, 0xFC, 0xFD, 0xFE, 0xFF };
+
+/// Length of each veritical code
 byte usx_vcode_lens[] = {  2,    3,    3,    4,    4,    4,    4,
                            4,    5,    5,    6,    6,    6,    7,
                            7,    7,    7,    7,    8,    8,    8,
                            8,    8,    8,    8,    8,    8,    8 };
 
+/// Vertical Codes and Set number for frequent sequences in sets USX_SYM and USX_NUM. First 3 bits indicate set (USX_SYM/USX_NUM) and rest are vcode positions
 byte usx_freq_codes[] = {(1 << 5) + 25, (1 << 5) + 26, (1 << 5) + 27, (2 << 5) + 23, (2 << 5) + 24, (2 << 5) + 25};
 
+/// Not used
 const int UTF8_MASK[] = {0xE0, 0xF0, 0xF8};
+/// Not used
 const int UTF8_PREFIX[] = {0xC0, 0xE0, 0xF0};
 
+/// Minimum length to consider as repeating sequence
 #define NICE_LEN 5
 
+/// Set (USX_NUM - 2) and vertical code (26) for encoding repeating letters
 #define RPT_CODE ((2 << 5) + 26)
+/// Set (USX_NUM - 2) and vertical code (27) for encoding terminator
 #define TERM_CODE ((2 << 5) + 27)
+/// Set (USX_SYM - 1) and vertical code (7) for encoding Line feed \\n
 #define LF_CODE ((1 << 5) + 7)
+/// Set (USX_NUM - 1) and vertical code (8) for encoding \\r\\n
 #define CRLF_CODE ((1 << 5) + 8)
+/// Set (USX_NUM - 1) and vertical code (22) for encoding \\r
 #define CR_CODE ((1 << 5) + 22)
+/// Set (USX_NUM - 1) and vertical code (14) for encoding \\t
 #define TAB_CODE  ((1 << 5) + 14)
+/// Set (USX_NUM - 2) and vertical code (17) for space character when it appears in USX_NUM state \\r
 #define NUM_SPC_CODE ((2 << 5) + 17)
 
+/// Code for special code (11111) when state=USX_DELTA
 #define UNI_STATE_SPL_CODE 0xF8
+/// Length of Code for special code when state=USX_DELTA
 #define UNI_STATE_SPL_CODE_LEN 5
+/// Code for switch code when state=USX_DELTA
 #define UNI_STATE_SW_CODE 0x80
+/// Length of Code for Switch code when state=USX_DELTA
 #define UNI_STATE_SW_CODE_LEN 2
 
+/// Switch code in USX_ALPHA and USX_NUM 00
 #define SW_CODE 0
+/// Length of Switch code
 #define SW_CODE_LEN 2
+/// Terminator bit sequence for Preset 1. Length varies depending on state as per following macros
 #define TERM_BYTE_PRESET_1 0
+/// Length of Terminator bit sequence when state is lower
 #define TERM_BYTE_PRESET_1_LEN_LOWER 6
+/// Length of Terminator bit sequence when state is upper
 #define TERM_BYTE_PRESET_1_LEN_UPPER 4
 
+/// Offset at which usx_code_94 starts
 #define USX_OFFSET_94 33
 
+/// global to indicate whether initialization is complete or not
 byte is_inited = 0;
+
+/// Fills the usx_code_94 94 letter array based on sets of characters at usx_sets \n
+/// For each element in usx_code_94, first 3 msb bits is set (USX_ALPHA / USX_SYM / USX_NUM) \n
+/// and the rest 5 bits indicate the vertical position in the corresponding set
 void init_coder() {
   if (is_inited)
     return;
@@ -106,7 +139,12 @@ void init_coder() {
   is_inited = 1;
 }
 
+/// Mask for retrieving each code to be encoded according to its length
 unsigned int usx_mask[] = {0x80, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC, 0xFE, 0xFF};
+
+/// Appends specified number of bits to the output (out) \n
+/// If maximum limit (olen) is reached, -1 is returned \n
+/// Otherwise clen bits in code are appended to out starting with MSB
 int append_bits(char *out, int olen, int ol, byte code, int clen) {
 
   byte cur_bit;
@@ -137,11 +175,13 @@ int append_bits(char *out, int olen, int ol, byte code, int clen) {
    return ol;
 }
 
+/// This is a safe call to append_bits() making sure it does not write past olen
 #define SAFE_APPEND_BITS(exp) do { \
   const int newidx = (exp); \
   if (newidx < 0) return newidx; \
 } while (0)
 
+/// Appends switch code to out depending on the state (USX_DELTA or other)
 int append_switch_code(char *out, int olen, int ol, byte state) {
   if (state == USX_DELTA) {
     SAFE_APPEND_BITS(ol = append_bits(out, olen, ol, UNI_STATE_SPL_CODE, UNI_STATE_SPL_CODE_LEN));
@@ -151,6 +191,7 @@ int append_switch_code(char *out, int olen, int ol, byte state) {
   return ol;
 }
 
+/// Appends given horizontal and veritical code bits to out
 int append_code(char *out, int olen, int ol, byte code, byte *state, const byte usx_hcodes[], const byte usx_hcode_lens[]) {
   byte hcode = code >> 5;
   byte vcode = code & 0x1F;
@@ -180,9 +221,13 @@ int append_code(char *out, int olen, int ol, byte code, byte *state, const byte 
   return ol;
 }
 
+/// Length of bits used to represent count for each level
 const byte count_bit_lens[5] = {2, 4, 7, 11, 16};
+/// Cumulative counts represented at each level
 const int32_t count_adder[5] = {4, 20, 148, 2196, 67732};
+/// Codes used to specify the level that the count belongs to
 const byte count_codes[] = {0x01, 0x82, 0xC3, 0xE4, 0xF4};
+/// Encodes given count to out
 int encodeCount(char *out, int olen, int ol, int count) {
   // First five bits are code and Last three bits of codes represent length
   for (int i = 0; i < 5; i++) {
@@ -200,9 +245,12 @@ int encodeCount(char *out, int olen, int ol, int count) {
   return ol;
 }
 
+/// Length of bits used to represent delta code for each level
 const byte uni_bit_len[5] = {6, 12, 14, 16, 21};
+/// Cumulative delta codes represented at each level
 const int32_t uni_adder[5] = {0, 64, 4160, 20544, 86080};
 
+/// Encodes the unicode code point given by code to out. prev_code is used to calculate the delta
 int encodeUnicode(char *out, int olen, int ol, int32_t code, int32_t prev_code) {
   // First five bits are code and Last three bits of codes represent length
   //const byte codes[8] = {0x00, 0x42, 0x83, 0xA3, 0xC3, 0xE4, 0xF5, 0xFD};
@@ -241,6 +289,7 @@ int encodeUnicode(char *out, int olen, int ol, int32_t code, int32_t prev_code) 
   return ol;
 }
 
+/// Reads UTF-8 character from in. Also returns the number of bytes occupied by the UTF-8 character in utf8len
 int32_t readUTF8(const char *in, int len, int l, int *utf8len) {
   int32_t ret = 0;
   if (l < (len - 1) && (in[l] & 0xE0) == 0xC0 && (in[l + 1] & 0xC0) == 0x80) {
@@ -278,6 +327,11 @@ int32_t readUTF8(const char *in, int len, int l, int *utf8len) {
   return ret;
 }
 
+/// Finds the longest matching sequence from the beginning of the string. \n
+/// If a match is found and it is longer than NICE_LEN, it is encoded as a repeating sequence to out \n
+/// This is also used for Unicode strings \n
+/// This is a crude implementation that is not optimized.  Assuming only short strings \n
+/// are encoded, this is not much of an issue.
 int matchOccurance(const char *in, int len, int l, char *out, int olen, int *ol, byte *state, const byte usx_hcodes[], const byte usx_hcode_lens[]) {
   int j, k;
   int longest_dist = 0;
@@ -313,6 +367,12 @@ int matchOccurance(const char *in, int len, int l, char *out, int olen, int *ol,
   return -l;
 }
 
+/// This is used only when encoding a string array
+/// Finds the longest matching sequence from the previous array element to the beginning of the string array. \n
+/// If a match is found and it is longer than NICE_LEN, it is encoded as a repeating sequence to out \n
+/// This is also used for Unicode strings \n
+/// This is a crude implementation that is not optimized.  Assuming only short strings \n
+/// are encoded, this is not much of an issue.
 int matchLine(const char *in, int len, int l, char *out, int olen, int *ol, struct us_lnk_lst *prev_lines, byte *state, const byte usx_hcodes[], const byte usx_hcode_lens[]) {
   int last_ol = *ol;
   int last_len = 0;
@@ -370,6 +430,8 @@ int matchLine(const char *in, int len, int l, char *out, int olen, int *ol, stru
   return -l;
 }
 
+/// Returns 4 bit code assuming ch falls between '0' to '9', \n
+/// 'A' to 'F' or 'a' to 'f'
 byte getBaseCode(char ch) {
   if (ch >= '0' && ch <= '9')
     return (ch - '0') << 4;
@@ -380,7 +442,12 @@ byte getBaseCode(char ch) {
   return 0;
 }
 
+/// Enum indicating nibble type - USX_NIB_NUM means ch is a number '0' to '9', \n
+/// USX_NIB_HEX_LOWER means ch is between 'a' to 'f', \n
+/// USX_NIB_HEX_UPPER means ch is between 'A' to 'F'
 enum {USX_NIB_NUM = 0, USX_NIB_HEX_LOWER, USX_NIB_HEX_UPPER, USX_NIB_NOT};
+/// Gets 4 bit code assuming ch falls between '0' to '9', \n
+/// 'A' to 'F' or 'a' to 'f'
 char getNibbleType(char ch) {
   if (ch >= '0' && ch <= '9')
     return USX_NIB_NUM;
@@ -391,6 +458,7 @@ char getNibbleType(char ch) {
   return USX_NIB_NOT;
 }
 
+/// Starts coding of nibble sets
 int append_nibble_escape(char *out, int olen, int ol, byte state, const byte usx_hcodes[], const byte usx_hcode_lens[]) {
   SAFE_APPEND_BITS(ol = append_switch_code(out, olen, ol, state));
   SAFE_APPEND_BITS(ol = append_bits(out, olen, ol, usx_hcodes[USX_NUM], usx_hcode_lens[USX_NUM]));
@@ -398,10 +466,12 @@ int append_nibble_escape(char *out, int olen, int ol, byte state, const byte usx
   return ol;
 }
 
+/// Returns minimum value of two longs
 long min_of(long c, long i) {
   return c > i ? i : c;
 }
 
+/// Appends the terminator code depending on the state, preset and whether full terminator needs to be encoded to out or not \n
 int append_final_bits(char *const out, const int olen, int ol, const byte state, const byte is_all_upper, const byte usx_hcodes[], const byte usx_hcode_lens[]) {
   if (usx_hcode_lens[USX_ALPHA]) {
     if (USX_NUM != state) {
@@ -423,12 +493,14 @@ int append_final_bits(char *const out, const int olen, int ol, const byte state,
   return ol;
 }
 
+/// Macro used in the main compress function so that if the output len exceeds given maximum length (olen) it can exit
 #define SAFE_APPEND_BITS2(olen, exp) do { \
   const int newidx = (exp); \
   const int __olen = (olen); \
   if (newidx < 0) return __olen >= 0 ? __olen + 1 : (1 - __olen) * 4; \
 } while (0)
 
+// Main API function. See unishox2.h for documentation
 int unishox2_compress_lines(const char *in, int len, UNISHOX_API_OUT_AND_LEN(char *out, int olen), const byte usx_hcodes[], const byte usx_hcode_lens[], const char *usx_freq_seq[], const char *usx_templates[], struct us_lnk_lst *prev_lines) {
 
   byte state;
@@ -761,18 +833,22 @@ int unishox2_compress_lines(const char *in, int len, UNISHOX_API_OUT_AND_LEN(cha
   }
 }
 
+// Main API function. See unishox2.h for documentation
 int unishox2_compress(const char *in, int len, UNISHOX_API_OUT_AND_LEN(char *out, int olen), const byte usx_hcodes[], const byte usx_hcode_lens[], const char *usx_freq_seq[], const char *usx_templates[]) {
   return unishox2_compress_lines(in, len, UNISHOX_API_OUT_AND_LEN(out, olen), usx_hcodes, usx_hcode_lens, usx_freq_seq, usx_templates, NULL);
 }
 
+// Main API function. See unishox2.h for documentation
 int unishox2_compress_simple(const char *in, int len, char *out) {
   return unishox2_compress_lines(in, len, UNISHOX_API_OUT_AND_LEN(out, INT_MAX - 1), USX_HCODES_DFLT, USX_HCODE_LENS_DFLT, USX_FREQ_SEQ_DFLT, USX_TEMPLATES, NULL);
 }
 
+// Reads one bit from in
 int readBit(const char *in, int bit_no) {
    return in[bit_no >> 3] & (0x80 >> (bit_no % 8));
 }
 
+// Reads next 8 bits, if available
 int read8bitCode(const char *in, int len, int bit_no) {
   int bit_pos = bit_no & 0x07;
   int char_pos = bit_no >> 3;
@@ -784,15 +860,19 @@ int read8bitCode(const char *in, int len, int bit_no) {
   return code;
 }
 
-// Decoder is designed for using less memory, not speed
+/// The list of veritical codes is split into 5 sections. Used by readVCodeIdx()
 #define SECTION_COUNT 5
+/// Used by readVCodeIdx() for finding the section under which the code read using read8bitCode() falls
 byte usx_vsections[] = {0x7F, 0xBF, 0xDF, 0xEF, 0xFF};
+/// Used by readVCodeIdx() for finding the section vertical position offset
 byte usx_vsection_pos[] = {0, 4, 8, 12, 20};
+/// Used by readVCodeIdx() for masking the code read by read8bitCode()
 byte usx_vsection_mask[] = {0x7F, 0x3F, 0x1F, 0x0F, 0x0F};
+/// Used by readVCodeIdx() for shifting the code read by read8bitCode() to obtain the vpos
 byte usx_vsection_shift[] = {5, 4, 3, 1, 0};
 
-// Vertical decoder lookup table - 3 bits code len, 5 bytes vertical pos
-// code len is one less as 8 cannot be accommodated in 3 bits
+/// Vertical decoder lookup table - 3 bits code len, 5 bytes vertical pos
+/// code len is one less as 8 cannot be accommodated in 3 bits
 byte usx_vcode_lookup[36] = {
   (1 << 5) + 0,  (1 << 5) + 0,  (2 << 5) + 1,  (2 << 5) + 2,  // Section 1
   (3 << 5) + 3,  (3 << 5) + 4,  (3 << 5) + 5,  (3 << 5) + 6,  // Section 2
@@ -805,6 +885,13 @@ byte usx_vcode_lookup[36] = {
   (7 << 5) + 24, (7 << 5) + 25, (7 << 5) + 26, (7 << 5) + 27
 };
 
+/// Decodes the vertical code from the given bitstream at in \n
+/// This is designed to use less memory using a 36 byte buffer \n
+/// compared to using a 256 byte buffer to decode the next 8 bits read by read8bitCode() \n
+/// by splitting the list of vertical codes. \n
+/// Decoder is designed for using less memory, not speed. \n
+/// Returns the veritical code index or 99 if match could not be found. \n
+/// Also updates bit_no_p with how many ever bits used by the vertical code.
 int readVCodeIdx(const char *in, int len, int *bit_no_p) {
   if (*bit_no_p < len) {
     byte code = read8bitCode(in, len, *bit_no_p);
@@ -822,7 +909,13 @@ int readVCodeIdx(const char *in, int len, int *bit_no_p) {
   return 99;
 }
 
+/// Mask for retrieving each code to be decoded according to its length \n
+/// Same as usx_mask so redundant
 byte len_masks[] = {0x80, 0xC0, 0xE0, 0xF0, 0xF8, 0xFC, 0xFE, 0xFF};
+/// Decodes the horizontal code from the given bitstream at in \n
+/// depending on the hcodes defined using usx_hcodes and usx_hcode_lens \n
+/// Returns the horizontal code index or 99 if match could not be found. \n
+/// Also updates bit_no_p with how many ever bits used by the horizontal code.
 int readHCodeIdx(const char *in, int len, int *bit_no_p, const byte usx_hcodes[], const byte usx_hcode_lens[]) {
   if (!usx_hcode_lens[USX_ALPHA])
     return USX_ALPHA;
@@ -839,6 +932,7 @@ int readHCodeIdx(const char *in, int len, int *bit_no_p, const byte usx_hcodes[]
 }
 
 // TODO: Last value check.. Also len check in readBit
+/// Returns the position of step code (0, 10, 110, etc.) encountered in the stream
 int getStepCodeIdx(const char *in, int len, int *bit_no_p, int limit) {
   int idx = 0;
   while (*bit_no_p < len && readBit(in, *bit_no_p)) {
@@ -853,6 +947,7 @@ int getStepCodeIdx(const char *in, int len, int *bit_no_p, int limit) {
   return idx;
 }
 
+/// Reads specified number of bits and builds the corresponding integer
 int32_t getNumFromBits(const char *in, int len, int bit_no, int count) {
    int32_t ret = 0;
    while (count-- && bit_no < len) {
@@ -862,6 +957,7 @@ int32_t getNumFromBits(const char *in, int len, int bit_no, int count) {
    return count < 0 ? ret : -1;
 }
 
+/// Decodes the count from the given bit stream at in. Also updates bit_no_p
 int32_t readCount(const char *in, int *bit_no_p, int len) {
   int idx = getStepCodeIdx(in, len, bit_no_p, 4);
   if (idx == 99)
@@ -873,6 +969,8 @@ int32_t readCount(const char *in, int *bit_no_p, int len) {
   return count;
 }
 
+/// Decodes the Unicode codepoint from the given bit stream at in. Also updates bit_no_p \n
+/// When the step code is 5, reads the next step code to find out the special code.
 int32_t readUnicode(const char *in, int *bit_no_p, int len) {
   int idx = getStepCodeIdx(in, len, bit_no_p, 5);
   if (idx == 99)
@@ -895,6 +993,7 @@ int32_t readUnicode(const char *in, int *bit_no_p, int len) {
   return 0;
 }
 
+/// Macro to ensure that the decoder does not append more than olen bytes to out
 #define DEC_OUTPUT_CHAR(out, olen, ol, c) do { \
   char *const obuf = (out); \
   const int oidx = (ol); \
@@ -904,12 +1003,14 @@ int32_t readUnicode(const char *in, int *bit_no_p, int len) {
   else obuf[oidx] = (c); \
 } while (0)
 
+/// Macro to ensure that the decoder does not append more than olen bytes to out
 #define DEC_OUTPUT_CHARS(olen, exp) do { \
   const int newidx = (exp); \
   const int limit = (olen); \
   if (newidx > limit) return limit + 1; \
 } while (0)
 
+/// Write given unicode code point to out as a UTF-8 sequence
 int writeUTF8(char *out, int olen, int ol, int uni) {
   if (uni < (1 << 11)) {
     DEC_OUTPUT_CHAR(out, olen, ol++, 0xC0 + (uni >> 6));
@@ -928,6 +1029,7 @@ int writeUTF8(char *out, int olen, int ol, int uni) {
   return ol;
 }
 
+/// Decode repeating sequence and appends to out
 int decodeRepeat(const char *in, int len, char *out, int olen, int ol, int *bit_no, struct us_lnk_lst *prev_lines) {
   if (prev_lines) {
     int32_t dict_len = readCount(in, bit_no, len) + NICE_LEN;
@@ -964,6 +1066,7 @@ int decodeRepeat(const char *in, int len, char *out, int olen, int ol, int *bit_
   return ol;
 }
 
+/// Returns hex character corresponding to the 4 bit nibble
 char getHexChar(int32_t nibble, int hex_type) {
   if (nibble >= 0 && nibble <= 9)
     return '0' + nibble;
@@ -972,6 +1075,7 @@ char getHexChar(int32_t nibble, int hex_type) {
   return 'A' + nibble - 10;
 }
 
+// Main API function. See unishox2.h for documentation
 int unishox2_decompress_lines(const char *in, int len, UNISHOX_API_OUT_AND_LEN(char *out, int olen), const byte usx_hcodes[], const byte usx_hcode_lens[], const char *usx_freq_seq[], const char *usx_templates[], struct us_lnk_lst *prev_lines) {
 
   int dstate;
@@ -1230,10 +1334,12 @@ int unishox2_decompress_lines(const char *in, int len, UNISHOX_API_OUT_AND_LEN(c
 
 }
 
+// Main API function. See unishox2.h for documentation
 int unishox2_decompress(const char *in, int len, UNISHOX_API_OUT_AND_LEN(char *out, int olen), const byte usx_hcodes[], const byte usx_hcode_lens[], const char *usx_freq_seq[], const char *usx_templates[]) {
   return unishox2_decompress_lines(in, len, UNISHOX_API_OUT_AND_LEN(out, olen), usx_hcodes, usx_hcode_lens, usx_freq_seq, usx_templates, NULL);
 }
 
+// Main API function. See unishox2.h for documentation
 int unishox2_decompress_simple(const char *in, int len, char *out) {
   return unishox2_decompress(in, len, UNISHOX_API_OUT_AND_LEN(out, INT_MAX - 1), USX_PSET_DFLT);
 }

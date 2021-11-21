@@ -1,9 +1,8 @@
 var searchData=
 [
-  ['unishox2_5fcompress_0',['unishox2_compress',['../unishox2_8h.html#a379f7637c1038582e5e3fcab27b4fae0',1,'unishox2.h']]],
-  ['unishox2_5fcompress_5flines_1',['unishox2_compress_lines',['../unishox2_8h.html#a5fc0490b257381a887c27e6c986e76bc',1,'unishox2.h']]],
-  ['unishox2_5fcompress_5fsimple_2',['unishox2_compress_simple',['../unishox2_8h.html#a37df146e9ddd9ff1b07c7c160683d96c',1,'unishox2.h']]],
-  ['unishox2_5fdecompress_3',['unishox2_decompress',['../unishox2_8h.html#a1fd9aa9f14850e527e6b46089cf83d1a',1,'unishox2.h']]],
-  ['unishox2_5fdecompress_5flines_4',['unishox2_decompress_lines',['../unishox2_8h.html#a0f4f2d5fce45500e5653047165778425',1,'unishox2.h']]],
-  ['unishox2_5fdecompress_5fsimple_5',['unishox2_decompress_simple',['../unishox2_8h.html#a3e5c00a0c5db7979d94b0b294908a04e',1,'unishox2.h']]]
+  ['append_5fbits_0',['append_bits',['../unishox2_8c.html#a9c6276d2099c1fbb7976c84dcd9f49ff',1,'unishox2.c']]],
+  ['append_5fcode_1',['append_code',['../unishox2_8c.html#aa7559accfc98eb1ed736025477131ef5',1,'unishox2.c']]],
+  ['append_5ffinal_5fbits_2',['append_final_bits',['../unishox2_8c.html#a420cad7fb6a3076ae16f8f98cc7e8c26',1,'unishox2.c']]],
+  ['append_5fnibble_5fescape_3',['append_nibble_escape',['../unishox2_8c.html#ac3f024df742b0a0ebd9f20c298cde80f',1,'unishox2.c']]],
+  ['append_5fswitch_5fcode_4',['append_switch_code',['../unishox2_8c.html#a02be4653b872089ee521f68c776c6869',1,'unishox2.c']]]
 ];
