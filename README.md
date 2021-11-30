@@ -34,11 +34,17 @@ To compile, just use `make` or use gcc as follows:
 gcc -std=c99 -o unishox2 test_unishox2.c unishox2.c
 ```
 
+# Unit tests (automated)
+
 For testing the compiled program, use:
 
 ```sh
 ./test_unishox2 -t
 ```
+
+This invokes `run_unit_tests()` function of `test_unishox2.c`, which tests all the features of Unishox2, including edge cases, using 159 strings covering several languages, emojis and binary data.
+
+Further, the CI pipeline at `.github/workflows/c-cpp.yml` runs these tests for all presets and also tests file compression for the different types of files in `sample_texts` folder.  This happens whenever a commit is made to the repository.
 
 # API
 
