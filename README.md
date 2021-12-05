@@ -6,6 +6,8 @@ In general compression utilities such as `zip`, `gzip` do not compress short str
 
 Note: The present byte-code version is 2 and it replaces [Unishox 1](https://github.com/siara-cc/Unishox2/blob/master/Unishox_Article_1.pdf?raw=true).  Unishox 1 is still available as unishox1.c, but it will have to be compiled manually if it is needed.
 
+This is a C/C++ library.  See [here for Python version](https://github.com/tweedge/unishox2-py3) and [here for Javascript version](https://github.com/siara-cc/Unishox_JS).
+
 # Applications
 
 - Compression for low memory devices such as Arduino and ESP8266
@@ -68,7 +70,7 @@ To compress and decompress a file, use:
 ./test_unishox2 -d <compressed_file> <decompressed_file>
 ```
 
-Unishox does not give good ratios compressing large files or compressing binary files.
+Note: Unishox is good for text content upto few kilobytes. Unishox does not give good ratios compressing large files or compressing binary files.
 
 # Character Set
 
