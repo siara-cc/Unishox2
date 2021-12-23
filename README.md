@@ -1,4 +1,4 @@
-# Unishox - A hybrid encoder for compressing Short Unicode Strings
+# Unishox: A hybrid encoder for Short Unicode Strings
 
 [![C/C++ CI](https://github.com/siara-cc/Unishox/actions/workflows/c-cpp.yml/badge.svg)](https://github.com/siara-cc/Unishox/actions/workflows/c-cpp.yml) [![DOI](https://zenodo.org/badge/199989895.svg)](https://zenodo.org/badge/latestdoi/199989895)
 
