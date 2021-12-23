@@ -6,8 +6,8 @@ authors:
   orcid: "https://orcid.org/0000-0001-6642-447X"
 title: "Unishox: A hybrid encoder for compressing Short Unicode Strings"
 version: 1.0.2
-doi: 10.5281/zenodo.5573864
-date-released: 2021-11-20
+doi: 10.5281/zenodo.5800408
+date-released: 2021-12-23
 url: "https://github.com/siara-cc/Unishox2"
 preferred-citation:
   type: article
