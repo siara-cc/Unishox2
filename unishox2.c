@@ -571,7 +571,7 @@ int unishox2_compress_lines(const char *in, int len, UNISHOX_API_OUT_AND_LEN(cha
         int uid_pos = l;
         for (; uid_pos < l + 36; uid_pos++) {
           char c_uid = in[uid_pos];
-          if (c_uid == '-')
+          if (c_uid == '-' && (uid_pos == 8 || uid_pos == 13 || uid_pos == 18 || uid_pos == 23))
             continue;
           char nib_type = getNibbleType(c_uid);
           if (nib_type == USX_NIB_NOT)

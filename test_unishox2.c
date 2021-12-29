@@ -399,6 +399,8 @@ int run_unit_tests(int argc, char *argv[]) {
     // Repeat
     if (preset != 1 && !test_ushx_cd("-----------------///////////////", preset)) return 1;
     if (preset != 1 && preset != 2 && !test_ushx_cd("-----------------Hello World1111111111112222222abcdef12345abcde1234_////////Hello World///////", preset)) return 1;
+    if (preset != 1 && !test_ushx_cd("-----------------///////////////", preset)) return 1;
+    if (preset != 1 && !test_ushx_cd("------------------------------------", preset)) return 1;
 
     // Nibbles
     if (preset != 1 && !test_ushx_cd("fa01b51e-7ecc-4e3e-be7b-918a4c2c891c", preset)) return 1;
@@ -841,6 +843,8 @@ if (argc == 2 || (argc == 3 && atoi(argv[2]) > 0)) {
    dlen = unishox2_decompress_preset_lines(cbuf, ctot, UNISHOX_API_OUT_AND_LEN(dbuf, sizeof dbuf - 1), preset, NULL);
    dbuf[dlen] = 0;
    printf("\nDecompressed: %s\n", dbuf);
+   if (strncmp(dbuf, argv[1], len))
+     printf("\nERROR: DECOMPRESSED STRING DOES NOT MATCH ORIGINAL");
    //print_compressed(dbuf, dlen);
    perc = (float)(len-ctot);
    perc /= len;
