@@ -45,13 +45,13 @@ The most popular method for forming optimal prefix-free discrete codes is Huffma
 
 A `Dictionary coder`, also sometimes known as a substitution coder, is a class of lossless data compression algorithms which operate by searching for matches between the text to be compressed and a set of strings contained in a data structure (called the `dictionary` maintained by the encoder. When the encoder finds such a match, it substitutes a reference to the string's position in the data structure.
 
-The LZ77 family of encoders use the dictionary encoding technique for compressing data. [@LempelZiv:1977]
+The LZ77 family of encoders use the dictionary encoding technique for compressing data [@LempelZiv:1977].
 
-`Delta coding` is a technique applied where encoding the difference between the previously encoded symbol or set of symbols is smaller compared to encoding the symbol or the set again. The differnce is determined by using the set minus operator or subtraction of values. [@Delta_encoding:2019]
+`Delta coding` is a technique applied where encoding the difference between the previously encoded symbol or set of symbols is smaller compared to encoding the symbol or the set again. The differnce is determined by using the set minus operator or subtraction of values [@Delta_encoding:2019].
 
 In contrast to these encoding methods, there are various other approaches to lossless coding including Run Length Encoding (RLE) and Burrows-Wheeler coding [@BurrowsWheeler:1994].
 
-While programs such as GZip, Deflate, Zip, LZMA and BZ2 that use such technologies are available for general purpose compression, they do not provide optimal compression for short strings. Eventhough these methods compress far more than what is proposed in this article, they often expand the original source for short strings because the symbol-code mapping also needs to be attached to aid decompression.
+While programs such as GZip, Deflate, Zip, LZMA and BZ2 that use such technologies are available for general purpose compression, they do not provide optimal compression for short strings. Even though these methods compress far more than what is proposed in this article, they often expand the original source for short strings because the symbol-code mapping also needs to be attached to aid decompression.
 
 ## Short string compression techniques
 
@@ -65,17 +65,17 @@ While both are lossless encoding methods, Smaz is dictionary based and Shoco cla
 
 In addition to providing a default frequency table as model, shoco provides an option to re-define the frequency table based on training text [@Schramm:2015].
 
-For compressing Unicode sequences, three technologies are available: SCSU [@Unicode:2005] and BOCU [@Scherer:2002] and FAST [@Studený:2008]. A survey of these compression algorithms was published by Doug Ewell in 2004 [@Ewell:2004].
+For compressing Unicode sequences, three technologies are available: SCSU [@Unicode:2005], BOCU [@Scherer:2002], and FAST [@Studený:2008]. @Ewell:2004 published a survey of these compression algorithms.
 
-The Standard Compression Scheme for Unicode (SCSU) is defined in Unicode Technical Standard \#6 and is based on a technique originally developed by Reuters. The basic premise of SCSU is to define dynamically positioned windows into the Unicode code space, so that characters belonging to small scripts (such as the Greek alphabet or Indic abugidas) can be encoded in a single byte, representing an index into the active window. These windows are preset to blocks expected to be in common use (e.g. Cyrillic), so the encoder doesn’t have to define them in these cases. There are also static windows that cannot be adjusted [@Unicode:2005] [@Ewell:2004].
+The Standard Compression Scheme for Unicode (SCSU) is defined in Unicode Technical Standard \#6 and is based on a technique originally developed by Reuters. The basic premise of SCSU is to define dynamically positioned windows into the Unicode code space, so that characters belonging to small scripts (such as the Greek alphabet or Indic abugidas) can be encoded in a single byte, representing an index into the active window. These windows are preset to blocks expected to be in common use (e.g., Cyrillic), so the encoder doesn’t have to define them in these cases. There are also static windows that cannot be adjusted [@Unicode:2005; @Ewell:2004].
 
-The Binary Ordered Compression for Unicode (BOCU) concept was developed in 2001 by Mark Davis and Markus Scherer for the ICU project. The main premise of BOCU-1 is to encode each Unicode character as the difference from the previous character, and to represent small differences in fewer bytes than large differences. By encoding differences, BOCU-1 achieves the same compression for all small alphabetic scripts, regardless of the block they reside in [@Scherer:2002] [@Ewell:2004].
+The Binary Ordered Compression for Unicode (BOCU) concept was developed in 2001 by Mark Davis and Markus Scherer for the ICU project. The main premise of BOCU-1 is to encode each Unicode character as the difference from the previous character, and to represent small differences in fewer bytes than large differences. By encoding differences, BOCU-1 achieves the same compression for all small alphabetic scripts, regardless of the block in which they reside [@Scherer:2002; @Ewell:2004].
 
 It is to be noted that SCSU is a Unicode Technical Standard (UTS\#6) and BOCU is published as a Unicode Technical Note (UTN\#6), although both have the same number assigned (6).
 
-Fast Compression Algorithm For Unicode Text (FAST) is a compression algorithm developed based on Lempel Ziv algorithm [@LempelZiv:1977]. Essentially it achieves faster compression by finding repeating unicode sequences instead of repeating bytes. There are other assumptions and variations made to LZ technique in addition to this [@Studený:2008].
+Fast Compression Algorithm For Unicode Text (FAST) is a compression algorithm developed based on the Lempel Ziv algorithm [@LempelZiv:1977]. Essentially it achieves faster compression by finding repeating unicode sequences instead of repeating bytes. There are other assumptions and variations made to LZ technique in addition to this [@Studený:2008].
 
-AIMCS is an Artificial Intelligence based Method for Compression of Short Strings, which is specifically designed for compression of strings with the size of less than 160 characters (tiny strings) [@AIMCS:2020]
+AIMCS is an Artificial Intelligence based Method for Compression of Short Strings, which is specifically designed for compression of strings with the size of less than 160 characters (tiny strings) [@AIMCS:2020].
 
 SSE is a technique where texts are pre-processed by a method named `sort and set empty` and are then compressed through the traditional lossless compression methods [@Xu2017SSELC:2017].
 
@@ -91,7 +91,7 @@ For Unicode, Delta encoding is proposed because usually the difference between s
 
 SCSU and BOCU do have special features for Unicode that Unishox does not address such as dynamic windows, binary order maintenance, XML suitability and MIME friendliness. Unishox uses plain delta encoding to achieve the best compression.
 
-For English letters, unlike shoco, a fixed frequency table is proposed, generated based on the characterestics of English language letter frequency. The research carried out by Oxford University [@Oxford:2012] and other sources [@StatisticalDistribution:2017] [@Wikipedia:2019] have been used to arrive at a unique method that takes advantage of the conventions of the language.
+For English letters, unlike shoco, a fixed frequency table is proposed, generated based on the characterestics of English language letter frequency. The research carried out by Oxford University [@Oxford:2012] and other sources [@StatisticalDistribution:2017] have been used to arrive at a unique method that takes advantage of the conventions of the language.
 
 A single fixed model is used because of the advantages it offers over the training models of shoco. The disadvantage with the training model, although it may appear to offer more compression, is that it does not consider the patterns that usually appear during text formation. It can be seen that this performs better than pre-trained model of shoco (See performance section).
 
