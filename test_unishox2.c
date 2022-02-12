@@ -124,12 +124,10 @@ int unishox2_decompress_preset_lines(const char *in, int len, UNISHOX_API_OUT_AN
   return 0;
 }
 
-/// Helper function for unit tests
-int test_ushx_cd(char *input, int preset) {
+int test_ushx_cd_with_len(char *input, int len, int preset) {
 
   char cbuf[200];
   char dbuf[251];
-  int len = (int)strlen(input);
   int clen = unishox2_compress_preset_lines(input, len, UNISHOX_API_OUT_AND_LEN(cbuf, sizeof cbuf), preset, NULL);
   if (clen > (int)sizeof cbuf) {
     printf("Compress Overflow\n");
@@ -235,6 +233,12 @@ int test_ushx_cd(char *input, int preset) {
 
   return 1;
 
+}
+
+/// Helper function for unit tests
+int test_ushx_cd(char *input, int preset) {
+  int len = (int)strlen(input);
+  return test_ushx_cd_with_len(input, len, preset);
 }
 
 int is_empty(const char *s) {
@@ -602,6 +606,7 @@ int run_unit_tests(int argc, char *argv[]) {
 
     // Binary
     if (presetForUnicode(preset) && !test_ushx_cd("Hello\x80\x83\xAE\xBC\xBD\xBE", preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd_with_len("Hello World with Null termination\x00", 34, preset)) return 1;
 
     return 0;
 }
