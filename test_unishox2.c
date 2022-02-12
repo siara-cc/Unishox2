@@ -145,7 +145,7 @@ int test_ushx_cd_with_len(char *input, int len, int preset) {
     printf("Fail len: %d, %d:\n%s\n%s\n", len, dlen, input, dbuf);
     return 0;
   }
-  if (strncmp(input, dbuf, len)) {
+  if (memcmp(input, dbuf, len)) {
     printf("Fail cmp:\n%s\n%s\n", input, dbuf);
     return 0;
   }
@@ -606,7 +606,7 @@ int run_unit_tests(int argc, char *argv[]) {
 
     // Binary
     if (presetForUnicode(preset) && !test_ushx_cd("Hello\x80\x83\xAE\xBC\xBD\xBE", preset)) return 1;
-    if (presetForUnicode(preset) && !test_ushx_cd_with_len("Hello World with Null termination\x00", 34, preset)) return 1;
+    if (presetForUnicode(preset) && !test_ushx_cd_with_len("Hello world\x0 with nulls\x0", 24, preset)) return 1;
 
     return 0;
 }

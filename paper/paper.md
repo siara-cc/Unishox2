@@ -85,7 +85,7 @@ Further four different methods available for compressing short messages have bee
 
 A hybrid encoding method is proposed relying on the three encoding techniques `viz.` Entropy encoding, Dictionary coding and Delta encoding methods for optimal compression.
 
-While existing techniques focus on either Unicode character sequences or only English characters, Unishox uses multiple techhniques to achieve the best compression ratio all round.
+While existing techniques focus on either Unicode character sequences or only English characters, Unishox uses multiple techniques to achieve the best compression ratio all round.
 
 For Unicode, Delta encoding is proposed because usually the difference between subsequent symbols is quite less while encoding text of a particular language. SCSU is slightly better with switching windows, but overall it was found that plain Delta coding works well considering that usually there is only one language text to be compressed and some languages span a lot of windows.
 
@@ -156,7 +156,7 @@ With these two sets of codes, several sets of letters are formed as shown in the
 
 - Symbols in Set 2 are encoded by first switching to the set by using 00 followed by 01. So the symbol " is encoded as 00 01 00.
 - Numbers in Set 3 are encoded by first switching to the set by using 00 followed by 10. So the symbol 9 is encoded as 00 10 1010.
-- For Set 3, whenever is switch is made from Set 1 to any number (0 to 9), it makes Set 3 active. So subsequent numbers symbols in Set 3 can be encoded without the switch symbol, as in 111000 for 3, 111001 for 4 and so on.
+- For Set 3, whenever a switch is made from Set 1 to any number (0 to 9), it makes Set 3 active. So subsequent numbers symbols in Set 3 can be encoded without the switch symbol, as in 111000 for 3, 111001 for 4 and so on.
 - To return to Set 1 in this case, the code 0000 is used.
 - However, when other symbols in Set 3 are encoded from Set 1, Set 3 is not made active.
 
