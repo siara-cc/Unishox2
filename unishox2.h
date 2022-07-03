@@ -129,6 +129,8 @@
 #define USX_FREQ_SEQ_HTML (const char *[]) {"</", "=\"", "div", "href", "class", "<p>"}
 /// Frequently occuring sequences in XML content
 #define USX_FREQ_SEQ_XML (const char *[]) {"</", "=\"", "\">", "<?xml version=\"1.0\"", "xmlns:", "://"}
+/// Frequently occuring sequences in EMail address content
+#define USX_FREQ_SEQ_EMAIL (const char *[]) {"@gmail.com", "@yahoo.com", "@hotmail.com", ".com", ".org", ".net"}
 
 /// Commonly occuring templates (ISO Date/Time, ISO Date, US Phone number, ISO Time, Unused)
 #define USX_TEMPLATES (const char *[]) {"tfff-of-tfTtf:rf:rf.fffZ", "tfff-of-tf", "(fff) fff-ffff", "tf:rf:rf", 0}
@@ -167,6 +169,8 @@
 #define USX_PSET_XML USX_HCODES_DFLT, USX_HCODE_LENS_DFLT, USX_FREQ_SEQ_XML, USX_TEMPLATES
 /// Preset parameter set favouring HTML content
 #define USX_PSET_HTML USX_HCODES_DFLT, USX_HCODE_LENS_DFLT, USX_FREQ_SEQ_HTML, USX_TEMPLATES
+/// Preset parameter set favouring Email addresses
+#define USX_PSET_EMAIL USX_HCODES_DFLT, USX_HCODE_LENS_DFLT, USX_FREQ_SEQ_EMAIL, USX_TEMPLATES
 
 /**
  * This structure is used when a string array needs to be compressed.
