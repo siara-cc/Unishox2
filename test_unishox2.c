@@ -79,6 +79,8 @@ int unishox2_compress_preset_lines(const char *in, int len, UNISHOX_API_OUT_AND_
       return unishox2_compress_lines(in, len, UNISHOX_API_OUT_AND_LEN(out, olen), USX_PSET_XML, prev_lines);
     case 16:
       return unishox2_compress_lines(in, len, UNISHOX_API_OUT_AND_LEN(out, olen), USX_PSET_HTML, prev_lines);
+    case 17:
+      return unishox2_compress_lines(in, len, UNISHOX_API_OUT_AND_LEN(out, olen), USX_PSET_EMAIL, prev_lines);
   }
   return 0;
 }
@@ -120,6 +122,8 @@ int unishox2_decompress_preset_lines(const char *in, int len, UNISHOX_API_OUT_AN
       return unishox2_decompress_lines(in, len, UNISHOX_API_OUT_AND_LEN(out, olen), USX_PSET_XML, prev_lines);
     case 16:
       return unishox2_decompress_lines(in, len, UNISHOX_API_OUT_AND_LEN(out, olen), USX_PSET_HTML, prev_lines);
+    case 17:
+      return unishox2_decompress_lines(in, len, UNISHOX_API_OUT_AND_LEN(out, olen), USX_PSET_EMAIL, prev_lines);
   }
   return 0;
 }
@@ -888,6 +892,7 @@ if (argc == 2 || (argc == 3 && atoi(argv[2]) > 0)) {
    printf("         14   Favor JSON (No Unicode)\n");
    printf("         15   Favor XML\n");
    printf("         16   Favor HTML\n");
+   printf("         17   Favor EMail addresses\n");
    return 1;
 }
 
