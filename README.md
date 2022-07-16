@@ -100,6 +100,10 @@ Strings that were compressed with this library can be decompressed with the [JS 
 - Thanks to [James Z.M. Gao](https://github.com/gsm55) for his PRs on improving presets, unit tests, bug fixes and more
 - Thanks to [Jm Casler](https://github.com/mc-hamster) and [Shiv Kokroo](https://github.com/kokroo) for choosing and integrating Unishox into [Meshtastic](https://github.com/meshtastic/Meshtastic-device) project
 
+# Sponsor
+
+If you like this work, you could [buy me coffee](https://www.buymeacoffee.com/siaracc).  However don't get pressured by this.  Feel free to use this work as you like.
+
 # Issues
 
 In case of any issues, please email the Author (Arundale Ramanathan) at arun@siara.cc or create GitHub issue.
