@@ -1,12 +1,14 @@
 *.h
 !unishox1.h
 !unishox2.h
+!unishox3.h
 !delta_only_unishox2.h
 ._*
 .vscode*
 a.out
 *.bin
 unishox
+!unishox/
 unishox1
 unishox2
 unishox++_0_1_0
@@ -26,6 +28,14 @@ CMakeFiles
 !spanish.txt
 !emoji.txt
 !french.txt
+!world95.txt
+!alice_wland_chn.txt
+!alice_wland.txt
+!hi.txt
+!ja.txt
+!ru.txt
+!ta.txt
+!zh.txt
 *.aux
 *.log
 *.out
@@ -33,6 +43,7 @@ CMakeFiles
 *w95*
 *test*
 !test_unishox2.c
+!test_unishox3.c
 Debug
 Release
 *dSYM
