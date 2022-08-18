@@ -285,21 +285,24 @@ void print_string_as_hex(char *in, int len) {
   int l;
   printf("String in hex:\n");
   for (l=0; l<len; l++) {
-    printf("%x, ", (unsigned char) in[l]);
+    printf("%02x, ", (unsigned char) in[l]);
   }
   printf("\n");
 }
 
 /// Internal helper function
-void print_compressed(char *in, int len) {
+void print_bytes(char *in, int len, const char *title) {
 
   int l;
   byte bit;
-  printf("Compressed bytes in decimal:\n");
-  for (l=0; l<len; l++) {
+  printf("%s %d bytes\n", title, len);
+  printf("Bytes in decimal:\n");
+  for (l=0; l<len; l++)
     printf("%u, ", (unsigned char) in[l]);
-  }
-  printf("\n\nCompressed bytes in binary:\n");
+  printf("\nBytes in hex:\n");
+  for (l=0; l<len; l++)
+    printf("\\x%02x", (unsigned char) in[l]);
+  printf("\nBytes in binary:\n");
   for (l=0; l<len*8; l++) {
     bit = (in[l/8]>>(7-l%8))&0x01;
     printf("%d", bit);
@@ -834,6 +837,17 @@ if (argc >= 4 && (strcmp(argv[1], "-g") == 0 ||
 if (argc >= 2 && strcmp(argv[1], "-t") == 0) {
   return run_unit_tests(argc, argv);
 } else
+if (argc == 4 && strcmp(argv[1], "-di") == 0) {
+  char *input = argv[2];
+  int clen = atoi(argv[3]);
+  //char *input = "\252!\355\347;멠<\322\336\346\070\205X\200v\367b\002\332l\213\022\n\003P\374\267\002\266e\207.\210r:\021\225\224\243\353\204\305\352\255\017L/(HH4i\223~\270-\223\206\221\246\212\261\221e\254\375\341\350\037\240X\211ǉ\325\330u\365\303ʂ\200гM\236&\375\377\071%'?V\025\070\374\026\346s\323$\276\350F\224\r-\226\347ɋ\317\344\214\v\032U\303\353\215\335GX\202\371B\302\355\a\247\273\356C\372\a-\262\006\\\343\"ZH|\357\034\001";
+  //clen = strlen(input);
+  //print_bytes(argv[2], clen, "Input:");
+  print_bytes(input, clen, "Input:");
+  dlen = unishox2_decompress_simple(input, clen, dbuf);
+  dbuf[dlen] = '\0';
+  printf("Decompressed: [%s], len: %zu", dbuf, dlen);
+} else
 if (argc == 2 || (argc == 3 && atoi(argv[2]) > 0)) {
    int preset = 0;
    if (argc >= 3)
@@ -843,7 +857,7 @@ if (argc == 2 || (argc == 3 && atoi(argv[2]) > 0)) {
    //print_string_as_hex(argv[1], len);
    memset(cbuf, 0, sizeof(cbuf));
    ctot = unishox2_compress_preset_lines(argv[1], len, UNISHOX_API_OUT_AND_LEN(cbuf, sizeof cbuf), preset, NULL);
-   print_compressed(cbuf, ctot);
+   print_bytes(cbuf, ctot, "Coompressed:");
    memset(dbuf, 0, sizeof(dbuf));
    dlen = unishox2_decompress_preset_lines(cbuf, ctot, UNISHOX_API_OUT_AND_LEN(dbuf, sizeof dbuf - 1), preset, NULL);
    dbuf[dlen] = 0;
