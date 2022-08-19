@@ -851,9 +851,11 @@ int readBit(const char *in, int bit_no) {
 int read8bitCode(const char *in, int len, int bit_no) {
   int bit_pos = bit_no & 0x07;
   int char_pos = bit_no >> 3;
+  len >>= 3;
   byte code = (((byte)in[char_pos]) << bit_pos);
-  if (bit_no + bit_pos < len) {
-    code |= ((byte)in[++char_pos]) >> (8 - bit_pos);
+  char_pos++;
+  if (char_pos < len) {
+    code |= ((byte)in[char_pos]) >> (8 - bit_pos);
   } else
     code |= (0xFF >> (8 - bit_pos));
   return code;
@@ -1042,9 +1044,13 @@ int decodeRepeat(const char *in, int len, char *out, int olen, int ol, int *bit_
       return -1;
     struct us_lnk_lst *cur_line = prev_lines;
     const int left = olen - ol;
-    while (ctx--)
+    while (ctx-- && cur_line)
       cur_line = cur_line->previous;
+    if (cur_line == NULL)
+      return -1;
     if (left <= 0) return olen + 1;
+    if (dist >= strlen(cur_line->data))
+      return -1;
     memmove(out + ol, cur_line->data + dist, min_of(left, dict_len));
     if (left < dict_len) return olen + 1;
     ol += dict_len;
@@ -1058,6 +1064,8 @@ int decodeRepeat(const char *in, int len, char *out, int olen, int ol, int *bit_
     const int32_t left = olen - ol;
     //printf("Decode len: %d, dist: %d\n", dict_len - NICE_LEN, dist - NICE_LEN + 1);
     if (left <= 0) return olen + 1;
+    if (ol - dist < 0)
+      return -1;
     memmove(out + ol, out + ol - dist, min_of(left, dict_len));
     if (left < dict_len) return olen + 1;
     ol += dict_len;
