@@ -2,7 +2,7 @@
 
 [![C/C++ CI](https://github.com/siara-cc/Unishox/actions/workflows/c-cpp.yml/badge.svg)](https://github.com/siara-cc/Unishox/actions/workflows/c-cpp.yml) [![DOI](https://joss.theoj.org/papers/10.21105/joss.03919/status.svg)](https://doi.org/10.21105/joss.03919)
 [![npm ver](https://img.shields.io/npm/v/unishox2.siara.cc)](https://www.npmjs.com/package/unishox2.siara.cc)
-[![afl](https://img.shields.io/badge/afl%20crashes%2Fhangs-0-green)](https://github.com/siara-cc/Unishox/afl-fuzz)
+[![afl](https://img.shields.io/badge/afl%20crashes%2Fhangs-0-green)](https://github.com/siara-cc/Unishox2/tree/master/afl_fuzz)
 
 In general compression utilities such as `zip`, `gzip` do not compress short strings well and often expand them. They also use lots of memory which makes them unusable in constrained environments like Arduino.  So Unishox algorithm was developed for individually compressing (and decompressing) short strings.
 
