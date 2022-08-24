@@ -78,10 +78,9 @@ delta_only
 doc/*.pdf
 doc/.~*
 paper/*.pdf
-fuzz_data/*
-fuzz_out/*
-afl_fuzz/fuzz_data/*
-afl_fuzz/fuzz_out/*
+fuzz_data
+fuzz_out
 
 # Traditional cmake building directories
 build*
+

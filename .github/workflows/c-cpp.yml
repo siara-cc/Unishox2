@@ -59,3 +59,4 @@ jobs:
       run: ./test_unishox2 -c sample_texts/ta.txt sample_texts/ta.usx && ./test_unishox2 -d sample_texts/ta.usx sample_texts/ta.dsx && cmp sample_texts/ta.txt sample_texts/ta.dsx
     - name: test sample_texts/zh.txt
       run: ./test_unishox2 -c sample_texts/zh.txt sample_texts/zh.usx && ./test_unishox2 -d sample_texts/zh.usx sample_texts/zh.dsx && cmp sample_texts/zh.txt sample_texts/zh.dsx
+
