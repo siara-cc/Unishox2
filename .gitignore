@@ -59,6 +59,7 @@ Html.h
 *.lzma
 *.us?
 *.dsx
+*.psx
 utf8samples/*.gz
 utf8samples/*.zip
 utf8samples/*.shox
@@ -77,6 +78,10 @@ delta_only
 doc/*.pdf
 doc/.~*
 paper/*.pdf
+fuzz_data/*
+fuzz_out/*
+afl_fuzz/fuzz_data/*
+afl_fuzz/fuzz_out/*
 
 # Traditional cmake building directories
 build*
