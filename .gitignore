@@ -1,8 +1,11 @@
 *.h
+*.o
 !unishox1.h
 !unishox2.h
 !unishox3.h
 !delta_only_unishox2.h
+!usx3_progmem.h
+!wordlist.h
 ._*
 .vscode*
 a.out
@@ -10,6 +13,7 @@ a.out
 unishox
 !unishox/
 unishox1
+!unishox1/
 unishox2
 unishox++_0_1_0
 unishox_0_1_0
@@ -51,6 +55,7 @@ ARM.h
 proverbs.h
 errno.h
 Html.h
+*.7z
 *.gz
 *.zip
 *.shx
@@ -78,9 +83,29 @@ delta_only
 doc/*.pdf
 doc/.~*
 paper/*.pdf
-fuzz_data
-fuzz_out
+id:*
+SEED
+fuzz_data/
+fuzz_data/*
+fuzz_data/fuzz-out/crashes/*
+fuzz_data/fuzz-out/hangs/*
+fuzz_data/fuzz-out/queue/*
+fuzz_data/fuzz-out/queue/.state/*
+fuzz-out/
+fuzz-out/*
+fuzz-out/crashes/*
+fuzz-out/hangs/*
+fuzz-out/queue/*
+fuzz-out/queue/.state/*
+afl_fuzz/fuzz_data/*
+afl_fuzz/fuzz_data/fuzz-out/crashes/*
+afl_fuzz/fuzz_data/fuzz-out/hangs/*
+afl_fuzz/fuzz_data/fuzz-out/queue/*
+afl_fuzz/fuzz_out/*
+afl_fuzz/fuzz-out/crashes/*
+afl_fuzz/fuzz-out/hangs/*
+afl_fuzz/fuzz-out/queue/*
+afl_fuzz/fuzz-out/queue/.state/*
 
 # Traditional cmake building directories
 build*
-

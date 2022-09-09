@@ -728,7 +728,8 @@ if (argc >= 4 && strcmp(argv[1], "-d") == 0) {
    } while (bytes_read > 0);
 } else
 if (argc >= 4 && (strcmp(argv[1], "-g") == 0 || 
-      strcmp(argv[1], "-G") == 0)) {
+      strcmp(argv[1], "-G") == 0 ||
+      strcmp(argv[1], "-gb") == 0)) {
    int preset = 0;
    if (argc > 4)
      preset = atoi(argv[4]);
@@ -748,12 +749,14 @@ if (argc >= 4 && (strcmp(argv[1], "-g") == 0 ||
    tot_len = 0;
    ctot = 0;
    struct us_lnk_lst *cur_line = NULL;
-   fputs("#ifndef __", wfp);
-   fputs(argv[3], wfp);
-   fputs("_UNISHOX2_COMPRESSED__\n", wfp);
-   fputs("#define __", wfp);
-   fputs(argv[3], wfp);
-   fputs("_UNISHOX2_COMPRESSED__\n", wfp);
+   if (strcmp(argv[1], "-gb") != 0) {
+     fputs("#ifndef __", wfp);
+     fputs(argv[3], wfp);
+     fputs("_UNISHOX2_COMPRESSED__\n", wfp);
+     fputs("#define __", wfp);
+     fputs(argv[3], wfp);
+     fputs("_UNISHOX2_COMPRESSED__\n", wfp);
+   }
    int line_ctr = 0;
    int max_len = 0;
    const size_t short_buf_len = strlen(argv[3]) + 100;
@@ -781,33 +784,38 @@ if (argc >= 4 && (strcmp(argv[1], "-g") == 0 ||
             perc /= len;
             perc *= 100;
             //print_compressed(dbuf, clen);
-            printf("len: %ld/%ld=", clen, len);
-            printf("%.2f %s\n", perc, cbuf);
+            //printf("len: %ld/%ld=", clen, len);
+            //printf("%.2f %s\n", perc, cbuf);
             tot_len += len;
             ctot += clen;
-            snprintf(short_buf, short_buf_len, "const byte %s_%d[] PROGMEM = {", argv[3], line_ctr++);
-            fputs(short_buf, wfp);
-            int len_len = encode_unsigned_varint((byte *) short_buf, clen);
-            for (int i = 0; i < len_len; i++) {
-              snprintf(short_buf, 10, "%u, ", (byte) short_buf[i]);
+            if (strcmp(argv[1], "-gb") != 0) {
+              snprintf(short_buf, short_buf_len, "const byte %s_%d[] PROGMEM = {", argv[3], line_ctr++);
               fputs(short_buf, wfp);
-            }
-            for (int i = 0; i < clen; i++) {
-              if (i) {
-                strcpy(short_buf, ", ");
+              int len_len = encode_unsigned_varint((byte *) short_buf, clen);
+              for (int i = 0; i < len_len; i++) {
+                snprintf(short_buf, 10, "%u, ", (byte) short_buf[i]);
                 fputs(short_buf, wfp);
               }
-              snprintf(short_buf, 6, "%u", (byte) dbuf[i]);
+              for (int i = 0; i < clen; i++) {
+                if (i) {
+                  strcpy(short_buf, ", ");
+                  fputs(short_buf, wfp);
+                }
+                snprintf(short_buf, 6, "%u", (byte) dbuf[i]);
+                fputs(short_buf, wfp);
+              }
+              strcpy(short_buf, "};\n");
               fputs(short_buf, wfp);
+            } else {
+              fwrite(dbuf, 1, clen, wfp);
+              fwrite("\r\n", 1, 2, wfp);
             }
-            strcpy(short_buf, "};\n");
-            fputs(short_buf, wfp);
         }
         if (len > max_len)
           max_len = len;
         dlen = unishox2_decompress_preset_lines(dbuf, clen, UNISHOX_API_OUT_AND_LEN(cbuf, sizeof cbuf - 1), preset, cur_line);
         cbuf[dlen] = 0;
-        printf("\n%s\n", cbuf);
+        //printf("\n%s\n", cbuf);
       }
    }
    perc = (float)(tot_len-ctot);
@@ -815,8 +823,10 @@ if (argc >= 4 && (strcmp(argv[1], "-g") == 0 ||
    perc *= 100;
    printf("\nBytes (Compressed/Original=Savings%%): %ld/%ld=", ctot, tot_len);
    printf("%.2f%%\n", perc);
-   snprintf(short_buf, short_buf_len, "const byte * const %s[] PROGMEM = {", argv[3]);
-   fputs(short_buf, wfp);
+   if (strcmp(argv[1], "-gb") != 0) {
+     snprintf(short_buf, short_buf_len, "const byte * const %s[] PROGMEM = {", argv[3]);
+     fputs(short_buf, wfp);
+   }
    for (int i = 0; i < line_ctr; i++) {
      if (i) {
        strcpy(short_buf, ", ");
@@ -826,12 +836,14 @@ if (argc >= 4 && (strcmp(argv[1], "-g") == 0 ||
      fputs(short_buf, wfp);
    }
    strcpy(short_buf, "};\n");
-   fputs(short_buf, wfp);
-   snprintf(short_buf, short_buf_len, "#define %s_line_count %d\n", argv[3], line_ctr);
-   fputs(short_buf, wfp);
-   snprintf(short_buf, short_buf_len, "#define %s_max_len %d\n", argv[3], max_len);
-   fputs(short_buf, wfp);
-   fputs("#endif\n", wfp);
+   if (strcmp(argv[1], "-gb") != 0) {
+     fputs(short_buf, wfp);
+     snprintf(short_buf, short_buf_len, "#define %s_line_count %d\n", argv[3], line_ctr);
+     fputs(short_buf, wfp);
+     snprintf(short_buf, short_buf_len, "#define %s_max_len %d\n", argv[3], max_len);
+     fputs(short_buf, wfp);
+     fputs("#endif\n", wfp);
+   }
    free(short_buf);
 } else
 if (argc >= 2 && strcmp(argv[1], "-t") == 0) {
