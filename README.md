@@ -6,8 +6,6 @@
 
 In general compression utilities such as `zip`, `gzip` do not compress short strings well and often expand them. They also use lots of memory which makes them unusable in constrained environments like Arduino.  So Unishox algorithm was developed for individually compressing (and decompressing) short strings.
 
-Note: The present byte-code version is 2 and it replaces [Unishox 1](https://github.com/siara-cc/Unishox2/blob/master/Unishox_Article_1.pdf?raw=true).  Unishox 1 is still available as unishox1.c, but it will have to be compiled manually if it is needed.
-
 This is a C/C++ library.  See [here for CPython version](https://github.com/tweedge/unishox2-py3) and [here for Javascript version](https://github.com/siara-cc/Unishox_JS) which is interoperable with this library.
 
 # Applications
@@ -102,9 +100,11 @@ Strings that were compressed with this library can be decompressed with the [JS 
 - Thanks to [James Z.M. Gao](https://github.com/gsm55) for his PRs on improving presets, unit tests, bug fixes and more
 - Thanks to [Jm Casler](https://github.com/mc-hamster) and [Shiv Kokroo](https://github.com/kokroo) for choosing and integrating Unishox into [Meshtastic](https://github.com/meshtastic/Meshtastic-device) project
 
-# Sponsor
+# Versions
 
-If you like this work, you could [buy me coffee](https://www.buymeacoffee.com/siaracc).  However don't get pressured by this.  Feel free to use this work as you like.
+The present byte-code version is 2 and it replaces [Unishox 1](https://github.com/siara-cc/Unishox2/blob/master/Unishox1/Unishox_Article_1.pdf?raw=true).  Unishox 1 is still available as unishox1.c, but it will have to be compiled manually if it is needed.
+
+The next version would be Unishox3 and it would include a multi-level static dictionaries residing in RAM or Flash memory that would greatly improve compression ratios compared to Unishox2.  However Unishox2 will still be supported for cases where space for storing static dictionaries is an issue.
 
 # Issues
 

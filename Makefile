@@ -1,11 +1,11 @@
-SRCFILE = unishox2.cpp
-SRCFILE1 = test_unishox2.cpp
+SRCFILE = unishox2.c
+SRCFILE1 = test_unishox2.c
 OUTFILE = test_unishox2
 COMPILE_OPTS = -O3
 
 default:
-	g++ -std=c++98 $(CFLAGS) $(COMPILE_OPTS) -o $(OUTFILE) $(SRCFILE) $(SRCFILE1)
-	g++ -std=c++98 $(CFLAGS) $(COMPILE_OPTS) -DUNISHOX_API_WITH_OUTPUT_LEN=1 -o $(OUTFILE)-w-olen $(SRCFILE) $(SRCFILE1)
+	gcc -std=c99 $(CFLAGS) $(COMPILE_OPTS) -o $(OUTFILE) $(SRCFILE) $(SRCFILE1)
+	gcc -std=c99 $(CFLAGS) $(COMPILE_OPTS) -DUNISHOX_API_WITH_OUTPUT_LEN=1 -o $(OUTFILE)-w-olen $(SRCFILE) $(SRCFILE1)
 
 install: default
 	cp $(OUTFILE) /usr/bin/
