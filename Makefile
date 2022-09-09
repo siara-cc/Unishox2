@@ -1,7 +1,7 @@
 SRCFILE = unishox2.c
 SRCFILE1 = test_unishox2.c
 OUTFILE = test_unishox2
-COMPILE_OPTS = -O3
+COMPILE_OPTS = -I.
 
 default:
 	gcc -std=c99 $(CFLAGS) $(COMPILE_OPTS) -o $(OUTFILE) $(SRCFILE) $(SRCFILE1)
