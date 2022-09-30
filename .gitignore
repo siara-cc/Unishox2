@@ -14,6 +14,8 @@ unishox
 !unishox/
 unishox1
 !unishox1/
+usx3
+tex/.*
 unishox2
 unishox++_0_1_0
 unishox_0_1_0
@@ -47,7 +49,7 @@ CMakeFiles
 *w95*
 *test*
 !test_unishox2.c
-!test_unishox3.c
+!test_unishox3.cpp
 Debug
 Release
 *dSYM

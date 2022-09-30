@@ -82,6 +82,52 @@
 /// byte is unsigned char
 typedef unsigned char byte;
 
+#include <stdint.h>
+#include <string.h>
+
+extern const char **wordlist[];
+
+/// Minimum length to consider as repeating sequence
+#define NICE_LEN 7
+
+/// Return value of function that matches repeating sequences
+class usx3_longest {
+  public:
+    int len;
+    int dist;
+    usx3_longest(int l = -1, int d = -1) {
+      len = l;
+      dist = d;
+    }
+    bool is_found() {
+      return (len >= 0);
+    }
+    int saving() {
+      if (len < 0)
+        return 0;
+      return len + NICE_LEN;
+    }
+};
+
+/// Return value of function that matches from internal dictionaries
+class usx3_dict_find {
+  public:
+    int lvl;
+    int pos;
+    usx3_dict_find(int l = -1, int p = -1) {
+      lvl = l;
+      pos = p;
+    }
+    bool is_found() {
+      return (pos >= 0);
+    }
+    int saving() {
+      if (pos < 0)
+        return 0;
+      return strlen(wordlist[lvl][pos]);
+    }
+};
+
 /** 
  * Class definition for compressing and decompressing a string
  */
@@ -90,38 +136,40 @@ class unishox3 {
   protected:
 
     /// Horizontal codes used by the instance
-    byte usx_hcodes[6];
-
+    uint8_t usx_hcodes[6];
     /// Length of each Horizontal code
-    byte usx_hcode_lens[6];
+    uint8_t usx_hcode_lens[6];
 
-    /// This 2D array has the characters for the sets USX_ALPHA, USX_SYM and USX_NUM. Where a character cannot fit into a byte, 0 is used and handled in code.
-    byte usx_sets[3][28];
+    /// This 2D array has the characters for the sets USX_ALPHA, USX_SYM and USX_NUM. Where a character cannot fit into a uint8_t, 0 is used and handled in code.
+    uint8_t usx_sets[3][28];
 
     /// Stores position of letter in usx_sets.
     /// First 3 bits - position in usx_hcodes
     /// Next  5 bits - position in usx_vcodes
-    byte usx_code_94[94];
+    uint8_t usx_code_94[94];
 
     const char **usx_templates;
 
-    int append_code(char *out, int olen, int ol, byte code, byte *state);
-    int append_switch_code(char *out, int olen, int ol, byte state);
-    int match_predef_dict(const char *in, int len, int l, char *out, int olen, int *ol, byte *state, byte *is_all_upper);
+    int append_code(char *out, int olen, int ol, uint8_t code, uint8_t *state);
+    int append_switch_code(char *out, int olen, int ol, uint8_t state);
+    int switch_to(char *out, int olen, int ol, uint8_t state, int hcode);
+
+    /// Starts coding of nibble sets
+    int append_nibble_escape(char *out, int olen, int ol, uint8_t state);
+
+    /// Appends the terminator code depending on the state, preset and whether full terminator needs to be encoded to out or not \n
+    int append_final_bits(char *const out, const int olen, int ol, const uint8_t state, const uint8_t is_all_upper);
+
+    usx3_dict_find match_predef_dict(const char *in, int len, int l);
 
     /// Finds the longest matching sequence from the beginning of the string. \n
     /// If a match is found and it is longer than NICE_LEN, it is encoded as a repeating sequence to out \n
     /// This is also used for Unicode strings \n
     /// This is a crude implementation that is not optimized.  Assuming only short strings \n
     /// are encoded, this is not much of an issue.
+    usx3_longest matchOccurance(const char *in, int len, int l);
 
-    int matchOccurance(const char *in, int len, int l, char *out, int olen, int *ol, byte *state);
-
-    /// Starts coding of nibble sets
-    int append_nibble_escape(char *out, int olen, int ol, byte state);
-
-    /// Appends the terminator code depending on the state, preset and whether full terminator needs to be encoded to out or not \n
-    int append_final_bits(char *const out, const int olen, int ol, const byte state, const byte is_all_upper);
+    int encode_dict_matches(const char *in, int len, int l, char *out, int olen, int *ol, uint8_t *state, uint8_t *is_all_upper);
 
     int readVCodeIdx(const char *in, int len, int *bit_no_p);
     int readHCodeIdx(const char *in, int len, int *bit_no_p);
@@ -179,7 +227,7 @@ class unishox3 {
 
     void setTemplates(const char *templates[]);
 
-    void setHCodess(byte hcodes[], byte hcode_lens[]);
+    void setHCodess(uint8_t hcodes[], uint8_t hcode_lens[]);
 
 };
 

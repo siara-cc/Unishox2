@@ -1,3 +1,5 @@
+#ifndef WORDLIST_H
+#define WORDLIST_H
 #define LATIN_DICT_LVL_MAX 5
 const int wordlist_lens[] = {16,64,256,2048,32768,65536};
 const char *wordlist_1[] = {
@@ -19,11 +21,11 @@ const char *wordlist_1[] = {
 "you "
 };
 const char *wordlist_2[] = {
+"\", \"",
 "\": ",
 "\": \"",
 "\":\"",
 ".com",
-".net",
 ".org",
 "://",
 "</",
@@ -100717,3 +100719,4 @@ const char *wordlist_6[] = {
 "zuckerberg"
 };
 const char **wordlist[] = {wordlist_1, wordlist_2, wordlist_3, wordlist_4, wordlist_5, wordlist_6};
+#endif
