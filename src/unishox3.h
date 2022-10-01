@@ -145,7 +145,7 @@ class unishox3 {
     /// Next  5 bits - position in usx_vcodes
     uint8_t usx_code_94[94];
 
-    const char *usx_templates[5];
+    const char *usx_templates[];
 
     int append_code(char *out, int olen, int ol, uint8_t code, uint8_t *state);
     int append_switch_code(char *out, int olen, int ol, uint8_t state);

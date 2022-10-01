@@ -510,10 +510,13 @@ int unishox3::append_final_bits(char *const out, const int olen, int ol, const u
   return ol;
 }
 
+uint8_t usx_lvl_counts[] = {0x00, 0x40, 0x80, 0xA0, 0xC0, 0xE0};
+uint8_t usx_lvl_lens[]   = {   2,    2,    3,    3,    3,    3};
 int unishox3::encode_dict_matches(const char *in, int len, int l, char *out, int olen, int *ol, uint8_t *state, uint8_t *is_all_upper) {
 
   bool continuous = false;
-  int continous_bit_loc = 0;
+  int continuous_bit_loc = 0;
+  int last_suffix_loc = 0;
   int encoded_count = 0;
 
   while (l < len) {
@@ -525,8 +528,14 @@ int unishox3::encode_dict_matches(const char *in, int len, int l, char *out, int
     if (usx_hcode_lens[USX_PREDEF_DICT] && in[l] != ' ')
       dict_find = match_predef_dict(in, len, l);
     if (!longest.is_found() && !dict_find.is_found()) {
-      if (continuous && encoded_count > 1)
-        SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, 0xE0, 3));
+      if (continuous) {
+        if (encoded_count > 1)
+          SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, 0xE0, 3));
+        else {
+          if (last_suffix_loc)
+            l = last_suffix_loc;
+        }
+      }
       return l;
     }
     encoded_count++;
@@ -534,8 +543,10 @@ int unishox3::encode_dict_matches(const char *in, int len, int l, char *out, int
     if (longest.is_found() && longest.saving() > dict_find.saving()) {
       if (continuous) {
         SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, 0, 2)); // end suffix and next repeating sequence
+        //printf("~");
       } else {
         SAFE_APPEND_BITS(*ol = switch_to(out, olen, *ol, *state, USX_DICT));
+        //printf("%%");
         //printf("Len:%d / Dist:%d/%.*s\n", longest_len, longest_dist, longest_len + NICE_LEN, in + l - longest_dist - NICE_LEN + 1);
       }
       l += (longest.len + NICE_LEN);
@@ -548,7 +559,9 @@ int unishox3::encode_dict_matches(const char *in, int len, int l, char *out, int
         if (in[l] >= 'A' && in[l] <= 'Z')
           SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, 0x80, 5)); // next upper
         SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, 0x40, 2)); // end suffix and next from dictionary
+        //printf("`");
       } else {
+        //printf("#");
         if (*state != USX_ALPHA) {
           SAFE_APPEND_BITS(*ol = switch_to(out, olen, *ol, *state, USX_ALPHA));
           *state = USX_ALPHA;
@@ -560,10 +573,10 @@ int unishox3::encode_dict_matches(const char *in, int len, int l, char *out, int
         if (in[l] >= 'A' && in[l] <= 'Z')
           SAFE_APPEND_BITS(*ol = switch_to(out, olen, *ol, *state, USX_ALPHA));
         SAFE_APPEND_BITS(*ol = switch_to(out, olen, *ol, *state, USX_PREDEF_DICT));
-        continous_bit_loc = *ol;
+        continuous_bit_loc = *ol;
         SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, 0x80, 1));
       }
-      SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, usx_hcodes[dict_find.lvl], usx_hcode_lens[dict_find.lvl])); // appending count level
+      SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, usx_lvl_counts[dict_find.lvl], usx_lvl_lens[dict_find.lvl])); // appending count level
       int bits_to_append = predict_count_bits[dict_find.lvl];
       l += min_of(len - l, strlen(wordlist[dict_find.lvl][dict_find.pos]));
       //printf("[%s], pos: %d, len: %ld\n", wordlist[pos], pos, min_of(max_len, strlen(wordlist[pos])));
@@ -577,9 +590,11 @@ int unishox3::encode_dict_matches(const char *in, int len, int l, char *out, int
       continuous = true;
     }
 
+    last_suffix_loc = l;
     while (true) {
       if (l >= len) {
         SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, 0x9F, 8)); // terminator
+        return l;
       }
       if (usx_hcode_lens[USX_DICT] && l < (len - NICE_LEN + 1))
         longest = matchOccurance(in, len, l);
