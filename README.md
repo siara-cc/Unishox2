@@ -11,9 +11,8 @@ This is a C/C++ library.  See [here for CPython version](https://github.com/twee
 # Applications
 
 - Compression for low memory devices such as Arduino and ESP8266
-- Compression of Chat application text exchange include Emojis
+- Compression of Chat application text exchange including Emojis
 - Storing compressed text in database
-- Faster retrieval speed when used as join keys
 - Bandwidth and storage cost reduction for Cloud
 
 ![Promo picture](https://github.com/siara-cc/Unishox2/blob/master/promo/Banner1.png?raw=true)

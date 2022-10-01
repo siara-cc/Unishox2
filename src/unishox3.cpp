@@ -353,7 +353,6 @@ unishox3::unishox3() {
     {  0, ',', '.', '0', '1', '9', '2', '5', '-',
       '/', '3', '4', '6', '7', '8', '(', ')', ' ',
       '=', '+', '$', '%', '#', 0, 0, 0, 0, 0}};
-  usx_templates = NULL;
   memcpy(usx_hcodes, (const uint8_t *) "\x00\xE0\x80\xA0\xC0\x40", 6);
   memcpy(usx_hcode_lens, (const uint8_t *) "\x02\x03\x03\x03\x03\x02", 6);
   memset(usx_code_94, '\0', sizeof(usx_code_94));
@@ -370,8 +369,9 @@ unishox3::unishox3() {
   }
 }
 
-void unishox3::setTemplates(const char *templates[]) {
-  usx_templates = templates;
+void unishox3::setTemplates(const char **templates) {
+  for (int i = 0; i < 5; i++)
+    usx_templates[i] = templates[i];
 }
 
 void unishox3::setHCodess(uint8_t hcodes[], uint8_t hcode_lens[]) {
@@ -520,32 +520,35 @@ int unishox3::encode_dict_matches(const char *in, int len, int l, char *out, int
 
     usx3_longest longest;
     usx3_dict_find dict_find;
-    if (usx_hcode_lens[USX_DICT] && l < (len - NICE_LEN + 1))
+    if (usx_hcode_lens[USX_DICT] && l < (len - NICE_LEN + 1) && !longest.is_found())
       longest = matchOccurance(in, len, l);
     if (usx_hcode_lens[USX_PREDEF_DICT] && in[l] != ' ')
       dict_find = match_predef_dict(in, len, l);
     if (!longest.is_found() && !dict_find.is_found()) {
-      // todo: add closing codes
+      if (continuous && encoded_count > 1)
+        SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, 0xE0, 3));
       return l;
     }
     encoded_count++;
 
     if (longest.is_found() && longest.saving() > dict_find.saving()) {
       if (continuous) {
-        // encode longest bit
-        // encode dist and len
+        SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, 0, 2)); // end suffix and next repeating sequence
       } else {
         SAFE_APPEND_BITS(*ol = switch_to(out, olen, *ol, *state, USX_DICT));
         //printf("Len:%d / Dist:%d/%.*s\n", longest_len, longest_dist, longest_len + NICE_LEN, in + l - longest_dist - NICE_LEN + 1);
-        l += (longest.len + NICE_LEN);
-        //l--;
       }
+      l += (longest.len + NICE_LEN);
       SAFE_APPEND_BITS(*ol = encodeCount(out, olen, *ol, longest.len));
       SAFE_APPEND_BITS(*ol = encodeCount(out, olen, *ol, longest.dist));
       if (!continuous)
         return l;
     } else {
-      if (!continuous) {
+      if (continuous) {
+        if (in[l] >= 'A' && in[l] <= 'Z')
+          SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, 0x80, 5)); // next upper
+        SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, 0x40, 2)); // end suffix and next from dictionary
+      } else {
         if (*state != USX_ALPHA) {
           SAFE_APPEND_BITS(*ol = switch_to(out, olen, *ol, *state, USX_ALPHA));
           *state = USX_ALPHA;
@@ -554,12 +557,11 @@ int unishox3::encode_dict_matches(const char *in, int len, int l, char *out, int
           SAFE_APPEND_BITS(*ol = switch_to(out, olen, *ol, *state, USX_ALPHA));
           *is_all_upper = 0;
         }
-        if (in[l] >= 'A' && in[l] <= 'Z') {
+        if (in[l] >= 'A' && in[l] <= 'Z')
           SAFE_APPEND_BITS(*ol = switch_to(out, olen, *ol, *state, USX_ALPHA));
-        }
         SAFE_APPEND_BITS(*ol = switch_to(out, olen, *ol, *state, USX_PREDEF_DICT));
-        //continous_bit_loc = *ol;
-        //SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, 1, 1));
+        continous_bit_loc = *ol;
+        SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, 0x80, 1));
       }
       SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, usx_hcodes[dict_find.lvl], usx_hcode_lens[dict_find.lvl])); // appending count level
       int bits_to_append = predict_count_bits[dict_find.lvl];
@@ -574,35 +576,52 @@ int unishox3::encode_dict_matches(const char *in, int len, int l, char *out, int
       } while (bits_to_append > 0);
       continuous = true;
     }
-    break;
-/*
+
     while (true) {
       if (l >= len) {
-        // encode terminator
+        SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, 0x9F, 8)); // terminator
       }
-      uint8_t c_in = in[l];
-      if ((c_in >= 'A' && c_in <= 'Z') || (c_in >= 'a' && c_in <= 'z') || c_in > 127) {
-        SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, 0, 1)); // suffix end
+      if (usx_hcode_lens[USX_DICT] && l < (len - NICE_LEN + 1))
+        longest = matchOccurance(in, len, l);
+      if (longest.is_found())
+        break;
+      int c_in = in[l];
+      if ((c_in >= 'A' && c_in <= 'Z') || (c_in >= 'a' && c_in <= 'z') || c_in > 126) {
         break; // loop and check if next code found in dict
       }
-      if (c_in >= 32 && c_in <= 126) {
-        c_in -= 32;
-        uint8_t code = usx_code_94[(int)c_in - USX_OFFSET_94];
+      if (c_in >= USX_OFFSET_94 && c_in <= 126) {
+        int code = usx_code_94[c_in - USX_OFFSET_94];
+        SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, (code >> 5) == 2 ? 0x40 : 0x60, 3));
+        if (c_in < '0' || c_in > '9')
+          c_in = 0;
+        do {
+          code &= 0x1F;
+          SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, usx_vcodes[code], usx_vcode_lens[code]));
+          l++;
+          if (c_in == 0)
+            break;
+          c_in = in[l];
+          code = usx_code_94[c_in - USX_OFFSET_94];
+        } while ((code >> 5) == 2);
+        if (c_in)
+          SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, 0x00, 2));
+        l--;
       } else {
         switch (c_in) {
           case 32:
             SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, 0xC0, 3)); // 0b110 space
             break;
-          case '\r':
-          case '\n':
-          case '\t':
-            SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, 0xF0, 4)); // 0b1111 switch to sym
+          case '\r': case '\n': case '\t':
+            SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, 0xA0, 3)); // 0b1111 switch to sym
             int vpos = (c_in == '\n' ? 7 : (l < (len - 1) && in[l+1] == '\n' ? 8 : 22));
+            if (vpos == 8)
+              l++;
             SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, usx_vcodes[vpos], usx_vcode_lens[vpos]));
         }
       }
+      l++;
     }
-*/
+
   }
 
   return l;
@@ -720,11 +739,11 @@ int unishox3::compress(const char *in, int len, USX3_API_OUT_AND_LEN(char *out, 
         continue;
       }
     }
-/*
-    if (usx_templates != NULL) {
+
+    { // if (usx_templates != NULL) {
       int i;
       for (i = 0; i < 5; i++) {
-        if (usx_templates[i]) {
+        if (usx_templates[i] != NULL) {
           int rem = (int)strlen(usx_templates[i]);
           int j = 0;
           for (; j < rem && l + j < len; j++) {
@@ -768,7 +787,7 @@ int unishox3::compress(const char *in, int len, USX3_API_OUT_AND_LEN(char *out, 
       if (i < 5)
         continue;
     }
-*/
+
     c_in = in[l];
 //printf("%c", c_in);
 

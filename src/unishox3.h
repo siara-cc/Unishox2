@@ -77,10 +77,7 @@
 #endif
 
 /// Commonly occuring templates (ISO Date/Time, ISO Date, US Phone number, ISO Time, Unused)
-#define USX_TEMPLATES (const char *[]) {"tfff-of-tfTtf:rf:rf.fffZ", "tfff-of-tf", "(fff) fff-ffff", "tf:rf:rf", 0}
-
-/// byte is unsigned char
-typedef unsigned char byte;
+#define USX_TEMPLATES (const char *[]) {"tfff-of-tfTtf:rf:rf.fffZ", "tfff-of-tf", "(fff) fff-ffff", "tf:rf:rf", NULL}
 
 #include <stdint.h>
 #include <string.h>
@@ -148,7 +145,7 @@ class unishox3 {
     /// Next  5 bits - position in usx_vcodes
     uint8_t usx_code_94[94];
 
-    const char **usx_templates;
+    const char *usx_templates[5];
 
     int append_code(char *out, int olen, int ol, uint8_t code, uint8_t *state);
     int append_switch_code(char *out, int olen, int ol, uint8_t state);
