@@ -170,6 +170,7 @@ class unishox3 {
 
     int readVCodeIdx(const char *in, int len, int *bit_no_p);
     int readHCodeIdx(const char *in, int len, int *bit_no_p);
+    int readLvlIdx(const char *in, int len, int *bit_no_p);
     int decodeRepeat(const char *in, int len, char *out, int olen, int ol, int *bit_no);
 
   public:

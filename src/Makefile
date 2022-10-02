@@ -1,7 +1,7 @@
 SRCFILE = unishox3.cpp
 SRCFILE1 = ../test_unishox3.cpp
 OUTFILE = usx3
-COMPILE_OPTS=-O3 -I.
+COMPILE_OPTS=-g  -I.
 # -fsanitize=address
 
 default:

@@ -425,7 +425,7 @@ int unishox3::append_code(char *out, int olen, int ol, uint8_t code, uint8_t *st
   return ol;
 }
 
-const uint8_t predict_count_bits[] = {4, 6, 8, 11, 15, 16};
+const uint8_t predict_count_bits[] = {4, 7, 10, 14, 17, 22};
 //static int prev_pos = 0;
 usx3_dict_find unishox3::match_predef_dict(const char *in, int len, int l) {
   size_t max_len = len - l;
@@ -529,7 +529,7 @@ int unishox3::encode_dict_matches(const char *in, int len, int l, char *out, int
       dict_find = match_predef_dict(in, len, l);
     if (!longest.is_found() && !dict_find.is_found()) {
       if (continuous) {
-        if (encoded_count > 1)
+        if (encoded_count > 0)
           SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, 0xE0, 3));
         else {
           if (last_suffix_loc)
@@ -542,7 +542,7 @@ int unishox3::encode_dict_matches(const char *in, int len, int l, char *out, int
 
     if (longest.is_found() && longest.saving() > dict_find.saving()) {
       if (continuous) {
-        SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, 0, 2)); // end suffix and next repeating sequence
+        SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, 0x40, 2)); // end suffix and next repeating sequence
         //printf("~");
       } else {
         SAFE_APPEND_BITS(*ol = switch_to(out, olen, *ol, *state, USX_DICT));
@@ -558,7 +558,7 @@ int unishox3::encode_dict_matches(const char *in, int len, int l, char *out, int
       if (continuous) {
         if (in[l] >= 'A' && in[l] <= 'Z')
           SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, 0x80, 5)); // next upper
-        SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, 0x40, 2)); // end suffix and next from dictionary
+        SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, 0x00, 2)); // end suffix and next from dictionary
         //printf("`");
       } else {
         //printf("#");
@@ -593,7 +593,8 @@ int unishox3::encode_dict_matches(const char *in, int len, int l, char *out, int
     last_suffix_loc = l;
     while (true) {
       if (l >= len) {
-        SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, 0x9F, 8)); // terminator
+        SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, 0x9F, 3));
+        *state = USX_NUM;
         return l;
       }
       if (usx_hcode_lens[USX_DICT] && l < (len - NICE_LEN + 1))
@@ -606,13 +607,17 @@ int unishox3::encode_dict_matches(const char *in, int len, int l, char *out, int
       }
       if (c_in >= USX_OFFSET_94 && c_in <= 126) {
         int code = usx_code_94[c_in - USX_OFFSET_94];
-        SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, (code >> 5) == 2 ? 0x40 : 0x60, 3));
+        SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, (code >> 5) == 2 ? 0x80 : 0xA0, 3));
         if (c_in < '0' || c_in > '9')
           c_in = 0;
         do {
           code &= 0x1F;
           SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, usx_vcodes[code], usx_vcode_lens[code]));
           l++;
+          if (l >= len) {
+            *state = USX_NUM;
+            return l;
+          }
           if (c_in == 0)
             break;
           c_in = in[l];
@@ -1169,6 +1174,19 @@ int unishox3::readHCodeIdx(const char *in, int len, int *bit_no_p) {
   return 99;
 }
 
+int unishox3::readLvlIdx(const char *in, int len, int *bit_no_p) {
+  if (*bit_no_p < len) {
+    uint8_t code = read8bitCode(in, len, *bit_no_p);
+    for (int code_pos = 0; code_pos < 6; code_pos++) {
+      if ((code & len_masks[usx_lvl_lens[code_pos] - 1]) == usx_lvl_counts[code_pos]) {
+        *bit_no_p += usx_lvl_lens[code_pos];
+        return code_pos;
+      }
+    }
+  }
+  return 99;
+}
+
 int unishox3::decodeRepeat(const char *in, int len, char *out, int olen, int ol, int *bit_no) {
   int32_t dict_len = readCount(in, bit_no, len) + NICE_LEN;
   if (dict_len < NICE_LEN)
@@ -1309,24 +1327,74 @@ int unishox3::decompress(const char *in, int len, USX3_API_OUT_AND_LEN(char *out
         continue;
       } else
       if (h == USX_PREDEF_DICT) {
-        int pos_lvl = readHCodeIdx(in, len, &bit_no);
-        if (pos_lvl == 99 || pos_lvl > 5)
-          break;
-        int bits_to_read = predict_count_bits[pos_lvl];
-        int32_t pos = getNumFromBits(in, len, bit_no, bits_to_read);
-        if (pos < 0 || pos >= wordlist_lens[pos_lvl])
-          break;
-        const char *dict_word = wordlist[pos_lvl][pos];
-        size_t dict_word_len = strlen(dict_word);
-        const int left = olen - ol;
-        if (left <= 0) return olen + 1;
-        memcpy(out + ol, dict_word, min_of(left, dict_word_len));
-        if (is_upper)
-          out[ol] -= ('a' - 'A');
-        is_upper = 0;
-        if (left < dict_word_len) return olen + 1;
-        ol += min_of(left, dict_word_len);
-        bit_no += bits_to_read;
+        bool is_cont = bit_no < len ? readBit(in, bit_no++) : 0;
+        bool is_rpt = false;
+        do {
+          if (is_rpt) {
+            int rpt_ret = decodeRepeat(in, len, out, olen, ol, &bit_no);
+            if (rpt_ret < 0)
+              break;
+            DEC_OUTPUT_CHARS(olen, ol = rpt_ret);
+          } else {
+            int pos_lvl = readLvlIdx(in, len, &bit_no);
+            if (pos_lvl == 99 || pos_lvl > 5)
+              break;
+            int bits_to_read = predict_count_bits[pos_lvl];
+            int32_t pos = getNumFromBits(in, len, bit_no, bits_to_read);
+            if (pos < 0 || pos >= wordlist_lens[pos_lvl])
+              break;
+            const char *dict_word = wordlist[pos_lvl][pos];
+            size_t dict_word_len = strlen(dict_word);
+            const int left = olen - ol;
+            if (left <= 0) return olen + 1;
+            memcpy(out + ol, dict_word, min_of(left, dict_word_len));
+            if (is_upper)
+              out[ol] -= ('a' - 'A');
+            is_upper = 0;
+            if (left < dict_word_len) return olen + 1;
+            ol += min_of(left, dict_word_len);
+            bit_no += bits_to_read;
+          }
+          if (is_cont) {
+            bool is_suffix = bit_no < len ? readBit(in, bit_no++) : 0;
+            while (is_suffix) {
+              bool is_spc_stop = bit_no < len ? readBit(in, bit_no++) : 0;
+              if (is_spc_stop) {
+                bool is_stop = bit_no < len ? readBit(in, bit_no++) : 0;
+                if (is_stop) {
+                  is_cont = false;
+                  break;
+                } else
+                  DEC_OUTPUT_CHAR(out, olen, ol++, ' ');
+              } else { // switch
+                bool is_sym = bit_no < len ? readBit(in, bit_no++) : 0;
+                v = readVCodeIdx(in, len, &bit_no);
+                if (!v)
+                  is_upper = 1;
+                else {
+                  do {
+                    char c;
+                    c = 0;
+                    if (v == 99 || h == 99 || (v == 27 && !is_sym))
+                      return ol;
+                    if (v == 8 && is_sym) {
+                      DEC_OUTPUT_CHAR(out, olen, ol++, '\r');
+                      DEC_OUTPUT_CHAR(out, olen, ol++, '\n');
+                    } else {
+                      c = usx_sets[is_sym ? 1 : 2][v];
+                      if (c)
+                        DEC_OUTPUT_CHAR(out, olen, ol++, c);
+                    }
+                    v = readVCodeIdx(in, len, &bit_no);
+                  } while (!is_sym && v > 0);
+                }
+              }
+              is_suffix = bit_no < len ? readBit(in, bit_no++) : 0;
+            }
+            if (is_cont)
+              is_rpt = bit_no < len ? readBit(in, bit_no++) : 0;
+          }
+        } while (is_cont);
         continue;
       } else
       if (h == USX_DELTA) {
