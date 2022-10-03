@@ -355,6 +355,7 @@ unishox3::unishox3() {
       '=', '+', '$', '%', '#', 0, 0, 0, 0, 0}};
   memcpy(usx_hcodes, (const uint8_t *) "\x00\xE0\x80\xA0\xC0\x40", 6);
   memcpy(usx_hcode_lens, (const uint8_t *) "\x02\x03\x03\x03\x03\x02", 6);
+  memset(usx_templates, '\0', sizeof(usx_templates));
   memset(usx_code_94, '\0', sizeof(usx_code_94));
   for (int i = 0; i < 3; i++) {
     for (int j = 0; j < 28; j++) {
@@ -601,10 +602,9 @@ int unishox3::encode_dict_matches(const char *in, int len, int l, char *out, int
         longest = matchOccurance(in, len, l);
       if (longest.is_found())
         break;
-      int c_in = in[l];
-      if ((c_in >= 'A' && c_in <= 'Z') || (c_in >= 'a' && c_in <= 'z') || c_in > 126) {
+      int c_in = (uint8_t) in[l];
+      if ((c_in >= 'A' && c_in <= 'Z') || (c_in >= 'a' && c_in <= 'z') || c_in > 126)
         break; // loop and check if next code found in dict
-      }
       if (c_in >= USX_OFFSET_94 && c_in <= 126) {
         int code = usx_code_94[c_in - USX_OFFSET_94];
         SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, (code >> 5) == 2 ? 0x80 : 0xA0, 3));
@@ -615,6 +615,8 @@ int unishox3::encode_dict_matches(const char *in, int len, int l, char *out, int
           SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, usx_vcodes[code], usx_vcode_lens[code]));
           l++;
           if (l >= len) {
+            if (c_in == 0)
+              SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, 0x9F, 3));
             *state = USX_NUM;
             return l;
           }
@@ -627,16 +629,29 @@ int unishox3::encode_dict_matches(const char *in, int len, int l, char *out, int
           SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, 0x00, 2));
         l--;
       } else {
-        switch (c_in) {
-          case 32:
-            SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, 0xC0, 3)); // 0b110 space
-            break;
-          case '\r': case '\n': case '\t':
-            SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, 0xA0, 3)); // 0b1111 switch to sym
-            int vpos = (c_in == '\n' ? 7 : (l < (len - 1) && in[l+1] == '\n' ? 8 : 22));
-            if (vpos == 8)
-              l++;
-            SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, usx_vcodes[vpos], usx_vcode_lens[vpos]));
+        if (c_in == 32)
+          SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, 0xC0, 3)); // 0b110 space
+        else {
+          int vpos;
+          switch (c_in) {
+            case '\r':
+              if (l < (len - 1) && in[l + 1] == '\n') {
+                vpos = 8;
+                l++;
+              } else
+                vpos = 22;
+              break;
+            case '\n':
+              vpos = 7;
+              break;
+            case '\0':
+              vpos = 25;
+              break;
+            case '\t':
+              vpos = 14;
+          }
+          SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, 0xA0, 3)); // 0b1111 switch to sym
+          SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, usx_vcodes[vpos], usx_vcode_lens[vpos]));
         }
       }
       l++;
@@ -1368,26 +1383,29 @@ int unishox3::decompress(const char *in, int len, USX3_API_OUT_AND_LEN(char *out
                   DEC_OUTPUT_CHAR(out, olen, ol++, ' ');
               } else { // switch
                 bool is_sym = bit_no < len ? readBit(in, bit_no++) : 0;
-                v = readVCodeIdx(in, len, &bit_no);
-                if (!v)
-                  is_upper = 1;
-                else {
-                  do {
-                    char c;
-                    c = 0;
-                    if (v == 99 || h == 99 || (v == 27 && !is_sym))
-                      return ol;
-                    if (v == 8 && is_sym) {
-                      DEC_OUTPUT_CHAR(out, olen, ol++, '\r');
-                      DEC_OUTPUT_CHAR(out, olen, ol++, '\n');
-                    } else {
-                      c = usx_sets[is_sym ? 1 : 2][v];
-                      if (c)
-                        DEC_OUTPUT_CHAR(out, olen, ol++, c);
-                    }
-                    v = readVCodeIdx(in, len, &bit_no);
-                  } while (!is_sym && v > 0);
-                }
+                bool is_cont_num = false;
+                do {
+                  v = readVCodeIdx(in, len, &bit_no);
+                  if (!v && !is_cont_num && !is_sym) {
+                    is_upper = 1;
+                    break;
+                  }
+                  if (v == 99 || h == 99 || (v == 27 && !is_sym))
+                    return ol;
+                  char c = 0;
+                  if (v == 8 && is_sym) {
+                    DEC_OUTPUT_CHAR(out, olen, ol++, '\r');
+                    DEC_OUTPUT_CHAR(out, olen, ol++, '\n');
+                  } else if (v == 25 && is_sym) {
+                    DEC_OUTPUT_CHAR(out, olen, ol++, 0);
+                  } else {
+                    c = usx_sets[is_sym ? 1 : 2][v];
+                    if (c)
+                      DEC_OUTPUT_CHAR(out, olen, ol++, c);
+                  }
+                  if (!is_cont_num && !is_sym && c >= '0' && c <= '9')
+                    is_cont_num = true;
+                } while (is_cont_num && v);
               }
               is_suffix = bit_no < len ? readBit(in, bit_no++) : 0;
             }

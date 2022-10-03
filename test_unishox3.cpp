@@ -537,8 +537,6 @@ uint32_t tStart;
 
 tStart = getTimeVal();
 
-usx3.setTemplates(USX_TEMPLATES);
-
 if (argc >= 4 && strcmp(argv[1], "-c") == 0) {
    tot_len = 0;
    fp = fopen(argv[2], "rb");
@@ -601,6 +599,7 @@ if (argc >= 4 && strcmp(argv[1], "-d") == 0) {
    } while (bytes_read > 0);
 } else
 if (argc >= 2 && strcmp(argv[1], "-t") == 0) {
+  usx3.setTemplates(USX_TEMPLATES);
   return run_unit_tests(argc, argv);
 } else
 if (argc == 4 && strcmp(argv[1], "-di") == 0) {
