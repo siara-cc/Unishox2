@@ -478,7 +478,7 @@ usx3_longest unishox3::matchOccurance(const char *in, int len, int l) {
       }
     }
   }
-  return longest_len ? usx3_longest(longest_len, longest_dist) : usx3_longest();
+  return usx3_longest(longest_len, longest_dist);
 }
 
 /// Starts coding of nibble sets
