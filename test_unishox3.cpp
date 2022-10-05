@@ -510,7 +510,8 @@ int run_unit_tests(int argc, char *argv[]) {
 
     return 0;
 }
-
+extern int short_count;
+extern int long_count;
 /**
  * <pre>
  * Usage: test_unishox3 \"string\"
@@ -570,6 +571,8 @@ if (argc >= 4 && strcmp(argv[1], "-c") == 0) {
    perc *= 100;
    printf("\nBytes (Compressed/Original=Savings%%): %ld/%ld=", ctot, tot_len);
    printf("%.2f%%\n", perc);
+   printf("Short count: %d\n", short_count);
+   printf("Long count: %d\n", long_count);
 } else
 if (argc >= 4 && strcmp(argv[1], "-d") == 0) {
    fp = fopen(argv[2], "rb");

@@ -39,6 +39,9 @@
 
 enum {EX_NON_REENTRANT };
 
+int short_count = 0;
+int long_count = 0;
+
 /// Vertical codes starting from the MSB
 uint8_t usx_vcodes[]   = { 0x00, 0x40, 0x60, 0x80, 0x90, 0xA0, 0xB0,
                            0xC0, 0xD0, 0xD8, 0xE0, 0xE4, 0xE8, 0xEC,
@@ -143,10 +146,7 @@ int append_bits(char *out, int olen, int ol, uint8_t code, int clen) {
      oidx = ol / 8;
      if (olen <= oidx)
         return ol;
-     if (cur_bit == 0)
-        out[oidx] = a_byte;
-     else
-        out[oidx] |= a_byte;
+     out[oidx] = (out[oidx] & (0xFF00 >> cur_bit)) | a_byte;
      code <<= blen;
      ol += blen;
      clen -= blen;
@@ -426,7 +426,6 @@ int unishox3::append_code(char *out, int olen, int ol, uint8_t code, uint8_t *st
   return ol;
 }
 
-const uint8_t predict_count_bits[] = {4, 7, 10, 14, 17, 22};
 //static int prev_pos = 0;
 usx3_dict_find unishox3::match_predef_dict(const char *in, int len, int l) {
   size_t max_len = len - l;
@@ -511,11 +510,12 @@ int unishox3::append_final_bits(char *const out, const int olen, int ol, const u
   return ol;
 }
 
-uint8_t usx_lvl_counts[] = {0x00, 0x40, 0x80, 0xA0, 0xC0, 0xE0};
-uint8_t usx_lvl_lens[]   = {   2,    2,    3,    3,    3,    3};
+uint8_t usx_lvl_counts[] = {0x40, 0x60, 0x80, 0xA0, 0xC0, 0x00, 0xE0};
+uint8_t usx_lvl_lens[]   = {   3,    3,    3,    3,    3,    2,    3};
 int unishox3::encode_dict_matches(const char *in, int len, int l, char *out, int olen, int *ol, uint8_t *state, uint8_t *is_all_upper) {
 
   bool continuous = false;
+  int continuous_bit_ol = 0;
   int continuous_bit_loc = 0;
   int last_suffix_loc = 0;
   int encoded_count = 0;
@@ -530,11 +530,15 @@ int unishox3::encode_dict_matches(const char *in, int len, int l, char *out, int
       dict_find = match_predef_dict(in, len, l);
     if (!longest.is_found() && !dict_find.is_found()) {
       if (continuous) {
-        if (encoded_count > 0)
+        if (encoded_count > 2) {
           SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, 0xE0, 3));
-        else {
-          if (last_suffix_loc)
-            l = last_suffix_loc;
+          long_count+=encoded_count;
+        } else {
+          uint8_t *start_byte = (uint8_t *) out + (continuous_bit_loc >> 3);
+          *start_byte &= ~(0x80 >> (continuous_bit_loc % 8));
+          *ol = continuous_bit_ol;
+          l = last_suffix_loc;
+          short_count+=encoded_count;
         }
       }
       return l;
@@ -544,10 +548,10 @@ int unishox3::encode_dict_matches(const char *in, int len, int l, char *out, int
     if (longest.is_found() && longest.saving() > dict_find.saving()) {
       if (continuous) {
         SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, 0x40, 2)); // end suffix and next repeating sequence
-        //printf("~");
+        printf("~");
       } else {
         SAFE_APPEND_BITS(*ol = switch_to(out, olen, *ol, *state, USX_DICT));
-        //printf("%%");
+        printf("%%");
         //printf("Len:%d / Dist:%d/%.*s\n", longest_len, longest_dist, longest_len + NICE_LEN, in + l - longest_dist - NICE_LEN + 1);
       }
       l += (longest.len + NICE_LEN);
@@ -560,9 +564,9 @@ int unishox3::encode_dict_matches(const char *in, int len, int l, char *out, int
         if (in[l] >= 'A' && in[l] <= 'Z')
           SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, 0x80, 5)); // next upper
         SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, 0x00, 2)); // end suffix and next from dictionary
-        //printf("`");
+        printf("`");
       } else {
-        //printf("#");
+        printf("#");
         if (*state != USX_ALPHA) {
           SAFE_APPEND_BITS(*ol = switch_to(out, olen, *ol, *state, USX_ALPHA));
           *state = USX_ALPHA;
@@ -574,7 +578,8 @@ int unishox3::encode_dict_matches(const char *in, int len, int l, char *out, int
         if (in[l] >= 'A' && in[l] <= 'Z')
           SAFE_APPEND_BITS(*ol = switch_to(out, olen, *ol, *state, USX_ALPHA));
         SAFE_APPEND_BITS(*ol = switch_to(out, olen, *ol, *state, USX_PREDEF_DICT));
-        continuous_bit_loc = *ol;
+        if (!continuous_bit_loc)
+          continuous_bit_loc = *ol;
         SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, 0x80, 1));
       }
       SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, usx_lvl_counts[dict_find.lvl], usx_lvl_lens[dict_find.lvl])); // appending count level
@@ -588,13 +593,16 @@ int unishox3::encode_dict_matches(const char *in, int len, int l, char *out, int
         SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, byte_to_append >> 24, bits_to_append > 8 ? 8 : bits_to_append)); // appending count level
         bits_to_append -= 8;
       } while (bits_to_append > 0);
+      if (!continuous_bit_ol) {
+        continuous_bit_ol = *ol;
+        last_suffix_loc = l;
+      }
       continuous = true;
     }
 
-    last_suffix_loc = l;
     while (true) {
       if (l >= len) {
-        SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, 0x9F, 3));
+        SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, 0x80, 3));
         *state = USX_NUM;
         return l;
       }
@@ -616,7 +624,7 @@ int unishox3::encode_dict_matches(const char *in, int len, int l, char *out, int
           l++;
           if (l >= len) {
             if (c_in == 0)
-              SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, 0x9F, 3));
+              SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, 0x80, 3));
             *state = USX_NUM;
             return l;
           }
@@ -824,7 +832,7 @@ int unishox3::compress(const char *in, int len, USX3_API_OUT_AND_LEN(char *out, 
     }
 
     c_in = in[l];
-//printf("%c", c_in);
+printf("%c", c_in);
 
     is_upper = 0;
     if (c_in >= 'A' && c_in <= 'Z')
@@ -1192,7 +1200,7 @@ int unishox3::readHCodeIdx(const char *in, int len, int *bit_no_p) {
 int unishox3::readLvlIdx(const char *in, int len, int *bit_no_p) {
   if (*bit_no_p < len) {
     uint8_t code = read8bitCode(in, len, *bit_no_p);
-    for (int code_pos = 0; code_pos < 6; code_pos++) {
+    for (int code_pos = 0; code_pos < 7; code_pos++) {
       if ((code & len_masks[usx_lvl_lens[code_pos] - 1]) == usx_lvl_counts[code_pos]) {
         *bit_no_p += usx_lvl_lens[code_pos];
         return code_pos;
@@ -1352,7 +1360,7 @@ int unishox3::decompress(const char *in, int len, USX3_API_OUT_AND_LEN(char *out
             DEC_OUTPUT_CHARS(olen, ol = rpt_ret);
           } else {
             int pos_lvl = readLvlIdx(in, len, &bit_no);
-            if (pos_lvl == 99 || pos_lvl > 5)
+            if (pos_lvl == 99 || pos_lvl > 6)
               break;
             int bits_to_read = predict_count_bits[pos_lvl];
             int32_t pos = getNumFromBits(in, len, bit_no, bits_to_read);
