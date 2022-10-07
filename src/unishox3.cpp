@@ -553,11 +553,16 @@ int unishox3::encode_dict_matches(const char *in, int len, int l, char *out, int
         SAFE_APPEND_BITS(*ol = switch_to(out, olen, *ol, *state, USX_DICT));
         printf("%%");
         //printf("Len:%d / Dist:%d/%.*s\n", longest_len, longest_dist, longest_len + NICE_LEN, in + l - longest_dist - NICE_LEN + 1);
+        if (*state != USX_DELTA) {
+          if (!continuous_bit_loc)
+            continuous_bit_loc = *ol;
+          SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, 0x80, 1));
+        }
       }
       l += (longest.len + NICE_LEN);
       SAFE_APPEND_BITS(*ol = encodeCount(out, olen, *ol, longest.len));
       SAFE_APPEND_BITS(*ol = encodeCount(out, olen, *ol, longest.dist));
-      if (!continuous)
+      if (*state == USX_DELTA)
         return l;
     } else {
       if (continuous) {
@@ -593,12 +598,13 @@ int unishox3::encode_dict_matches(const char *in, int len, int l, char *out, int
         SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, byte_to_append >> 24, bits_to_append > 8 ? 8 : bits_to_append)); // appending count level
         bits_to_append -= 8;
       } while (bits_to_append > 0);
+    }
+
       if (!continuous_bit_ol) {
         continuous_bit_ol = *ol;
         last_suffix_loc = l;
       }
       continuous = true;
-    }
 
     while (true) {
       if (l >= len) {
@@ -640,7 +646,7 @@ int unishox3::encode_dict_matches(const char *in, int len, int l, char *out, int
         if (c_in == 32)
           SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, 0xC0, 3)); // 0b110 space
         else {
-          int vpos;
+          int vpos = 0;
           switch (c_in) {
             case '\r':
               if (l < (len - 1) && in[l + 1] == '\n') {
@@ -658,6 +664,8 @@ int unishox3::encode_dict_matches(const char *in, int len, int l, char *out, int
             case '\t':
               vpos = 14;
           }
+          if (vpos == 0)
+            break;
           SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, 0xA0, 3)); // 0b1111 switch to sym
           SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, usx_vcodes[vpos], usx_vcode_lens[vpos]));
         }
@@ -1341,17 +1349,9 @@ int unishox3::decompress(const char *in, int len, USX3_API_OUT_AND_LEN(char *out
             continue;
          }
       } else
-      if (h == USX_DICT) {
-        int rpt_ret = decodeRepeat(in, len, out, olen, ol, &bit_no);
-        if (rpt_ret < 0)
-          break;
-        DEC_OUTPUT_CHARS(olen, ol = rpt_ret);
-        is_upper = 0;
-        continue;
-      } else
-      if (h == USX_PREDEF_DICT) {
+      if (h == USX_DICT || h == USX_PREDEF_DICT) {
         bool is_cont = bit_no < len ? readBit(in, bit_no++) : 0;
-        bool is_rpt = false;
+        bool is_rpt = (h == USX_DICT);
         do {
           if (is_rpt) {
             int rpt_ret = decodeRepeat(in, len, out, olen, ol, &bit_no);
