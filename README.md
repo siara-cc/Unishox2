@@ -10,6 +10,7 @@ This is a C/C++ library.  See [here for CPython version](https://github.com/twee
 
 # Applications
 
+- Faster transfer of text over low-speed networks such as LORA or BLE
 - Compression for low memory devices such as Arduino and ESP8266
 - Compression of Chat application text exchange including Emojis
 - Storing compressed text in database

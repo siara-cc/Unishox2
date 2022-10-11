@@ -40,8 +40,6 @@
 #include <ctype.h>
 #include <stdint.h>
 
-typedef unsigned char byte;
-
 unishox3 usx3;
 
 int test_ushx_cd_with_len(const char *input, int len) {
@@ -214,7 +212,7 @@ void print_string_as_hex(char *in, int len) {
 void print_bytes(char *in, int len, const char *title) {
 
   int l;
-  byte bit;
+  uint8_t bit;
   printf("%s %d bytes\n", title, len);
   printf("Bytes in decimal:\n");
   for (l=0; l<len; l++)

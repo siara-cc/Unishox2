@@ -40,8 +40,6 @@
 #include <ctype.h>
 #include <stdint.h>
 
-typedef unsigned char byte;
-
 /// Internal function to call compress function in unishox2.c
 int unishox2_compress_preset_lines(const char *in, int len, UNISHOX_API_OUT_AND_LEN(char *out, int olen), int preset, struct us_lnk_lst *prev_lines) {
   switch (preset) {
@@ -294,7 +292,7 @@ void print_string_as_hex(char *in, int len) {
 void print_bytes(char *in, int len, const char *title) {
 
   int l;
-  byte bit;
+  uint8_t bit;
   printf("%s %d bytes\n", title, len);
   printf("Bytes in decimal:\n");
   for (l=0; l<len; l++)
@@ -789,11 +787,11 @@ if (argc >= 4 && (strcmp(argv[1], "-g") == 0 ||
             tot_len += len;
             ctot += clen;
             if (strcmp(argv[1], "-gb") != 0) {
-              snprintf(short_buf, short_buf_len, "const byte %s_%d[] PROGMEM = {", argv[3], line_ctr++);
+              snprintf(short_buf, short_buf_len, "const uint8_t %s_%d[] PROGMEM = {", argv[3], line_ctr++);
               fputs(short_buf, wfp);
-              int len_len = encode_unsigned_varint((byte *) short_buf, clen);
+              int len_len = encode_unsigned_varint((uint8_t *) short_buf, clen);
               for (int i = 0; i < len_len; i++) {
-                snprintf(short_buf, 10, "%u, ", (byte) short_buf[i]);
+                snprintf(short_buf, 10, "%u, ", (uint8_t) short_buf[i]);
                 fputs(short_buf, wfp);
               }
               for (int i = 0; i < clen; i++) {
@@ -801,7 +799,7 @@ if (argc >= 4 && (strcmp(argv[1], "-g") == 0 ||
                   strcpy(short_buf, ", ");
                   fputs(short_buf, wfp);
                 }
-                snprintf(short_buf, 6, "%u", (byte) dbuf[i]);
+                snprintf(short_buf, 6, "%u", (uint8_t) dbuf[i]);
                 fputs(short_buf, wfp);
               }
               strcpy(short_buf, "};\n");
@@ -824,7 +822,7 @@ if (argc >= 4 && (strcmp(argv[1], "-g") == 0 ||
    printf("\nBytes (Compressed/Original=Savings%%): %ld/%ld=", ctot, tot_len);
    printf("%.2f%%\n", perc);
    if (strcmp(argv[1], "-gb") != 0) {
-     snprintf(short_buf, short_buf_len, "const byte * const %s[] PROGMEM = {", argv[3]);
+     snprintf(short_buf, short_buf_len, "const uint8_t * const %s[] PROGMEM = {", argv[3]);
      fputs(short_buf, wfp);
    }
    for (int i = 0; i < line_ctr; i++) {
