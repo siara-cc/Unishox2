@@ -49,7 +49,7 @@ CMakeFiles
 *w95*
 *test*
 !test_unishox2.c
-!test_unishox3.cpp
+!test_unishox3_alpha.cpp
 Debug
 Release
 *dSYM
