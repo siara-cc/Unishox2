@@ -77,7 +77,7 @@
 #endif
 
 /// Commonly occuring templates (ISO Date/Time, ISO Date, US Phone number, ISO Time, Unused)
-#define USX_TEMPLATES (const char *[]) {"tfff-of-tfTtf:rf:rf.fffZ", "tfff-of-tf", "(fff) fff-ffff", "tf:rf:rf", NULL}
+#define USX_TEMPLATES {"tfff-of-tfTtf:rf:rf.fffZ", "tfff-of-tf", "(fff) fff-ffff", "tf:rf:rf", NULL}
 
 #include <stdint.h>
 #include <string.h>
