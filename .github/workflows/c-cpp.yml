@@ -63,7 +63,7 @@ jobs:
     - name: make v3
       run: cd Unishox3_Alpha && make
     - name: test v3
-      run: ./usx3 -t && ./usx3-w-olen -t
+      run: ./usx3 -t
     - name: test v3 sample_texts/chinese.txt
       run: ./usx3 -c sample_texts/chinese.txt sample_texts/chinese.psx && ./usx3 -d sample_texts/chinese.psx sample_texts/chinese.ds3 && cmp sample_texts/chinese.txt sample_texts/chinese.ds3
     - name: test v3 sample_texts/emoji.txt
