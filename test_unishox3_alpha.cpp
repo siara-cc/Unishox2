@@ -493,7 +493,8 @@ int run_unit_tests(int argc, char *argv[]) {
       char dbuf[128];
       const char *hex = ":AAAAAA-bbbbbb";
       const int len = strlen(hex);
-      usx3.setTemplates((const char *[]){":FFFFFF", "-ffffff", 0, 0, 0});
+      static const char *template_dflt[5] = USX_TEMPLATES;
+      usx3.setTemplates(template_dflt);
       const int clen = usx3.compress(hex, len, USX3_API_OUT_AND_LEN(cbuf, sizeof cbuf));
       const int dlen = usx3.decompress(cbuf, clen, USX3_API_OUT_AND_LEN(dbuf, sizeof dbuf));
       if (dlen != len) {
@@ -600,7 +601,8 @@ if (argc >= 4 && strcmp(argv[1], "-d") == 0) {
    } while (bytes_read > 0);
 } else
 if (argc >= 2 && strcmp(argv[1], "-t") == 0) {
-  usx3.setTemplates(USX_TEMPLATES);
+  static const char *template_dflt[5] = USX_TEMPLATES;
+  usx3.setTemplates(template_dflt);
   return run_unit_tests(argc, argv);
 } else
 if (argc == 4 && strcmp(argv[1], "-di") == 0) {
