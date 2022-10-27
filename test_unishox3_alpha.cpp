@@ -586,8 +586,14 @@ if (argc >= 4 && strcmp(argv[1], "-d") == 0) {
    }
    do {
      //memset(dbuf, 0, sizeof(dbuf));
+     if (feof(fp))
+       break;
      int len_to_read = fgetc(fp) << 8;
+     if (feof(fp))
+       break;
      len_to_read += fgetc(fp);
+     if (feof(fp))
+       break;
      bytes_read = (int)fread(dbuf, 1, len_to_read, fp);
      if (bytes_read > 0) {
         dlen = usx3.decompress(dbuf, bytes_read, USX3_API_OUT_AND_LEN(cbuf, sizeof cbuf));
