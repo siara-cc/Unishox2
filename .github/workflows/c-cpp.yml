@@ -82,8 +82,6 @@ jobs:
       run: ./usx3 -c sample_texts/json3.txt sample_texts/json3.psx && ./usx3 -d sample_texts/json3.psx sample_texts/json3.ds3 && cmp sample_texts/json3.txt sample_texts/json3.ds3
     - name: test v3 sample_texts/json4.txt
       run: ./usx3 -c sample_texts/json4.txt sample_texts/json4.psx && ./usx3 -d sample_texts/json4.psx sample_texts/json4.ds3 && cmp sample_texts/json4.txt sample_texts/json4.ds3
-    - name: test v3 sample_texts/korean.txt
-      run: ./usx3 -c sample_texts/korean.txt sample_texts/korean.psx && ./usx3 -d sample_texts/korean.psx sample_texts/korean.ds3 && cmp sample_texts/korean.txt sample_texts/korean.ds3
     - name: test v3 sample_texts/spanish.txt
       run: ./usx3 -c sample_texts/spanish.txt sample_texts/spanish.psx && ./usx3 -d sample_texts/spanish.psx sample_texts/spanish.ds3 && cmp sample_texts/spanish.txt sample_texts/spanish.ds3
     - name: test v3 sample_texts/tamil.txt
