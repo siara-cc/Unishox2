@@ -10,7 +10,7 @@ This is a C/C++ library.  See [here for CPython version](https://github.com/twee
 
 ## Unishox3 Alpha
 
-The next version Unishox3 which includes multi-level static dictionaries residing in RAM or Flash memory provides much better compression than Unishox2.  In most cases it surpasses GZip for compression ratio.  A preview is available in Unishox3_Alpha folder and a make file is available.  To compile please use the following steps:
+The next version `Unishox3` which includes multi-level static dictionaries residing in RAM or Flash memory provides much better compression than `Unishox2`.  In most cases it surpasses `GZip` for compression ratio.  A preview is available in `Unishox3_Alpha` folder and a make file is available.  To compile please use the following steps:
 
 ```
 cd Unishox3_Alpha
@@ -18,7 +18,9 @@ make
 ../usx3 "The quick brown fox jumped over the lazy dog"
 ```
 
-This is just a preview and the specification and dictionaries are expected to change before Unishox3 will be released.  However, this folder will be retained so if someone used it for compressing strings, they can still use it for decompressing them.
+This is just a preview and the specification and dictionaries are expected to change before `Unishox3` will be released.  However, this folder will be retained so if someone used it for compressing strings, they can still use it for decompressing them.
+
+Unishox2 will still be supported for cases where space for storing static dictionaries is an issue.
 
 # Applications
 

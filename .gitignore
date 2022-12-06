@@ -67,10 +67,7 @@ Html.h
 *.us?
 *.dsx
 *.psx
-utf8samples/*.gz
-utf8samples/*.zip
-utf8samples/*.shox
-utf8samples/*.bz2
+*.br
 Banner4.odp
 test_unishox
 test_unishox1
