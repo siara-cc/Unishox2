@@ -8,6 +8,20 @@ In general compression utilities such as `zip`, `gzip` do not compress short str
 
 This is a C/C++ library.  See [here for CPython version](https://github.com/tweedge/unishox2-py3) and [here for Javascript version](https://github.com/siara-cc/Unishox_JS) which is interoperable with this library.
 
+The contenders for Unishox are [Smaz](https://github.com/antirez/smaz), [Shoco](https://github.com/Ed-von-Schleck/shoco), Unicode.org's [SCSU](https://www.unicode.org/reports/tr6/tr6-4.html) and [BOCU](http://www.unicode.org/notes/tn6/) (implementations [here](https://www.unicode.org/Public/PROGRAMS/SCSU/) and [here](https://github.com/siara-cc/bocu)) and [AIMCS](https://ieeexplore.ieee.org/document/9108719) (Implementation [here](https://github.com/MasoudAbedi/AIMCS-an-artificial-intelligence-based-method-for-compression-of-short-strings)).
+
+Note: Unishox provides the best compression for short text and not to be compared with general purpose compression algorithm like lz4, snappy, lzma, brottli and zstd.
+
+# Applications
+
+- Faster transfer of text over low-speed networks such as LORA or BLE
+- Compression for low memory devices such as Arduino and ESP8266
+- Compression of Chat application text exchange including Emojis
+- Storing compressed text in database
+- Bandwidth and storage cost reduction for Cloud
+
+![Promo picture](https://github.com/siara-cc/Unishox2/blob/master/promo/Banner1.png?raw=true)
+
 ## Unishox3 Alpha
 
 The next version `Unishox3` which includes multi-level static dictionaries residing in RAM or Flash memory provides much better compression than `Unishox2`.  In most cases it surpasses `GZip` for compression ratio.  A preview is available in `Unishox3_Alpha` folder and a make file is available.  To compile please use the following steps:
@@ -21,16 +35,6 @@ make
 This is just a preview and the specification and dictionaries are expected to change before `Unishox3` will be released.  However, this folder will be retained so if someone used it for compressing strings, they can still use it for decompressing them.
 
 Unishox2 will still be supported for cases where space for storing static dictionaries is an issue.
-
-# Applications
-
-- Faster transfer of text over low-speed networks such as LORA or BLE
-- Compression for low memory devices such as Arduino and ESP8266
-- Compression of Chat application text exchange including Emojis
-- Storing compressed text in database
-- Bandwidth and storage cost reduction for Cloud
-
-![Promo picture](https://github.com/siara-cc/Unishox2/blob/master/promo/Banner1.png?raw=true)
 
 # How it works
 
@@ -90,6 +94,19 @@ Note: Unishox is good for text content upto few kilobytes. Unishox does not give
 
 Unishox supports the entire Unicode character set.  As of now it supports UTF-8 as input and output encoding.
 
+# Achieving better overall compression
+
+Since Unishox is designed and developed for short texts and other methods are not good for short texts, following logic could be used to achieve better overall compression, since the magic bit(s) at the beginning of compressed bytes can be used to identify Unishox or other methods:
+
+```
+if (size < 1024)
+    output = compress_with_unishox(input);
+else
+    output = compress_with_any_other(input)
+```
+
+The threshold size 1024 is arbitrary and if speed is not a concern, it is also possible to compress with both and use the best.
+
 # Interoperability with the JS Library
 
 Strings that were compressed with this library can be decompressed with the [JS Library](https://github.com/siara-cc/Unishox_JS) and vice-versa.  However please see [this section in the documentation](https://github.com/siara-cc/Unishox_JS#interoperability-with-the-c-library) for usage.
@@ -103,7 +120,7 @@ Strings that were compressed with this library can be decompressed with the [JS 
 - [Port of Unishox 1 to Python and C++ by Stephan Hadinger for Tasmota](https://github.com/arendst/Tasmota/tree/development/tools/unishox)
 - [Python bindings for Unishox2](https://github.com/tweedge/unishox2-py3)
 - [Unishox2 Javascript library](https://github.com/siara-cc/unishox_js)
-- [Unishox2 proposed to be used in Meshtastic project](https://github.com/meshtastic/Meshtastic-device/tree/master/src/mesh/compression)
+- [Unishox2 used in Meshtastic project](https://github.com/meshtastic/Meshtastic-device/tree/master/src/mesh/compression)
 
 # Credits
 
