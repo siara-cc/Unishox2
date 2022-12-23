@@ -24,7 +24,7 @@ Note: Unishox provides the best compression for short text and not to be compare
 
 ## Unishox3 Alpha
 
-The next version `Unishox3` which includes multi-level static dictionaries residing in RAM or Flash memory provides much better compression than `Unishox2`.  In most cases it surpasses `GZip` for compression ratio.  A preview is available in `Unishox3_Alpha` folder and a make file is available.  To compile please use the following steps:
+The next version `Unishox3` which includes multi-level static dictionaries residing in RAM or Flash memory provides much better compression than `Unishox2`.  A preview is available in `Unishox3_Alpha` folder and a make file is available.  To compile please use the following steps:
 
 ```
 cd Unishox3_Alpha
