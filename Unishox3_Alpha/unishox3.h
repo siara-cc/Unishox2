@@ -82,10 +82,51 @@
 #include <stdint.h>
 #include <string.h>
 
-extern const char **wordlist[];
+#include "wordlist_index.h"
 
 /// Minimum length to consider as repeating sequence
 #define NICE_LEN 7
+
+#define ARRAY_LENGTH(array) (size_t)(sizeof((array)) / sizeof((array)[0]))
+
+inline int getOffset(int lvl)
+{
+    switch (lvl) {
+    case 0:
+        return 0;
+    case 1:
+        return 16;
+    case 2:
+        return 16 + 56;
+    case 3:
+        return 16 + 56 + 256;
+    case 4:
+        return 16 + 56 + 256 + 2048;
+    case 5:
+        return 16 + 56 + 256 + 2048 + 32768;
+    case 6:
+        return 16 + 56 + 256 + 2048 + 32768 + 131072;
+    default:
+        return ARRAY_LENGTH(wordlist_index); // invalid
+    }
+}
+
+
+extern char _binary_wordlist_bin_start[];
+
+inline const char *getDictWord(int lvl, int pos, size_t *size)
+{
+    size_t index = getOffset(lvl) + pos;
+    if (index < ARRAY_LENGTH(wordlist_index) - 1) {
+        int start = wordlist_index[index];
+        int end = wordlist_index[index + 1];
+        *size = end - start;
+        return _binary_wordlist_bin_start + start; // wordlist_bin
+    }
+    *size = 0;
+    return NULL;
+}
+
 
 /// Return value of function that matches repeating sequences
 class usx3_longest {
@@ -121,7 +162,10 @@ class usx3_dict_find {
     int saving() {
       if (pos < 0)
         return 0;
-      return strlen(wordlist[lvl][pos]);
+
+      size_t size;
+      getDictWord(lvl, pos, &size);
+      return size;
     }
 };
 
