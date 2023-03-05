@@ -34,7 +34,6 @@
 
 #include "unishox3.h"
 
-#include "wordlist.h"
 #define HCODE_COUNT 6
 
 enum {EX_NON_REENTRANT };
@@ -312,8 +311,8 @@ int32_t binarySearch(const char *ptr, size_t max_len, int lvl) {
   sz = wordlist_lens[lvl];
   while (first < sz) {
     middle = (first + sz) >> 1;
-    const char *dict_word = wordlist[lvl][middle];
-    size_t dict_word_len = strlen(dict_word);
+    size_t dict_word_len;
+    const char *dict_word = getDictWord(lvl, middle, &dict_word_len);
     cmp = compare(ptr, min_of(max_len, dict_word_len), dict_word, dict_word_len);
     if (abs(cmp) > max_cmp)
       max_cmp = abs(cmp);
@@ -327,8 +326,8 @@ int32_t binarySearch(const char *ptr, size_t max_len, int lvl) {
   if (middle)
     middle--;
   while (max_cmp > 2 && middle < wordlist_lens[lvl]) {
-    const char *dict_word = wordlist[lvl][middle];
-    size_t dict_word_len = strlen(dict_word);
+    size_t dict_word_len;
+    const char *dict_word = getDictWord(lvl, middle, &dict_word_len);
     cmp = compare(ptr, min_of(max_len, dict_word_len), dict_word, dict_word_len);
     if (cmp == 0)
       return middle;
@@ -436,8 +435,8 @@ usx3_dict_find unishox3::match_predef_dict(const char *in, int len, int l) {
     if (pos != -1) {
       int32_t next = pos + 1;
       while (next < wordlist_lens[pos_lvl]) {
-        const char *dict_word = wordlist[pos_lvl][next];
-        size_t dict_word_len = strlen(dict_word);
+        size_t dict_word_len;
+        const char *dict_word = getDictWord(pos_lvl, next, &dict_word_len);
         int cmp = compare(&in[l], min_of(max_len, dict_word_len), dict_word, dict_word_len);
         if (cmp)
           next = wordlist_lens[pos_lvl];
@@ -589,7 +588,10 @@ int unishox3::encode_dict_matches(const char *in, int len, int l, char *out, int
       }
       SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, usx_lvl_counts[dict_find.lvl], usx_lvl_lens[dict_find.lvl])); // appending count level
       int bits_to_append = predict_count_bits[dict_find.lvl];
-      l += min_of(len - l, strlen(wordlist[dict_find.lvl][dict_find.pos]));
+
+      size_t dict_word_len;
+      const char *dict_word = getDictWord(dict_find.lvl, dict_find.pos, &dict_word_len);
+      l += min_of(len - l, dict_word_len);
       //printf("[%s], pos: %d, len: %ld\n", wordlist[pos], pos, min_of(max_len, strlen(wordlist[pos])));
       //printf("%d\n", pos);
       //prev_pos = pos;
@@ -1366,8 +1368,8 @@ int unishox3::decompress(const char *in, int len, USX3_API_OUT_AND_LEN(char *out
             int32_t pos = getNumFromBits(in, len, bit_no, bits_to_read);
             if (pos < 0 || pos >= wordlist_lens[pos_lvl])
               break;
-            const char *dict_word = wordlist[pos_lvl][pos];
-            size_t dict_word_len = strlen(dict_word);
+            size_t dict_word_len;
+            const char *dict_word = getDictWord(pos_lvl, pos, &dict_word_len);
             const int left = olen - ol;
             if (left <= 0) return olen + 1;
             memcpy(out + ol, dict_word, min_of(left, dict_word_len));

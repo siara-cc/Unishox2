@@ -6,6 +6,8 @@
 !delta_only_unishox2.h
 !usx3_progmem.h
 !wordlist.h
+!wordlist_index.h
+!wordlist.bin
 ._*
 .vscode*
 a.out
@@ -108,3 +110,6 @@ afl_fuzz/fuzz-out/queue/.state/*
 
 # Traditional cmake building directories
 build*
+
+# python files
+__pycache__*
