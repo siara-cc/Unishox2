@@ -2,12 +2,12 @@ SRCFILE = unishox3.cpp
 # wordlist_bin.o
 SRCFILE1 = ../test_unishox3_alpha.cpp
 OUTFILE = ../usx3
-COMPILE_OPTS=-O3 -I. -lmarisa
+COMPILE_OPTS=-O3 -I.
 # -fsanitize=address
 
 default:
 #	ld -r -b binary -o wordlist_bin.o wordlist.bin
-	g++ -std=c++11 $(CFLAGS) $(COMPILE_OPTS) -o $(OUTFILE) $(SRCFILE) $(SRCFILE1)
+	g++ -std=c++11 $(CFLAGS) $(COMPILE_OPTS) -o $(OUTFILE) $(SRCFILE) $(SRCFILE1) -lmarisa
 	#g++ -std=c99 $(CFLAGS) $(COMPILE_OPTS) -DUNISHOX_API_WITH_OUTPUT_LEN=1 -o $(OUTFILE)-w-olen $(SRCFILE) $(SRCFILE1)
 
 install: default
