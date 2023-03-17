@@ -526,8 +526,8 @@ extern int long_count;
  */
 int main(int argc, char *argv[]) {
 
-char cbuf[4096];
-char dbuf[8192];
+char cbuf[65536];
+char dbuf[1038576];
 long len, tot_len, clen, ctot=0;
 size_t dlen;
 float perc=0.F;
