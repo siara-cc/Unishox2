@@ -60,6 +60,8 @@ jobs:
     - name: test sample_texts/zh.txt
       run: ./test_unishox2 -c sample_texts/zh.txt sample_texts/zh.usx && ./test_unishox2 -d sample_texts/zh.usx sample_texts/zh.dsx && cmp sample_texts/zh.txt sample_texts/zh.dsx
 
+    - name: install marisa
+      run: sudo apt-get install marisa
     - name: make v3
       run: cd Unishox3_Alpha && make
     - name: test v3
