@@ -33,10 +33,9 @@
 #include <limits.h>
 
 #include "unishox3.h"
+#include "wordlist.h"
 
 #define HCODE_COUNT 6
-
-enum {EX_NON_REENTRANT };
 
 int short_count = 0;
 int long_count = 0;
@@ -303,40 +302,6 @@ int compare(const char *v1, uint8_t len1, const char *v2,
     return (len1 < len2 ? -k : k);
 }
 
-int32_t binarySearch(const char *ptr, size_t max_len, int lvl) {
-  uint32_t middle, first, sz;
-  int cmp, max_cmp;
-  max_cmp = 0;
-  first = 0;
-  sz = wordlist_lens[lvl];
-  while (first < sz) {
-    middle = (first + sz) >> 1;
-    size_t dict_word_len;
-    const char *dict_word = getDictWord(lvl, middle, &dict_word_len);
-    cmp = compare(ptr, min_of(max_len, dict_word_len), dict_word, dict_word_len);
-    if (abs(cmp) > max_cmp)
-      max_cmp = abs(cmp);
-    if (cmp > 0)
-      first = middle + 1;
-    else if (cmp < 0)
-      sz = middle;
-    else
-      return middle;
-  }
-  if (middle)
-    middle--;
-  while (max_cmp > 2 && middle < wordlist_lens[lvl]) {
-    size_t dict_word_len;
-    const char *dict_word = getDictWord(lvl, middle, &dict_word_len);
-    cmp = compare(ptr, min_of(max_len, dict_word_len), dict_word, dict_word_len);
-    if (cmp == 0)
-      return middle;
-    max_cmp = abs(cmp);
-    middle--;
-  }
-  return -1;
-}
-
 /// Fills the usx_code_94 94 letter array based on sets of characters at usx_sets \n
 /// For each element in usx_code_94, first 3 msb bits is set (USX_ALPHA / USX_SYM / USX_NUM) \n
 /// and the rest 5 bits indicate the vertical position in the corresponding set
@@ -366,6 +331,9 @@ unishox3::unishox3() {
           usx_code_94[c - USX_OFFSET_94 - ('a' - 'A')] = (i << 5) + j;
       }
     }
+  }
+  for (int i = 6; i >= 0; i--) {
+    tries[i].map(trie_dumps[i], predict_trie_sizes[i]);
   }
 }
 
@@ -427,27 +395,35 @@ int unishox3::append_code(char *out, int olen, int ol, uint8_t code, uint8_t *st
 
 //static int prev_pos = 0;
 usx3_dict_find unishox3::match_predef_dict(const char *in, int len, int l) {
-  size_t max_len = len - l;
-  int pos_lvl = LATIN_DICT_LVL_MAX;
+  int32_t found_len = -1;
   int32_t pos = -1;
+  marisa::Agent agent;
+  char key[predict_max_lens[LATIN_DICT_LVL_MAX]+1];
+  int key_len = min_of(len - l, predict_max_lens[LATIN_DICT_LVL_MAX]);
+  int pos_lvl = LATIN_DICT_LVL_MAX;
   for (; pos_lvl >= 0; pos_lvl--) {
-    pos = binarySearch(&in[l], max_len, pos_lvl);
-    if (pos != -1) {
-      int32_t next = pos + 1;
-      while (next < wordlist_lens[pos_lvl]) {
-        size_t dict_word_len;
-        const char *dict_word = getDictWord(pos_lvl, next, &dict_word_len);
-        int cmp = compare(&in[l], min_of(max_len, dict_word_len), dict_word, dict_word_len);
-        if (cmp)
-          next = wordlist_lens[pos_lvl];
-        else
-          pos = next;
-        next++;
+    strncpy(key, in + l, key_len);
+    if (in[l] >= 'A' && in[l] <= 'Z')
+      key[0] += ('a' - 'A');
+    key[key_len] = 0;
+    //printf("key: %s\n", key);
+    agent.set_query(key);
+    int max_len = 0;
+    int max_len_pos = -1;
+    while (tries[pos_lvl].common_prefix_search(agent)) {
+      //printf("Found at pos: %d, %d, len: %lu, key: %s\n", pos_lvl, l, agent.key().length(), agent.key().ptr());
+      if (max_len < agent.key().length()) {
+        max_len = agent.key().length();
+        max_len_pos = agent.key().id();
       }
+    }
+    if (max_len > 0) {
+      pos = max_len_pos;
+      found_len = max_len;
       break;
     }
   }
-  return usx3_dict_find(pos_lvl, pos);
+  return usx3_dict_find(pos_lvl, pos, found_len);
 }
 
 /// Finds the longest matching sequence from the beginning of the string. \n
@@ -456,6 +432,14 @@ usx3_dict_find unishox3::match_predef_dict(const char *in, int len, int l) {
 /// This is a crude implementation that is not optimized.  Assuming only short strings \n
 /// are encoded, this is not much of an issue.
 usx3_longest unishox3::matchOccurance(const char *in, int len, int l) {
+
+  if (len - l > NICE_LEN) {
+    if (bf.check_uint8_str((const uint8_t *) in + l, NICE_LEN) == BLOOM_FAILURE) {
+      bf.add_uint8_str((const uint8_t *) in + l, NICE_LEN);
+      return usx3_longest(-1, -1);
+    }
+  }
+
   int j, k;
   int longest_dist = -1;
   int longest_len = -1;
@@ -589,9 +573,7 @@ int unishox3::encode_dict_matches(const char *in, int len, int l, char *out, int
       SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, usx_lvl_counts[dict_find.lvl], usx_lvl_lens[dict_find.lvl])); // appending count level
       int bits_to_append = predict_count_bits[dict_find.lvl];
 
-      size_t dict_word_len;
-      const char *dict_word = getDictWord(dict_find.lvl, dict_find.pos, &dict_word_len);
-      l += min_of(len - l, dict_word_len);
+      l += min_of(len - l, dict_find.len);
       //printf("[%s], pos: %d, len: %ld\n", wordlist[pos], pos, min_of(max_len, strlen(wordlist[pos])));
       //printf("%d\n", pos);
       //prev_pos = pos;
@@ -685,6 +667,8 @@ int unishox3::encode_dict_matches(const char *in, int len, int l, char *out, int
 int unishox3::compress(const char *in, int len, USX3_API_OUT_AND_LEN(char *out, int olen)) {
 
   uint8_t state;
+
+  bf.init(len / 3, 0.005);
 
   int l, ll, ol;
   char c_in, c_next;
@@ -967,6 +951,9 @@ int unishox3::compress(const char *in, int len, USX3_API_OUT_AND_LEN(char *out, 
       }
     }
   }
+
+  //bf.stats();
+  bf.destroy();
 
   if (need_full_term_codes) {
     const int orig_ol = ol;
@@ -1366,13 +1353,15 @@ int unishox3::decompress(const char *in, int len, USX3_API_OUT_AND_LEN(char *out
               break;
             int bits_to_read = predict_count_bits[pos_lvl];
             int32_t pos = getNumFromBits(in, len, bit_no, bits_to_read);
-            if (pos < 0 || pos >= wordlist_lens[pos_lvl])
-              break;
             size_t dict_word_len;
-            const char *dict_word = getDictWord(pos_lvl, pos, &dict_word_len);
+            marisa::Agent agent;
+            agent.set_query(pos);
+            //printf("DC: lvl: %d, id: %d\n", pos_lvl, pos);
             const int left = olen - ol;
             if (left <= 0) return olen + 1;
-            memcpy(out + ol, dict_word, min_of(left, dict_word_len));
+            tries[pos_lvl].reverse_lookup(agent);
+            dict_word_len = agent.key().length();
+            strncpy(out + ol, agent.key().ptr(), min_of(left, dict_word_len));
             if (is_upper)
               out[ol] -= ('a' - 'A');
             is_upper = 0;

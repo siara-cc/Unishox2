@@ -82,51 +82,11 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "wordlist_index.h"
+#include "bloom.hpp"
+#include "marisa.h"
 
 /// Minimum length to consider as repeating sequence
 #define NICE_LEN 7
-
-#define ARRAY_LENGTH(array) (size_t)(sizeof((array)) / sizeof((array)[0]))
-
-inline int getOffset(int lvl)
-{
-    switch (lvl) {
-    case 0:
-        return 0;
-    case 1:
-        return 16;
-    case 2:
-        return 16 + 56;
-    case 3:
-        return 16 + 56 + 256;
-    case 4:
-        return 16 + 56 + 256 + 2048;
-    case 5:
-        return 16 + 56 + 256 + 2048 + 32768;
-    case 6:
-        return 16 + 56 + 256 + 2048 + 32768 + 131072;
-    default:
-        return ARRAY_LENGTH(wordlist_index); // invalid
-    }
-}
-
-
-extern char _binary_wordlist_bin_start[];
-
-inline const char *getDictWord(int lvl, int pos, size_t *size)
-{
-    size_t index = getOffset(lvl) + pos;
-    if (index < ARRAY_LENGTH(wordlist_index) - 1) {
-        int start = wordlist_index[index];
-        int end = wordlist_index[index + 1];
-        *size = end - start;
-        return _binary_wordlist_bin_start + start; // wordlist_bin
-    }
-    *size = 0;
-    return NULL;
-}
-
 
 /// Return value of function that matches repeating sequences
 class usx3_longest {
@@ -152,20 +112,19 @@ class usx3_dict_find {
   public:
     int lvl;
     int pos;
-    usx3_dict_find(int l = -1, int p = -1) {
+    int len;
+    usx3_dict_find(int l = -1, int _pos = -1, int _len = -1) {
       lvl = l;
-      pos = p;
+      pos = _pos;
+      len = _len;
     }
     bool is_found() {
-      return (pos >= 0);
+      return (len >= 0);
     }
     int saving() {
-      if (pos < 0)
+      if (len < 0)
         return 0;
-
-      size_t size;
-      getDictWord(lvl, pos, &size);
-      return size;
+      return len;
     }
 };
 
@@ -190,6 +149,9 @@ class unishox3 {
     uint8_t usx_code_94[94];
 
     const char *usx_templates[5];
+
+    bloom_filter bf;
+    marisa::Trie tries[6];
 
     int append_code(char *out, int olen, int ol, uint8_t code, uint8_t *state);
     int append_switch_code(char *out, int olen, int ol, uint8_t state);
