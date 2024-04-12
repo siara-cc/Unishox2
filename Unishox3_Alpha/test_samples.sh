@@ -1,0 +1,21 @@
+../usx3 -t
+../usx3 -c ../sample_texts/chinese.txt ../sample_texts/chinese.psx && ../usx3 -d ../sample_texts/chinese.psx ../sample_texts/chinese.ds3 && cmp ../sample_texts/chinese.txt ../sample_texts/chinese.ds3
+../usx3 -c ../sample_texts/emoji.txt ../sample_texts/emoji.psx && ../usx3 -d ../sample_texts/emoji.psx ../sample_texts/emoji.ds3 && cmp ../sample_texts/emoji.txt ../sample_texts/emoji.ds3
+../usx3 -c ../sample_texts/french.txt ../sample_texts/french.psx && ../usx3 -d ../sample_texts/french.psx ../sample_texts/french.ds3 && cmp ../sample_texts/french.txt ../sample_texts/french.ds3
+../usx3 -c ../sample_texts/hindi.txt ../sample_texts/hindi.psx && ../usx3 -d ../sample_texts/hindi.psx ../sample_texts/hindi.ds3 && cmp ../sample_texts/hindi.txt ../sample_texts/hindi.ds3
+../usx3 -c ../sample_texts/japanese.txt ../sample_texts/japanese.psx && ../usx3 -d ../sample_texts/japanese.psx ../sample_texts/japanese.ds3 && cmp ../sample_texts/japanese.txt ../sample_texts/japanese.ds3
+../usx3 -c ../sample_texts/json1.txt ../sample_texts/json1.psx && ../usx3 -d ../sample_texts/json1.psx ../sample_texts/json1.ds3 && cmp ../sample_texts/json1.txt ../sample_texts/json1.ds3
+../usx3 -c ../sample_texts/json2.txt ../sample_texts/json2.psx && ../usx3 -d ../sample_texts/json2.psx ../sample_texts/json2.ds3 && cmp ../sample_texts/json2.txt ../sample_texts/json2.ds3
+../usx3 -c ../sample_texts/json3.txt ../sample_texts/json3.psx && ../usx3 -d ../sample_texts/json3.psx ../sample_texts/json3.ds3 && cmp ../sample_texts/json3.txt ../sample_texts/json3.ds3
+../usx3 -c ../sample_texts/json4.txt ../sample_texts/json4.psx && ../usx3 -d ../sample_texts/json4.psx ../sample_texts/json4.ds3 && cmp ../sample_texts/json4.txt ../sample_texts/json4.ds3
+../usx3 -c ../sample_texts/spanish.txt ../sample_texts/spanish.psx && ../usx3 -d ../sample_texts/spanish.psx ../sample_texts/spanish.ds3 && cmp ../sample_texts/spanish.txt ../sample_texts/spanish.ds3
+../usx3 -c ../sample_texts/tamil.txt ../sample_texts/tamil.psx && ../usx3 -d ../sample_texts/tamil.psx ../sample_texts/tamil.ds3 && cmp ../sample_texts/tamil.txt ../sample_texts/tamil.ds3
+../usx3 -c ../sample_texts/xml1.txt ../sample_texts/xml1.psx && ../usx3 -d ../sample_texts/xml1.psx ../sample_texts/xml1.ds3 && cmp ../sample_texts/xml1.txt ../sample_texts/xml1.ds3
+../usx3 -c ../sample_texts/world95.txt ../sample_texts/world95.psx && ../usx3 -d ../sample_texts/world95.psx ../sample_texts/world95.ds3 && cmp ../sample_texts/world95.txt ../sample_texts/world95.ds3
+../usx3 -c ../sample_texts/alice_wland_chn.txt ../sample_texts/alice_wland_chn.psx && ../usx3 -d ../sample_texts/alice_wland_chn.psx ../sample_texts/alice_wland_chn.ds3 && cmp ../sample_texts/alice_wland_chn.txt ../sample_texts/alice_wland_chn.ds3
+../usx3 -c ../sample_texts/alice_wland.txt ../sample_texts/alice_wland.psx && ../usx3 -d ../sample_texts/alice_wland.psx ../sample_texts/alice_wland.ds3 && cmp ../sample_texts/alice_wland.txt ../sample_texts/alice_wland.ds3
+../usx3 -c ../sample_texts/hi.txt ../sample_texts/hi.psx && ../usx3 -d ../sample_texts/hi.psx ../sample_texts/hi.ds3 && cmp ../sample_texts/hi.txt ../sample_texts/hi.ds3
+../usx3 -c ../sample_texts/ja.txt ../sample_texts/ja.psx && ../usx3 -d ../sample_texts/ja.psx ../sample_texts/ja.ds3 && cmp ../sample_texts/ja.txt ../sample_texts/ja.ds3
+../usx3 -c ../sample_texts/ru.txt ../sample_texts/ru.psx && ../usx3 -d ../sample_texts/ru.psx ../sample_texts/ru.ds3 && cmp ../sample_texts/ru.txt ../sample_texts/ru.ds3
+../usx3 -c ../sample_texts/ta.txt ../sample_texts/ta.psx && ../usx3 -d ../sample_texts/ta.psx ../sample_texts/ta.ds3 && cmp ../sample_texts/ta.txt ../sample_texts/ta.ds3
+../usx3 -c ../sample_texts/zh.txt ../sample_texts/zh.psx && ../usx3 -d ../sample_texts/zh.psx ../sample_texts/zh.ds3 && cmp ../sample_texts/zh.txt ../sample_texts/zh.ds3

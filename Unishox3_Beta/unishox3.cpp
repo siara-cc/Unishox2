@@ -403,27 +403,36 @@ usx3_dict_find unishox3::match_predef_dict(const char *in, int len, int l) {
     int max_len_pos = -1;
     int max_len_lvl = LATIN_DICT_LVL_MAX;
   int pos_lvl = LATIN_DICT_LVL_MAX;
+    strncpy(key, in + l, key_len);
+  madras_dv1::dict_iter_ctx ctx[7];
+  for (int i = 0; i < 7; i++)
+    ctx[i].init(tries[i].get_max_key_len(), tries[i].get_max_level());
   for (; pos_lvl >= 0; pos_lvl--) {
     strncpy(key, in + l, key_len);
+    // printf("Key: %.*s, len: %d\n", key_len, in+l, key_len);
     if (pos_lvl != LATIN_DICT_LVL_MAX) {
       if (in[l] >= 'A' && in[l] <= 'Z')
         key[0] += ('a' - 'A');
     }
     key[key_len] = 0;
     //printf("key: %s\n", key);
-    madras_dv1::dict_lookup_ctx ctx(tries[pos_lvl].get_max_key_len());
-    tries[pos_lvl].find_first((uint8_t *) key, key_len, ctx);
-    if (max_len < ctx.last_leaf_key_len) {
-      max_len = ctx.last_leaf_key_len;
-      max_len_pos = ctx.last_leaf_node_id;
-      max_len_lvl = pos_lvl;
-      printf("Found at lvl: %d, pos: %u, key_len: %d, key: %.*s\n", pos_lvl, max_len_pos, max_len, max_len, ctx.key);
+    // printf("%d, %.*s\n", key_len, key_len, key);
+    tries[pos_lvl].find_first((uint8_t *) key, key_len, ctx[pos_lvl]);
+    if (ctx[pos_lvl].last_leaf_set) {
+      int dict_key_len = ctx[pos_lvl].key_len - ctx[pos_lvl].last_leaf_len_offset;
+      if (max_len < dict_key_len) {
+        max_len = dict_key_len;
+        max_len_pos = ctx[pos_lvl].last_leaf_node_id;
+        max_len_lvl = pos_lvl;
+        // printf("Found at lvl: %d, pos: %u, key_len: %d, key: %.*s\n", pos_lvl, max_len_pos, max_len, max_len, ctx[pos_lvl].key);
+      }
     }
+    // ctx.close();
   }
     if (max_len > 0) {
       pos = tries[max_len_lvl].leaf_rank(max_len_pos);
       found_len = max_len;
-      printf("Leaf rank: %u\n", pos);
+      // printf("Leaf rank: %u\n", pos);
     }
   return usx3_dict_find(max_len_lvl, pos, found_len);
 }
@@ -551,7 +560,7 @@ int unishox3::encode_dict_matches(const char *in, int len, int l, char *out, int
         return l;
     } else {
       if (continuous) {
-        if (in[l] >= 'A' && in[l] <= 'Z')
+        if (in[l] >= 'A' && in[l] <= 'Z' && dict_find.lvl < 6)
           SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, 0x80, 5)); // next upper
         SAFE_APPEND_BITS(*ol = append_bits(out, olen, *ol, 0x00, 2)); // end suffix and next from dictionary
         //printf("`");
@@ -565,7 +574,7 @@ int unishox3::encode_dict_matches(const char *in, int len, int l, char *out, int
           SAFE_APPEND_BITS(*ol = switch_to(out, olen, *ol, *state, USX_ALPHA));
           *is_all_upper = 0;
         }
-        if (in[l] >= 'A' && in[l] <= 'Z')
+        if (in[l] >= 'A' && in[l] <= 'Z' && dict_find.lvl < 6)
           SAFE_APPEND_BITS(*ol = switch_to(out, olen, *ol, *state, USX_ALPHA));
         SAFE_APPEND_BITS(*ol = switch_to(out, olen, *ol, *state, USX_PREDEF_DICT));
         if (!continuous_bit_loc)
