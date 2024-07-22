@@ -117,21 +117,13 @@
 /// Length of each hcode for no Unicode characters
 #define USX_HCODE_LENS_NO_UNI (const unsigned char[]) {2, 2, 2, 2, 0}
 
-/// Default frequently occuring sequences. When composition of text is know beforehand, the other sequences in this section can be used to achieve more compression.
-#define USX_FREQ_SEQ_DFLT (const char *[]) {"\": \"", "\": ", "</", "=\"", "\":\"", "://"}
-/// Frequently occuring sequences in text content
-#define USX_FREQ_SEQ_TXT (const char *[]) {" the ", " and ", "tion", " with", "ing", "ment"}
-/// Frequently occuring sequences in URL content
-#define USX_FREQ_SEQ_URL (const char *[]) {"https://", "www.", ".com", "http://", ".org", ".net"}
-/// Frequently occuring sequences in JSON content
-#define USX_FREQ_SEQ_JSON (const char *[]) {"\": \"", "\": ", "\",", "}}}", "\":\"", "}}"}
-/// Frequently occuring sequences in HTML content
-#define USX_FREQ_SEQ_HTML (const char *[]) {"</", "=\"", "div", "href", "class", "<p>"}
-/// Frequently occuring sequences in XML content
-#define USX_FREQ_SEQ_XML (const char *[]) {"</", "=\"", "\">", "<?xml version=\"1.0\"", "xmlns:", "://"}
-
-/// Commonly occuring templates (ISO Date/Time, ISO Date, US Phone number, ISO Time, Unused)
-#define USX_TEMPLATES (const char *[]) {"tfff-of-tfTtf:rf:rf.fffZ", "tfff-of-tf", "(fff) fff-ffff", "tf:rf:rf", 0}
+extern const char * USX_FREQ_SEQ_DFLT[];
+extern const char * USX_FREQ_SEQ_TXT[];
+extern const char * USX_FREQ_SEQ_URL[];
+extern const char * USX_FREQ_SEQ_JSON[];
+extern const char * USX_FREQ_SEQ_HTML[];
+extern const char * USX_FREQ_SEQ_XML[];
+extern const char * USX_TEMPLATES[];
 
 /// Default preset parameter set. When composition of text is know beforehand, the other parameter sets in this section can be used to achieve more compression.
 #define USX_PSET_DFLT USX_HCODES_DFLT, USX_HCODE_LENS_DFLT, USX_FREQ_SEQ_DFLT, USX_TEMPLATES

@@ -36,6 +36,24 @@
 /// uint8_t is unsigned char
 typedef unsigned char uint8_t;
 
+/// Default frequently occuring sequences. When composition of text is know beforehand, the other sequences in this section can be used to achieve more compression.
+const char * USX_FREQ_SEQ_DFLT[] = {"\": \"", "\": ", "</", "=\"", "\":\"", "://"};
+/// Frequently occuring sequences in text content
+const char * USX_FREQ_SEQ_TXT[] = {" the ", " and ", "tion", " with", "ing", "ment"};
+/// Frequently occuring sequences in URL content
+const char * USX_FREQ_SEQ_URL[] = {"https://", "www.", ".com", "http://", ".org", ".net"};
+/// Frequently occuring sequences in JSON content
+const char * USX_FREQ_SEQ_JSON[] = {"\": \"", "\": ", "\",", "}}}", "\":\"", "}}"};
+/// Frequently occuring sequences in HTML content
+const char * USX_FREQ_SEQ_HTML[]  = {"</", "=\"", "div", "href", "class", "<p>"};
+/// Frequently occuring sequences in XML content
+const char * USX_FREQ_SEQ_XML[]  = {"</", "=\"", "\">", "<?xml version=\"1.0\"", "xmlns:", "://"};
+
+const char * USX_TEMPLATES[] = {"tfff-of-tfTtf:rf:rf.fffZ", "tfff-of-tf", "(fff) fff-ffff", "tf:rf:rf", 0};
+
+/// Commonly occuring templates (ISO Date/Time, ISO Date, US Phone number, ISO Time, Unused)
+#define USX_TEMPLATES (const char *[]) {"tfff-of-tfTtf:rf:rf.fffZ", "tfff-of-tf", "(fff) fff-ffff", "tf:rf:rf", 0}
+
 /// possible horizontal sets and states
 enum {USX_ALPHA = 0, USX_SYM, USX_NUM, USX_DICT, USX_DELTA, USX_NUM_TEMP};
 
