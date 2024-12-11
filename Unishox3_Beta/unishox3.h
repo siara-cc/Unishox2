@@ -151,7 +151,7 @@ class unishox3 {
     const char *usx_templates[5];
 
     bloom_filter bf;
-    madras_dv1::static_dict tries[7];
+    madras_dv1::static_trie tries[7];
 
     int append_code(char *out, int olen, int ol, uint8_t code, uint8_t *state);
     int append_switch_code(char *out, int olen, int ol, uint8_t state);

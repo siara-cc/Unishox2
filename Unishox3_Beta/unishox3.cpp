@@ -281,21 +281,18 @@ char getNibbleType(char ch) {
   return USX_NIB_NOT;
 }
 
-int compare(const char *v1, uint8_t len1, const char *v2,
-        uint8_t len2) {
-    int k = 0;
+static int compare(const uint8_t *v1, int len1, const uint8_t *v2, int len2) {
     int lim = (len2 < len1 ? len2 : len1);
-    while (k < lim) {
+    int k = 0;
+    do {
         uint8_t c1 = v1[k];
         uint8_t c2 = v2[k];
-        if (k == 0 && c1 >= 'A' && c1 <= 'Z')
-          c1 += ('a' - 'A');
         k++;
         if (c1 < c2)
             return -k;
         else if (c1 > c2)
             return k;
-    }
+    } while (k < lim);
     if (len1 == len2)
         return 0;
     k++;
@@ -333,7 +330,7 @@ unishox3::unishox3() {
     }
   }
   for (int i = 6; i >= 0; i--) {
-    tries[i].map_from_memory((uint8_t *) trie_dumps[i]);
+    tries[i].load_static_trie((uint8_t *) trie_dumps[i]);
   }
 }
 
@@ -397,19 +394,19 @@ int unishox3::append_code(char *out, int olen, int ol, uint8_t code, uint8_t *st
 usx3_dict_find unishox3::match_predef_dict(const char *in, int len, int l) {
   int32_t found_len = -1;
   int32_t pos = -1;
-  char key[predict_max_lens[LATIN_DICT_LVL_MAX]+1];
-  int key_len = min_of(len - l, predict_max_lens[LATIN_DICT_LVL_MAX]);
+  uint8_t key[predict_max_lens[LATIN_DICT_LVL_MAX]+1];
+  size_t key_len = min_of(len - l, predict_max_lens[LATIN_DICT_LVL_MAX]);
     int max_len = 0;
     int max_len_pos = -1;
     int max_len_lvl = LATIN_DICT_LVL_MAX;
   int pos_lvl = LATIN_DICT_LVL_MAX;
-    strncpy(key, in + l, key_len);
-  madras_dv1::dict_iter_ctx ctx[7];
+    memcpy(key, in + l, key_len);
+  madras_dv1::iter_ctx ctx[7];
   for (int i = 0; i < 7; i++)
     ctx[i].init(tries[i].get_max_key_len(), tries[i].get_max_level());
   for (; pos_lvl >= 0; pos_lvl--) {
-    strncpy(key, in + l, key_len);
-    // printf("Key: %.*s, len: %d\n", key_len, in+l, key_len);
+    memcpy(key, in + l, key_len);
+    //printf("Key: %.*s, len: %d\n", key_len, in+l, key_len);
     if (pos_lvl != LATIN_DICT_LVL_MAX) {
       if (in[l] >= 'A' && in[l] <= 'Z')
         key[0] += ('a' - 'A');
@@ -418,11 +415,18 @@ usx3_dict_find unishox3::match_predef_dict(const char *in, int len, int l) {
     //printf("key: %s\n", key);
     // printf("%d, %.*s\n", key_len, key_len, key);
     tries[pos_lvl].find_first((uint8_t *) key, key_len, ctx[pos_lvl]);
-    if (ctx[pos_lvl].last_leaf_set) {
-      int dict_key_len = ctx[pos_lvl].key_len - ctx[pos_lvl].last_leaf_len_offset;
-      if (max_len < dict_key_len) {
+    int32_t ctx_lvl = ctx[pos_lvl].cur_idx;
+    while (ctx_lvl > 0 && !tries[pos_lvl].is_leaf(ctx[pos_lvl].node_path[ctx_lvl])) {
+      ctx[pos_lvl].key_len -= ctx[pos_lvl].last_tail_len[ctx_lvl];
+      ctx_lvl--;
+    }
+    if (tries[pos_lvl].is_leaf(ctx[pos_lvl].node_path[ctx_lvl])) {
+      int dict_key_len = 0;
+      if (memcmp(ctx[pos_lvl].key, key, ctx[pos_lvl].key_len) == 0)
+        dict_key_len = ctx[pos_lvl].key_len;
+      if (max_len <= dict_key_len && dict_key_len >= 4) {
         max_len = dict_key_len;
-        max_len_pos = ctx[pos_lvl].last_leaf_node_id;
+        max_len_pos = ctx[pos_lvl].node_path[ctx_lvl];
         max_len_lvl = pos_lvl;
         // printf("Found at lvl: %d, pos: %u, key_len: %d, key: %.*s\n", pos_lvl, max_len_pos, max_len, max_len, ctx[pos_lvl].key);
       }
@@ -430,7 +434,7 @@ usx3_dict_find unishox3::match_predef_dict(const char *in, int len, int l) {
     // ctx.close();
   }
     if (max_len > 0) {
-      pos = tries[max_len_lvl].leaf_rank(max_len_pos);
+      pos = tries[max_len_lvl].leaf_rank1(max_len_pos);
       found_len = max_len;
       // printf("Leaf rank: %u\n", pos);
     }
@@ -1364,17 +1368,19 @@ int unishox3::decompress(const char *in, int len, USX3_API_OUT_AND_LEN(char *out
               break;
             int bits_to_read = predict_count_bits[pos_lvl];
             int32_t pos = getNumFromBits(in, len, bit_no, bits_to_read);
-            int dict_word_len;
+            size_t dict_word_len;
             //printf("DC: lvl: %d, id: %d\n", pos_lvl, pos);
             const int left = olen - ol;
             if (left <= 0) return olen + 1;
             // TODO: handle overflow
+            //out[ol++] = '[';
             tries[pos_lvl].reverse_lookup(pos, &dict_word_len, (uint8_t *) out + ol);
             if (is_upper)
               out[ol] -= ('a' - 'A');
             is_upper = 0;
             if (left < dict_word_len) return olen + 1;
             ol += min_of(left, dict_word_len);
+            //out[ol++] = ']';
             bit_no += bits_to_read;
           }
           if (is_cont) {
@@ -1386,9 +1392,13 @@ int unishox3::decompress(const char *in, int len, USX3_API_OUT_AND_LEN(char *out
                 if (is_stop) {
                   is_cont = false;
                   break;
-                } else
+                } else {
+            //out[ol++] = '[';
                   DEC_OUTPUT_CHAR(out, olen, ol++, ' ');
+            //out[ol++] = ']';
+                }
               } else { // switch
+            //out[ol++] = '[';
                 bool is_sym = bit_no < len ? readBit(in, bit_no++) : 0;
                 bool is_cont_num = false;
                 do {
@@ -1413,6 +1423,7 @@ int unishox3::decompress(const char *in, int len, USX3_API_OUT_AND_LEN(char *out
                   if (!is_cont_num && !is_sym && c >= '0' && c <= '9')
                     is_cont_num = true;
                 } while (is_cont_num && v);
+            //out[ol++] = ']';
               }
               is_suffix = bit_no < len ? readBit(in, bit_no++) : 0;
             }
