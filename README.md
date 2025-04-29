@@ -121,6 +121,7 @@ Strings that were compressed with this library can be decompressed with the [JS 
 - [Python bindings for Unishox2](https://github.com/tweedge/unishox2-py3)
 - [Unishox2 Javascript library](https://github.com/siara-cc/unishox_js)
 - [Unishox2 used in Meshtastic project](https://github.com/meshtastic/Meshtastic-device/tree/master/src/mesh/compression)
+- [Abracadabra, an Advanced Chinese Text Anti-Censorship Tool](https://github.com/SheepChef/Abracadabra)
 
 # Credits
 
@@ -130,6 +131,7 @@ Strings that were compressed with this library can be decompressed with the [JS 
 - Thanks to [Luis Díaz Más](https://github.com/piponazo) for his PRs to support MSVC and CMake setup
 - Thanks to [James Z.M. Gao](https://github.com/gsm55) for his PRs on improving presets, unit tests, bug fixes and more
 - Thanks to [Jm Casler](https://github.com/mc-hamster) and [Shiv Kokroo](https://github.com/kokroo) for choosing and integrating Unishox into [Meshtastic](https://github.com/meshtastic/Meshtastic-device) project
+- Thanks to [SheepChef](https://github.com/SheepChef) for integrating Unishox2 with his project [Abracadabra](https://github.com/SheepChef/Abracadabra)
 
 # Versions
 
