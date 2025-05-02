@@ -121,7 +121,7 @@ Strings that were compressed with this library can be decompressed with the [JS 
 - [Python bindings for Unishox2](https://github.com/tweedge/unishox2-py3)
 - [Unishox2 Javascript library](https://github.com/siara-cc/unishox_js)
 - [Unishox2 used in Meshtastic project](https://github.com/meshtastic/Meshtastic-device/tree/master/src/mesh/compression)
-- [Abracadabra, an Advanced Chinese Text Anti-Censorship Tool](https://github.com/SheepChef/Abracadabra)
+- [Abracadabra, an Advanced Chinese Text Stylized-Encryption Tool](https://github.com/SheepChef/Abracadabra)
 
 # Credits
 
