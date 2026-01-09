@@ -523,7 +523,7 @@ int unishox2_compress_lines(const char *in, int len, UNISHOX_API_OUT_AND_LEN(cha
   uint8_t state;
 
   int l, ll, ol;
-  char c_in, c_next;
+  unsigned int c_in, c_next;
   int prev_uni;
   uint8_t is_upper, is_all_upper;
 #if (UNISHOX_API_OUT_AND_LEN(0,1)) == 0
