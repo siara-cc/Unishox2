@@ -25,17 +25,10 @@
 var NAVTREE =
 [
   [ "Unishox", "index.html", [
-    [ "Unishox - A hybrid encoder for compressing Short Unicode Strings", "index.html", [
-      [ "Applications", "index.html#autotoc_md1", null ],
-      [ "How it works", "index.html#autotoc_md2", null ],
-      [ "Compiling", "index.html#autotoc_md3", null ],
-      [ "API", "index.html#autotoc_md4", null ],
-      [ "Usage", "index.html#autotoc_md5", null ],
-      [ "Character Set", "index.html#autotoc_md6", null ],
-      [ "Projects that use Unishox", "index.html#autotoc_md7", null ],
-      [ "Credits", "index.html#autotoc_md8", null ],
-      [ "Issues", "index.html#autotoc_md9", null ]
-    ] ],
+    [ "Unishox: A hybrid encoder for Short Unicode Strings", "index.html", "index" ],
+    [ "Topics", "topics.html", "topics" ],
+    [ "Core API", "group__core__api.html", null ],
+    [ "Advanced API", "group__advanced__api.html", null ],
     [ "Data Structures", "annotated.html", [
       [ "Data Structures", "annotated.html", "annotated_dup" ],
       [ "Data Structure Index", "classes.html", null ]
@@ -58,5 +51,6 @@ var NAVTREEINDEX =
 "annotated.html"
 ];
 
-var SYNCONMSG = 'click to disable panel synchronisation';
-var SYNCOFFMSG = 'click to enable panel synchronisation';
+var SYNCONMSG = 'click to disable panel synchronization';
+var SYNCOFFMSG = 'click to enable panel synchronization';
+var LISTOFALLMEMBERS = 'List of all members';

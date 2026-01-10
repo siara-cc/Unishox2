@@ -1,4 +1,5 @@
 # Unishox: A hybrid encoder for Short Unicode Strings
+<img src="promo/logo.png" width="150" align="right" />
 
 [![C/C++ CI](https://github.com/siara-cc/Unishox/actions/workflows/c-cpp.yml/badge.svg)](https://github.com/siara-cc/Unishox/actions/workflows/c-cpp.yml) [![DOI](https://joss.theoj.org/papers/10.21105/joss.03919/status.svg)](https://doi.org/10.21105/joss.03919)
 [![npm ver](https://img.shields.io/npm/v/unishox2.siara.cc)](https://www.npmjs.com/package/unishox2.siara.cc)

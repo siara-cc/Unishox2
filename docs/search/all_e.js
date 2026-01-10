@@ -1,4 +1,6 @@
 var searchData=
 [
-  ['writeutf8_0',['writeUTF8',['../unishox2_8c.html#a559a926b123cad02f7af04c2d4f8a8d2',1,'unishox2.c']]]
+  ['parameter_20presets_0',['Parameter Presets',['../group__presets.html',1,'']]],
+  ['presets_1',['Parameter Presets',['../group__presets.html',1,'']]],
+  ['projects_20that_20use_20unishox_2',['Projects that use Unishox',['../index.html#autotoc_md11',1,'']]]
 ];

@@ -48,6 +48,12 @@
 #  define UNISHOX_API_WITH_OUTPUT_LEN 0
 #endif
 
+
+/**
+ * @defgroup config Configuration Macros
+ * @brief Compile-time configurations for the library
+ * @{
+ */
 /// Upto 8 bits of initial magic bit sequence can be included. Bit count can be specified with UNISHOX_MAGIC_BIT_LEN
 #ifndef UNISHOX_MAGIC_BITS
 #  define UNISHOX_MAGIC_BITS 0xFF
@@ -61,6 +67,8 @@
 #else
 #  define UNISHOX_MAGIC_BIT_LEN 1
 #endif
+/** @} */
+
 
 //enum {USX_ALPHA = 0, USX_SYM, USX_NUM, USX_DICT, USX_DELTA};
 
@@ -125,6 +133,12 @@ extern const char * USX_FREQ_SEQ_HTML[];
 extern const char * USX_FREQ_SEQ_XML[];
 extern const char * USX_TEMPLATES[];
 
+
+/**
+ * @defgroup presets Parameter Presets
+ * @brief Pre-defined parameter sets for different types of input data.
+ * @{
+ */
 /// Default preset parameter set. When composition of text is know beforehand, the other parameter sets in this section can be used to achieve more compression.
 #define USX_PSET_DFLT USX_HCODES_DFLT, USX_HCODE_LENS_DFLT, USX_FREQ_SEQ_DFLT, USX_TEMPLATES
 /// Preset parameter set for English Alphabet only content
@@ -159,6 +173,7 @@ extern const char * USX_TEMPLATES[];
 #define USX_PSET_XML USX_HCODES_DFLT, USX_HCODE_LENS_DFLT, USX_FREQ_SEQ_XML, USX_TEMPLATES
 /// Preset parameter set favouring HTML content
 #define USX_PSET_HTML USX_HCODES_DFLT, USX_HCODE_LENS_DFLT, USX_FREQ_SEQ_HTML, USX_TEMPLATES
+/** @} */
 
 /**
  * This structure is used when a string array needs to be compressed.
@@ -185,6 +200,12 @@ struct us_lnk_lst {
 #  define UNISHOX_API_OUT_AND_LEN(out, olen) out
 #endif
 
+
+/**
+ * @defgroup core_api Core API
+ * @brief Simple and Comprehensive APIs for compression/decompression
+ * @{
+ */
 /** 
  * Simple API for compressing a string
  * @param[in] in    Input ASCII / UTF-8 string
@@ -237,6 +258,13 @@ extern int unishox2_compress(const char *in, int len, UNISHOX_API_OUT_AND_LEN(ch
 extern int unishox2_decompress(const char *in, int len, UNISHOX_API_OUT_AND_LEN(char *out, int olen),
               const unsigned char usx_hcodes[], const unsigned char usx_hcode_lens[],
               const char *usx_freq_seq[], const char *usx_templates[]);
+/** @} */
+
+/**
+ * @defgroup advanced_api Advanced API
+ * @brief Utilities for compressing arrays of strings and internal structures
+ * @{
+ */
 /** 
  * More Comprehensive API for compressing array of strings
  * 
@@ -266,5 +294,6 @@ extern int unishox2_decompress_lines(const char *in, int len, UNISHOX_API_OUT_AN
               const unsigned char usx_hcodes[], const unsigned char usx_hcode_lens[],
               const char *usx_freq_seq[], const char *usx_templates[],
               struct us_lnk_lst *prev_lines);
+/** @} */
 
 #endif

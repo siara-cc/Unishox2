@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['is_5finited_0',['is_inited',['../unishox2_8c.html#a0a9564a66a4ec8428ad6e701194a78fe',1,'unishox2.c']]]
+  ['is_5finited_0',['is_inited',['../unishox2_8c.html#a72220b3da1173b898165852a0ee61894',1,'unishox2.c']]]
 ];

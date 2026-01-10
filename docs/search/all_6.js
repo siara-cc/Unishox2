@@ -1,5 +1,8 @@
 var searchData=
 [
-  ['init_5fcoder_0',['init_coder',['../unishox2_8c.html#af4cff050d88960562fac68ad6af9346b',1,'unishox2.c']]],
-  ['is_5finited_1',['is_inited',['../unishox2_8c.html#a0a9564a66a4ec8428ad6e701194a78fe',1,'unishox2.c']]]
+  ['getbasecode_0',['getBaseCode',['../unishox2_8c.html#a8e64eeffdef76e96fd1e24372ee55e87',1,'unishox2.c']]],
+  ['gethexchar_1',['getHexChar',['../unishox2_8c.html#a03ac8ed467720baa525e93e24700e448',1,'unishox2.c']]],
+  ['getnibbletype_2',['getNibbleType',['../unishox2_8c.html#aaf7770cce3b7324d1f1622ce934a9b3d',1,'unishox2.c']]],
+  ['getnumfrombits_3',['getNumFromBits',['../unishox2_8c.html#a7b917b750c7765551970478c66442af6',1,'unishox2.c']]],
+  ['getstepcodeidx_4',['getStepCodeIdx',['../unishox2_8c.html#af6dd94aa6b1641044305bac4d3a5b261',1,'unishox2.c']]]
 ];
