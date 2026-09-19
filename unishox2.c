@@ -358,8 +358,17 @@ int matchOccurance(const char *in, int len, int l, char *out, int olen, int *ol,
       if (in[k] != in[j + k - l])
         break;
     }
-    while ((((unsigned char) in[k]) >> 6) == 2)
+    while (k < len && (((unsigned char) in[k]) >> 6) == 2)
       k--; // Skip partial UTF-8 matches
+    // Safety note: the historical code read in[k] here unconditionally,
+    // which is one byte past the caller's buffer when a match runs exactly
+    // to the end of input (k == len). That byte is not part of the input,
+    // so output could depend on whatever happened to sit there. Not
+    // trimming in that case matches a guard byte that is anything but a
+    // UTF-8 continuation byte. Bounding the walk with k < len keeps every
+    // read inside [l, len); walking at or below l can never qualify
+    // (k - l > NICE_LEN - 1 is already false there), so in-bounds behavior
+    // is unchanged.
     //if ((in[k - 1] >> 3) == 0x1E || (in[k - 1] >> 4) == 0x0E || (in[k - 1] >> 5) == 0x06)
     //  k--;
     if ((k - l) > (NICE_LEN - 1)) {
