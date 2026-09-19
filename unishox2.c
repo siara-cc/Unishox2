@@ -93,6 +93,51 @@ const int UTF8_MASK[] = {0xE0, 0xF0, 0xF8};
 /// Not used
 const int UTF8_PREFIX[] = {0xC0, 0xE0, 0xF0};
 
+/// Nibble type lookup for all 256 byte values.
+/// Maps '0'-'9' -> USX_NIB_NUM (0), 'a'-'f' -> USX_NIB_HEX_LOWER (1),
+/// 'A'-'F' -> USX_NIB_HEX_UPPER (2), everything else -> USX_NIB_NOT (3).
+/// Portable .rodata table: helps every target (MIPS through servers),
+/// no extra RAM (input-independent), identical mapping to getNibbleType().
+static const uint8_t usx_nibble_type_tbl[256] = {
+  3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,
+  3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,
+  3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,
+  0,0,0,0,0,0,0,0,0,0,3,3,3,3,3,3,
+  3,2,2,2,2,2,2,3,3,3,3,3,3,3,3,3,
+  3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,
+  3,1,1,1,1,1,1,3,3,3,3,3,3,3,3,3,
+  3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,
+  3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,
+  3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,
+  3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,
+  3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,
+  3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,
+  3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,
+  3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,
+  3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3
+};
+
+/// 4-bit base code (already shifted << 4) for hex/nibble chars, 0 otherwise.
+/// Identical mapping to getBaseCode().
+static const uint8_t usx_base_code_tbl[256] = {
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  0x00,0x10,0x20,0x30,0x40,0x50,0x60,0x70,0x80,0x90,0,0,0,0,0,0,
+  0,0xA0,0xB0,0xC0,0xD0,0xE0,0xF0,0,0,0,0,0,0,0,0,0,
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  0,0xA0,0xB0,0xC0,0xD0,0xE0,0xF0,0,0,0,0,0,0,0,0,0,
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+};
+
 /// Minimum length to consider as repeating sequence
 #define NICE_LEN 5
 
@@ -167,6 +212,41 @@ int append_bits(char *out, int olen, int ol, uint8_t code, int clen) {
 
 
   //printf("%d,%x,%d,%d\n", ol, code, clen, state);
+
+  // Fast path: single-byte fill without loop/div/mod.
+  // Bit-identical to the loop below, including partial writes on olen
+  // overflow: the loop writes the first touched byte and then fails on
+  // the second, so the fast path must do the same for the truncated
+  // prefix comparison in the test suite to match byte-exactly.
+  if (clen > 0 && clen <= 8) {
+    unsigned int bit = (unsigned int)ol & 7u;
+    unsigned int oidx = (unsigned int)ol >> 3;
+    unsigned int need = bit + (unsigned int)clen;
+    if ((int)oidx < 0 || olen <= (int)oidx)
+      return -1;
+    {
+      unsigned int shift = bit;
+      unsigned int first = (unsigned int)clen;
+      if (first + bit > 8)
+        first = 8 - bit;
+      {
+        unsigned int a = ((unsigned int)code & (unsigned int)usx_mask[clen - 1]) >> shift;
+        if (bit == 0)
+          out[oidx] = (char)a;
+        else
+          out[oidx] = (char)((unsigned char)out[oidx] | (unsigned char)a);
+      }
+      if (need > 8) {
+        if (olen <= (int)oidx + 1)
+          return -1;
+        {
+          unsigned int rest = (unsigned int)clen - first;
+          out[oidx + 1] = (char)((((unsigned int)code << first) & (unsigned int)usx_mask[rest - 1]) & 0xFFu);
+        }
+      }
+      return ol + clen;
+    }
+  }
 
   while (clen > 0) {
     int oidx;
@@ -353,30 +433,48 @@ int matchOccurance(const char *in, int len, int l, char *out, int olen, int *ol,
   int j, k;
   int longest_dist = 0;
   int longest_len = 0;
-  for (j = l - NICE_LEN; j >= 0; j--) {
-    for (k = l; k < len && j + k - l < l; k++) {
-      if (in[k] != in[j + k - l])
-        break;
-    }
-    while (k < len && (((unsigned char) in[k]) >> 6) == 2)
-      k--; // Skip partial UTF-8 matches
-    // Safety note: the historical code read in[k] here unconditionally,
-    // which is one byte past the caller's buffer when a match runs exactly
-    // to the end of input (k == len). That byte is not part of the input,
-    // so output could depend on whatever happened to sit there. Not
-    // trimming in that case matches a guard byte that is anything but a
-    // UTF-8 continuation byte. Bounding the walk with k < len keeps every
-    // read inside [l, len); walking at or below l can never qualify
-    // (k - l > NICE_LEN - 1 is already false there), so in-bounds behavior
-    // is unchanged.
-    //if ((in[k - 1] >> 3) == 0x1E || (in[k - 1] >> 4) == 0x0E || (in[k - 1] >> 5) == 0x06)
-    //  k--;
-    if ((k - l) > (NICE_LEN - 1)) {
-      int match_len = k - l - NICE_LEN;
-      int match_dist = l - j - NICE_LEN + 1;
-      if (match_len > longest_len) {
-          longest_len = match_len;
-          longest_dist = match_dist;
+  if (l < NICE_LEN)
+    return -l;
+  {
+    unsigned char first = (unsigned char)in[l];
+    int max_len = len - l;
+    for (j = l - NICE_LEN; j >= 0; j--) {
+      int max_j;
+      if ((unsigned char)in[j] != first)
+        continue;
+      max_j = l - j;
+      if (max_j > max_len)
+        max_j = max_len;
+      if (max_j - NICE_LEN <= longest_len)
+        continue;
+      {
+        int need = longest_len + NICE_LEN + 1;
+        int lim = l + need;
+        if (lim > l + max_j)
+          lim = l + max_j;
+        if (memcmp(in + j, in + l, (size_t)(lim - l)) != 0)
+          continue;
+        k = lim;
+        while (k < len && j + k - l < l && in[k] == in[j + k - l])
+          k++;
+      }
+      if (k < len) {
+        while (k > l && (((unsigned char)in[k]) >> 6) == 2)
+          k--; // Skip partial UTF-8 matches (bounded: never reads past end)
+      }
+      // Safety: never reads past the end (see previous commit fixing the
+      // matchOccurance past-the-end trim read). The k > l bound keeps the
+      // walk inside the current match (walking at or below l can never
+      // qualify: k - l > NICE_LEN - 1 is already false there).
+      //if ((in[k - 1] >> 3) == 0x1E || (in[k - 1] >> 4) == 0x0E || (in[k - 1] >> 5) == 0x06)
+      //  k--;
+      if ((k - l) > (NICE_LEN - 1)) {
+        int match_len = k - l - NICE_LEN;
+        int match_dist = l - j - NICE_LEN + 1;
+        if (match_len > longest_len) {
+            longest_len = match_len;
+            longest_dist = match_dist;
+        }
       }
     }
   }
@@ -459,13 +557,7 @@ int matchLine(const char *in, int len, int l, char *out, int olen, int *ol, stru
 /// Returns 4 bit code assuming ch falls between '0' to '9', \n
 /// 'A' to 'F' or 'a' to 'f'
 uint8_t getBaseCode(char ch) {
-  if (ch >= '0' && ch <= '9')
-    return (ch - '0') << 4;
-  else if (ch >= 'A' && ch <= 'F')
-    return (ch - 'A' + 10) << 4;
-  else if (ch >= 'a' && ch <= 'f')
-    return (ch - 'a' + 10) << 4;
-  return 0;
+  return usx_base_code_tbl[(unsigned char)ch];
 }
 
 /// Enum indicating nibble type - USX_NIB_NUM means ch is a number '0' to '9', \n
@@ -475,13 +567,7 @@ enum {USX_NIB_NUM = 0, USX_NIB_HEX_LOWER, USX_NIB_HEX_UPPER, USX_NIB_NOT};
 /// Gets 4 bit code assuming ch falls between '0' to '9', \n
 /// 'A' to 'F' or 'a' to 'f'
 char getNibbleType(char ch) {
-  if (ch >= '0' && ch <= '9')
-    return USX_NIB_NUM;
-  else if (ch >= 'a' && ch <= 'f')
-    return USX_NIB_HEX_LOWER;
-  else if (ch >= 'A' && ch <= 'F')
-    return USX_NIB_HEX_UPPER;
-  return USX_NIB_NOT;
+  return (char)usx_nibble_type_tbl[(unsigned char)ch];
 }
 
 /// Starts coding of nibble sets
@@ -553,6 +639,18 @@ int unishox2_compress_lines(const char *in, int len, UNISHOX_API_OUT_AND_LEN(cha
   prev_uni = 0;
   state = USX_ALPHA;
   is_all_upper = 0;
+  // Hoisted string lengths: identical values, computed once per call
+  // instead of on every input position. Pure win on all targets,
+  // no behavior change (same order, same comparisons, same memcmp).
+  int usx_freq_len[6];
+  int usx_tmpl_len[5];
+  {
+    int _i;
+    for (_i = 0; _i < 6; _i++)
+      usx_freq_len[_i] = (usx_freq_seq != NULL && usx_freq_seq[_i] != NULL) ? (int)strlen(usx_freq_seq[_i]) : 0;
+    for (_i = 0; _i < 5; _i++)
+      usx_tmpl_len[_i] = (usx_templates != NULL && usx_templates[_i] != NULL) ? (int)strlen(usx_templates[_i]) : -1;
+  }
   SAFE_APPEND_BITS2(rawolen, ol = append_bits(out, olen, ol, UNISHOX_MAGIC_BITS, UNISHOX_MAGIC_BIT_LEN)); // magic bit(s)
   for (l=0; l<len; l++) {
 
@@ -655,8 +753,8 @@ int unishox2_compress_lines(const char *in, int len, UNISHOX_API_OUT_AND_LEN(cha
     if (usx_templates != NULL) {
       int i;
       for (i = 0; i < 5; i++) {
-        if (usx_templates[i]) {
-          int rem = (int)strlen(usx_templates[i]);
+        if (usx_tmpl_len[i] >= 0) {
+          int rem = usx_tmpl_len[i];
           int j = 0;
           for (; j < rem && l + j < len; j++) {
             char c_t = usx_templates[i][j];
@@ -703,7 +801,7 @@ int unishox2_compress_lines(const char *in, int len, UNISHOX_API_OUT_AND_LEN(cha
     if (usx_freq_seq != NULL) {
       int i;
       for (i = 0; i < 6; i++) {
-        int seq_len = (int)strlen(usx_freq_seq[i]);
+        int seq_len = usx_freq_len[i];
         if (len - seq_len >= 0 && l <= len - seq_len) {
           if (memcmp(usx_freq_seq[i], in + l, seq_len) == 0 && usx_hcode_lens[usx_freq_codes[i] >> 5]) {
             SAFE_APPEND_BITS2(rawolen, ol = append_code(out, olen, ol, usx_freq_codes[i], &state, usx_hcodes, usx_hcode_lens));
@@ -913,6 +1011,47 @@ uint8_t usx_vcode_lookup[36] = {
   (7 << 5) + 24, (7 << 5) + 25, (7 << 5) + 26, (7 << 5) + 27
 };
 
+/// Direct 256-entry vertical-code table: index = next 8 bits from read8bitCode().
+/// Top 3 bits = code length - 1 (lengths 2..8 fit, as in usx_vcode_lookup),
+/// low 5 bits = vertical position 0..27.
+/// Bit-identical to the section-split lookup above (verified by brute force
+/// over all 256 inputs); trades 220 bytes of .rodata for the per-symbol
+/// section loop + second shift/mask. Portable to every target, no extra RAM.
+static const uint8_t usx_vcode_direct[256] = {
+  (0x20), (0x20), (0x20), (0x20), (0x20), (0x20), (0x20), (0x20),
+  (0x20), (0x20), (0x20), (0x20), (0x20), (0x20), (0x20), (0x20),
+  (0x20), (0x20), (0x20), (0x20), (0x20), (0x20), (0x20), (0x20),
+  (0x20), (0x20), (0x20), (0x20), (0x20), (0x20), (0x20), (0x20),
+  (0x20), (0x20), (0x20), (0x20), (0x20), (0x20), (0x20), (0x20),
+  (0x20), (0x20), (0x20), (0x20), (0x20), (0x20), (0x20), (0x20),
+  (0x20), (0x20), (0x20), (0x20), (0x20), (0x20), (0x20), (0x20),
+  (0x20), (0x20), (0x20), (0x20), (0x20), (0x20), (0x20), (0x20),
+  (0x41), (0x41), (0x41), (0x41), (0x41), (0x41), (0x41), (0x41),
+  (0x41), (0x41), (0x41), (0x41), (0x41), (0x41), (0x41), (0x41),
+  (0x41), (0x41), (0x41), (0x41), (0x41), (0x41), (0x41), (0x41),
+  (0x41), (0x41), (0x41), (0x41), (0x41), (0x41), (0x41), (0x41),
+  (0x42), (0x42), (0x42), (0x42), (0x42), (0x42), (0x42), (0x42),
+  (0x42), (0x42), (0x42), (0x42), (0x42), (0x42), (0x42), (0x42),
+  (0x42), (0x42), (0x42), (0x42), (0x42), (0x42), (0x42), (0x42),
+  (0x42), (0x42), (0x42), (0x42), (0x42), (0x42), (0x42), (0x42),
+  (0x63), (0x63), (0x63), (0x63), (0x63), (0x63), (0x63), (0x63),
+  (0x63), (0x63), (0x63), (0x63), (0x63), (0x63), (0x63), (0x63),
+  (0x64), (0x64), (0x64), (0x64), (0x64), (0x64), (0x64), (0x64),
+  (0x64), (0x64), (0x64), (0x64), (0x64), (0x64), (0x64), (0x64),
+  (0x65), (0x65), (0x65), (0x65), (0x65), (0x65), (0x65), (0x65),
+  (0x65), (0x65), (0x65), (0x65), (0x65), (0x65), (0x65), (0x65),
+  (0x66), (0x66), (0x66), (0x66), (0x66), (0x66), (0x66), (0x66),
+  (0x66), (0x66), (0x66), (0x66), (0x66), (0x66), (0x66), (0x66),
+  (0x67), (0x67), (0x67), (0x67), (0x67), (0x67), (0x67), (0x67),
+  (0x67), (0x67), (0x67), (0x67), (0x67), (0x67), (0x67), (0x67),
+  (0x88), (0x88), (0x88), (0x88), (0x88), (0x88), (0x88), (0x88),
+  (0x89), (0x89), (0x89), (0x89), (0x89), (0x89), (0x89), (0x89),
+  (0xAA), (0xAA), (0xAA), (0xAA), (0xAB), (0xAB), (0xAB), (0xAB),
+  (0xAC), (0xAC), (0xAC), (0xAC), (0xCD), (0xCD), (0xCE), (0xCE),
+  (0xCF), (0xCF), (0xD0), (0xD0), (0xD1), (0xD1), (0xF2), (0xF3),
+  (0xF4), (0xF5), (0xF6), (0xF7), (0xF8), (0xF9), (0xFA), (0xFB),
+};
+
 /// Decodes the vertical code from the given bitstream at in \n
 /// This is designed to use less memory using a 36 uint8_t buffer \n
 /// compared to using a 256 uint8_t buffer to decode the next 8 bits read by read8bitCode() \n
@@ -923,16 +1062,11 @@ uint8_t usx_vcode_lookup[36] = {
 int readVCodeIdx(const char *in, int len, int *bit_no_p) {
   if (*bit_no_p < len) {
     uint8_t code = read8bitCode(in, len, *bit_no_p);
-    int i = 0;
-    do {
-      if (code <= usx_vsections[i]) {
-        uint8_t vcode = usx_vcode_lookup[usx_vsection_pos[i] + ((code & usx_vsection_mask[i]) >> usx_vsection_shift[i])];
-        (*bit_no_p) += ((vcode >> 5) + 1);
-        if (*bit_no_p > len)
-          return 99;
-        return vcode & 0x1F;
-      }
-    } while (++i < SECTION_COUNT);
+    uint8_t vcode = usx_vcode_direct[code];
+    (*bit_no_p) += ((vcode >> 5) + 1);
+    if (*bit_no_p > len)
+      return 99;
+    return vcode & 0x1F;
   }
   return 99;
 }
@@ -1125,6 +1259,17 @@ int unishox2_decompress_lines(const char *in, int len, UNISHOX_API_OUT_AND_LEN(c
   bit_no = UNISHOX_MAGIC_BIT_LEN; // ignore the magic bit
   dstate = h = USX_ALPHA;
   is_all_upper = 0;
+  // Hoisted lengths, same pattern as the compressor: identical values,
+  // computed once instead of per decoded symbol.
+  int usx_freq_len_d[6];
+  int usx_tmpl_len_d[5];
+  {
+    int _i;
+    for (_i = 0; _i < 6; _i++)
+      usx_freq_len_d[_i] = (usx_freq_seq != NULL && usx_freq_seq[_i] != NULL) ? (int)strlen(usx_freq_seq[_i]) : 0;
+    for (_i = 0; _i < 5; _i++)
+      usx_tmpl_len_d[_i] = (usx_templates != NULL && usx_templates[_i] != NULL) ? (int)strlen(usx_templates[_i]) : -1;
+  }
 
   int prev_uni = 0;
 
@@ -1260,10 +1405,14 @@ int unishox2_decompress_lines(const char *in, int len, UNISHOX_API_OUT_AND_LEN(c
               break;
             if (usx_templates[idx] == NULL)
               break;
-            size_t tlen = strlen(usx_templates[idx]);
-            if (rem > tlen)
-              break;
-            rem = tlen - rem;
+            {
+              int tlen = usx_tmpl_len_d[idx];
+              if (tlen < 0)
+                break;
+              if (rem > tlen)
+                break;
+              rem = tlen - rem;
+            }
             int eof = 0;
             for (int j = 0; j < rem; j++) {
               char c_t = usx_templates[idx][j];
@@ -1353,20 +1502,24 @@ int unishox2_decompress_lines(const char *in, int len, UNISHOX_API_OUT_AND_LEN(c
             DEC_OUTPUT_CHAR(out, olen, ol++, rpt_c);
         } else if (h == USX_SYM && v > 24) {
           v -= 25;
-          const int freqlen = (int)strlen(usx_freq_seq[v]);
-          const int left = olen - ol;
-          if (left <= 0) return olen + 1;
-          memcpy(out + ol, usx_freq_seq[v], min_of(left, freqlen));
-          if (left < freqlen) return olen + 1;
-          ol += freqlen;
+          {
+            const int freqlen = usx_freq_len_d[v];
+            const int left = olen - ol;
+            if (left <= 0) return olen + 1;
+            memcpy(out + ol, usx_freq_seq[v], min_of(left, freqlen));
+            if (left < freqlen) return olen + 1;
+            ol += freqlen;
+          }
         } else if (h == USX_NUM && v > 22 && v < 26) {
           v -= (23 - 3);
-          const int freqlen = (int)strlen(usx_freq_seq[v]);
-          const int left = olen - ol;
-          if (left <= 0) return olen + 1;
-          memcpy(out + ol, usx_freq_seq[v], min_of(left, freqlen));
-          if (left < freqlen) return olen + 1;
-          ol += freqlen;
+          {
+            const int freqlen = usx_freq_len_d[v];
+            const int left = olen - ol;
+            if (left <= 0) return olen + 1;
+            memcpy(out + ol, usx_freq_seq[v], min_of(left, freqlen));
+            if (left < freqlen) return olen + 1;
+            ol += freqlen;
+          }
         } else
           break; // Terminator
         if (dstate == USX_DELTA)
